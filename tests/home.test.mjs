@@ -259,6 +259,16 @@ export default {
     }
   },
 
+  async "フォント：このページで つかう 文字が ぜんぶ フォントの リンクに はいっている"(t) {
+    const { join } = await import("node:path");
+    const { pathToFileURL } = await import("node:url");
+    const fonts = await import(pathToFileURL(join(t.ROOT, "tools", "fonts.mjs")).href);
+    const have = fonts.linkedChars();
+    t.ok(have, "index.html に フォントの リンク（id=font）が ない");
+    const missing = fonts.usedChars().filter((c) => !have?.has(c));
+    t.eq(missing.join(""), "", "たりない 文字が ある（node tools/fonts.mjs を ながして）");
+  },
+
   async "本物の news.json は 形が ただしい"(t) {
     const { readFileSync } = await import("node:fs");
     const { join } = await import("node:path");

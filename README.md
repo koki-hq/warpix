@@ -28,7 +28,7 @@
 
 ## 製作所だより（news.json）
 
-おしらせは `news.json` に 書くだけ。ホームページの けいじばんと 一覧に 出ます。
+おしらせは `news.json` に 書いて、`node tools/fonts.mjs`（新しい 文字を フォントに 入れる）。ホームページの けいじばんと 一覧に 出ます。
 warpix-link も この ファイルを 読みにきて、ピクセが「ニュースが あるよ」と 教えます。
 
 ```json
@@ -59,9 +59,10 @@ warpix-link も この ファイルを 読みにきて、ピクセが「ニュ�
 | `chika.js` | 地面の 下の 世界 |
 | `radio.js` | ラジカセの チップチューン（音を ブラウザで つくる） |
 | `news.json` | 製作所だより |
+| `tools/fonts.mjs` | つかう 文字だけの フォントを たのむ（文字を ふやしたら `node tools/fonts.mjs`） |
 | `favicon.svg` | ヘルメットの ピクセ（`node tools/favicon.mjs` で つくる） |
 | `docs/` | 世界観（`THEME.md`）と 仕様メモ（`spec/`） |
-| `tests/` | テスト（`node tests/run.mjs`、13 件） |
+| `tests/` | テスト（`node tests/run.mjs`、14 件） |
 | `tools/health.mjs` | 健康診断（重さ・スマホでの速さ・待機中の CPU・アクセシビリティ） |
 
 うごく ものは ぜんぶ 1 つの「工場の とけい」（0.3 秒ごと）で いっしょに 1 コマ すすめます。
