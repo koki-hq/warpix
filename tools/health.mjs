@@ -68,7 +68,7 @@ const server = await startServer();
   console.log("\n## アクセシビリティ（axe-core 4.10.2）");
   const b = await launchBrowser();
   const p = await b.firstPage();
-  for (const [label, q] of [["ひる", "?hour=14"], ["まよなか（ピクセが ねている）", "?hour=2"]]) {
+  for (const [label, q] of [["ひる", "?hour=14"], ["水を のんでいる コマ", "?hour=2&t=64"]]) {
     await p.goto(server.url + q, 1500);
     await p.ev(`new Promise((ok, ng) => { if (window.axe) return ok(); const s = document.createElement("script"); s.src = ${JSON.stringify(AXE)}; s.onload = ok; s.onerror = ng; document.head.append(s); })`);
     const res = await p.ev(`axe.run(document, { resultTypes: ["violations"] }).then((r) => r.violations.map((v) => ({ id: v.id, impact: v.impact, help: v.help, n: v.nodes.length, where: v.nodes.slice(0, 3).map((n) => n.target.join(" ")) })))`);
