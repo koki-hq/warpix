@@ -104,7 +104,7 @@ export default {
       t.ok((await said(p)).includes(`${i + 1}きょくめ「${title}」`), `ゲンさんが きょくめいを いわない: ${await said(p)}`);
       t.eq(await p.ev(`document.querySelector("${btn}").getAttribute("aria-pressed")`), "true", "aria-pressed");
     }
-    await t.sleep(700);
+    await t.sleep(1500); // パソコンが いそがしいと 音の 時計が おくれる ので、すこし ながめに まつ
     t.ok((await p.ev(`radio.beat()`)) >= 1, "はくが すすまない");
     await p.click(btn);
     t.ok(!(await p.ev(`radio.playing()`)) && (await said(p)).includes("とめたぞ"), "4 かいめで とまらない");
