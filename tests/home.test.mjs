@@ -166,6 +166,28 @@ export default {
     }
   },
 
+  async "工場見学ツアー：ピクセが あんないして カメラが うごく。Esc で おわる。スマホでも 見えない ところへ"(t) {
+    for (const opts of [{ size: { width: 1440, height: 900 } }, { mobile: [390, 844] }]) {
+      const { server, p } = await open(t, "?hour=14", opts);
+      t.eq(await p.ev(`factory.tour()`), null, "さいしょから ツアー中");
+      await p.click("#tour-btn");
+      t.eq(await p.ev(`document.getElementById("tour-btn").getAttribute("aria-pressed")`), "true", "aria-pressed");
+      t.ok((await said(p)).includes("あんないがかり"), `ピクセが あんない しない: ${await said(p)}`);
+      t.ok(await p.ev(`[...document.querySelectorAll(".hot")].every((b) => getComputedStyle(b).display === "none")`), "ツアー中に おせる ところが のこっている");
+      t.ok((await p.ev(`document.querySelector(".scene .say").textContent`)).includes("いっしょに 工場を"), "絵の 中に あんないが でない");
+      await t.sleep(7000); // 1 つめの あんないは 約 6 秒
+      const st = await p.ev(`factory.tour()`);
+      t.ok(st && st.i >= 1 && (await said(p)).includes("時計塔"), `つぎの 場所へ すすまない: ${JSON.stringify(st)} ${await said(p)}`);
+      t.eq(st.z, opts.mobile ? 1 : 2, "カメラの よりかた");
+      await p.key("Escape");
+      t.eq(await p.ev(`factory.tour()`), null, "Esc で おわらない");
+      t.ok(await p.ev(`getComputedStyle(document.getElementById("pikuse-btn")).display !== "none"`), "おわっても おせる ところが もどらない");
+      t.noErrors(p);
+      await server.close();
+      await t.closeAll();
+    }
+  },
+
   async "えんとつを おすと ぽっぽー、10 かいで けほっ"(t) {
     const { server, p } = await open(t);
     await p.click(".hot.chimney");

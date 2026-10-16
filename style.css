@@ -245,6 +245,45 @@ main > .hollow {
   height: 260px;
 }
 
+/* 工場見学ツアー */
+.tour-btn {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 2;
+  padding: 8px 12px 6px;
+  border: 0;
+  background: var(--yellow);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 0 0 3px var(--ink), 0 var(--px) 0 3px var(--ink);
+}
+.tour-btn:hover {
+  background: #ffe680;
+}
+.touring .hot {
+  display: none;
+}
+.say.narrate {
+  top: auto !important;
+  bottom: 14px;
+  left: 50% !important;
+  max-width: min(86%, 680px);
+  translate: -50% 0;
+  font-size: 16px;
+}
+.say.narrate::after {
+  display: none;
+}
+@media (max-width: 480px) {
+  .say.narrate {
+    bottom: 66px;
+    font-size: 14px;
+  }
+}
+
 /* ---------- 工場あんない・けいじばん ---------- */
 main {
   width: var(--w);

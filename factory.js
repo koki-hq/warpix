@@ -260,27 +260,19 @@ const factory = (() => {
       thunderhead(120, 118, 120, 44, seeded(7));
       thunderhead(380, 118, 90, 30, seeded(21));
     } else if (season === "autumn") {
-      // 秋は 高い 空に うろこ雲
-      const rnd = seeded(9);
-      // ふっくら 丸い かたまりを 波もように ならべ、はしの ほうほど まばらに
-      const scale = (x, y, w) => {
-        rect(x + 1, y, w - 2, 1, "#ffffff");
-        rect(x, y + 1, w, 2, "#ffffff");
-        rect(x + 1, y + 3, w - 2, 1, "#d6e7f8");
-        dot(x + 1, y + 1, "#f4f9ff");
-      };
-      const cx = 200;
-      const cy = 40;
-      for (let row = 0; row < 11; row++) {
-        const y0 = 13 + row * 5;
-        for (let x = 20 + (row % 2) * 4; x < 380; x += 8 + Math.floor(rnd() * 2)) {
-          const y = y0 + Math.round(3 * Math.sin(x / 28 + row * 0.9));
-          const d = Math.hypot((x - cx) / 170, (y - cy) / 30); // まんなかから どれだけ はなれているか
-          if (d > 1 || rnd() < d * d * 0.9) continue;
-          scale(x, y, 5 + Math.floor(rnd() * 4) - Math.round(d * 2));
+      // 秋は 高い 空に、筆で さっと はいた ような すじ雲と、ふんわり 浮かぶ 雲
+      for (const [x0, y0, len, bend] of [[60, 22, 150, 9], [210, 12, 120, -6], [250, 46, 90, 5], [90, 58, 70, -4]]) {
+        for (let i = 0; i < len; i++) {
+          const t = i / len;
+          const y = Math.round(y0 + bend * Math.sin(t * Math.PI) - t * 6);
+          const fade = Math.sin(t * Math.PI); // まんなかが こく、はしは うすい
+          dot(x0 + i, y, fade > 0.35 ? "#ffffff" : "#e4f0fc");
+          if (fade > 0.6) dot(x0 + i, y + 1, "#eef6fe");
+          if (fade > 0.8 && i % 3 === 0) dot(x0 + i + 1, y - 1, "#ffffff"); // はけの すじ
         }
       }
-      thunderhead(400, 118, 80, 22, seeded(21));
+      thunderhead(150, 118, 110, 34, seeded(7));
+      thunderhead(390, 118, 80, 24, seeded(21));
     } else {
       // 冬は うすい すじ雲
       for (const [x, y, w] of [[40, 30, 140], [220, 18, 110], [120, 52, 90], [300, 60, 120]]) {
@@ -968,19 +960,21 @@ const factory = (() => {
   let scale = 2;
   let cropX = 0;
   let visW = W;
+  const cam = { x: 0, y: 0, z: 1 }; // カメラ（ふだんは cropX・まるごと。ツアーの ときは よって うごく）
+  let tour = null;
   function fit() {
     const cssW = scene.clientWidth || innerWidth;
     scale = Math.max(2, Math.ceil(cssW / W));
     visW = Math.min(W, Math.ceil(cssW / scale));
     cropX = Math.max(0, Math.min(W - visW, Math.round(244 - visW / 2)));
+    if (!tour) Object.assign(cam, { x: cropX, y: 0, z: 1 });
     canvas.width = visW;
     canvas.height = H;
+    view.imageSmoothingEnabled = false;
     canvas.style.width = `${visW * scale}px`;
     canvas.style.height = `${H * scale}px`;
     scene.style.height = `${H * scale}px`;
-    // 看板の 見出し
-    place(signEl, 193, 61, 106, 17);
-    signEl.style.fontSize = `${Math.floor((106 * scale) / 10.5)}px`;
+    placeSign();
     place(chimneyBtn, 298, 22, 16, 70);
     place(ojiBtn, OX - 2, OY - 1, 26, 25);
     place(catBtn, 396, 110, 18, 10);
@@ -988,13 +982,21 @@ const factory = (() => {
     lastSay = null;
   }
   const offset = () => (scene.clientWidth - visW * scale) / 2;
+  // 絵の 目もり → 画面の 位置（カメラに あわせる）
+  const cssX = (x) => (x - cam.x) * cam.z * scale + offset();
+  const cssY = (y) => (y - cam.y) * cam.z * scale;
   function place(el, x, y, w, h) {
-    const left = (x - cropX) * scale + offset();
-    el.style.left = `${left}px`;
-    el.style.top = `${y * scale}px`;
-    el.style.width = `${w * scale}px`;
-    el.style.height = `${h * scale}px`;
-    el.hidden = x + w < cropX || x > cropX + visW; // 見えない ところの ボタンは かくす
+    el.style.left = `${cssX(x)}px`;
+    el.style.top = `${cssY(y)}px`;
+    el.style.width = `${w * cam.z * scale}px`;
+    el.style.height = `${h * cam.z * scale}px`;
+    el.hidden = x + w < cam.x || x > cam.x + visW / cam.z; // 見えない ところの ボタンは かくす
+  }
+  // 看板の 見出し
+  function placeSign() {
+    place(signEl, 193, 61, 106, 17);
+    signEl.hidden = false;
+    signEl.style.fontSize = `${Math.floor((106 * scale * cam.z) / 10.5)}px`;
   }
 
   // ---------- 1 コマ 描く ----------
@@ -1004,7 +1006,7 @@ const factory = (() => {
     const t = n % 96;
     const s = story(t);
     if (override && n >= override.until && frozen == null) override = null;
-    view.setTransform(1, 0, 0, 1, -cropX, 0);
+    view.setTransform(cam.z, 0, 0, cam.z, -Math.round(cam.x * cam.z), -Math.round(cam.y * cam.z));
     g = view;
     g.drawImage(back, 0, 0);
     clouds(n);
@@ -1058,6 +1060,18 @@ const factory = (() => {
     // おせる ピクセを 絵の ピクセに あわせる
     place(pikuseBtn, s.px, s.py, 16, 15);
 
+    if (tour) {
+      // ツアー中は 看板が カメラに ついていき、ピクセの あんないは 下の まんなかに
+      placeSign();
+      if (lastSay !== tour.text) {
+        lastSay = tour.text;
+        sayEl.textContent = tour.text;
+        sayEl.classList.add("narrate");
+        sayEl.classList.remove("edge-left", "edge-right");
+      }
+      return;
+    }
+    sayEl.classList.remove("narrate");
     // ふきだし：おされた ときの ことばが さき、なければ お話の セリフ
     const text = override ? override.text : s.say;
     const who = override ? override.who : s.who;
@@ -1066,14 +1080,85 @@ const factory = (() => {
     if (key !== lastSay) {
       lastSay = key;
       sayEl.textContent = text;
-      const left = (x - cropX) * scale + offset();
+      const left = cssX(x);
       sayEl.style.left = `${left}px`;
-      sayEl.style.top = `${y * scale - 10}px`;
+      sayEl.style.top = `${cssY(y) - 10}px`;
       const box = scene.clientWidth;
       sayEl.classList.toggle("edge-right", left > box * 0.7);
       sayEl.classList.toggle("edge-left", left < box * 0.3);
     }
   }
+
+  // ---------- 工場見学ツアー（ピクセが あんない。カメラが よって うごく） ----------
+  // スマホでは 左右が 見えないので、ツアーで ぜんぶ 見て まわれる。さいごは 地面の 下へ
+  const tourBtn = document.getElementById("tour-btn");
+  const nowText = () => {
+    const d = new Date();
+    return `${params.has("hour") ? hour : d.getHours()}じ ${d.getMinutes()}ふん`;
+  };
+  const STOPS = [
+    { x: 232, y: 150, text: () => "ぼく、ピクセ！ WARPIX製作所の あんないがかり だよ。\nいっしょに 工場を 見て まわろう！" },
+    { x: 152, y: 92, text: () => `これが 時計塔。はりは ほんとうの 時刻で うごくんだ。\nいまは ${nowText()}！` },
+    { x: 84, y: 100, text: () => "タワークレーンと ブルーシート。\n中では つぎの 製品を 建造中。バチが ようせつ してる！" },
+    { x: 252, y: 58, text: () => "屋上の 看板と、紅白の えんとつ。\nえんとつは おすと もくもく するよ。" },
+    { x: 364, y: 116, text: () => "かまぼこ倉庫。屋根の アームさんが、\nいつも どこかを なおしてる。" },
+    { x: 412, y: 138, text: () => "自販機の 上は、ねこの トタンの いつもの 場所。\nリフトンは 木の 箱を はこんでる。" },
+    { x: 300, y: 64, text: () => "空には 飛行船の ソラマメ号。\nうしろの 高架には、レトロな 電車も はしるよ。" },
+    { x: 186, y: 154, text: () => "ゲンさんの ラジカセ。おすと チップチューンが ながれるよ。\nゲンさんの おきにいり！" },
+    { x: 0, y: 0, end: true, text: () => "さいごは……地面の 下へ！\nだれも 知らない 世界が まってるよ。" },
+  ];
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  function camFor(stop) {
+    if (stop.end) return { x: cropX, y: 0, z: 1 };
+    const z = visW < 300 ? 1 : 2; // スマホは もう 大きいので、よらずに 横へ うごく だけ
+    const vw = visW / z;
+    const vh = H / z;
+    return { x: clamp(stop.x - vw / 2, 0, W - vw), y: clamp(stop.y - vh * 0.55, 0, H - vh), z };
+  }
+  let tourTimer = 0;
+  let raf = 0;
+  function tourGo(i) {
+    if (i >= STOPS.length) return tourEnd(true);
+    const text = STOPS[i].text();
+    const dur = reduced ? 0 : 1100;
+    tour = { i, text, from: { ...cam }, to: camFor(STOPS[i]), start: performance.now(), dur };
+    bubble.textContent = `ピクセ「${text.replaceAll("\n", " ")}」`;
+    clearTimeout(tourTimer);
+    tourTimer = setTimeout(() => tourGo(i + 1), dur + 2600 + text.length * 55);
+    frame();
+    if (!raf) raf = requestAnimationFrame(tourLoop);
+  }
+  // うごいている あいだだけ なめらかに 描く（ツアーが おわったら とまる）
+  function tourLoop(now) {
+    raf = 0;
+    if (!tour) return;
+    const p = tour.dur ? Math.min(1, (now - tour.start) / tour.dur) : 1;
+    const e = p < 0.5 ? 2 * p * p : 1 - (-2 * p + 2) ** 2 / 2;
+    for (const k of ["x", "y", "z"]) cam[k] = tour.from[k] + (tour.to[k] - tour.from[k]) * e;
+    frame();
+    if (p < 1) raf = requestAnimationFrame(tourLoop);
+  }
+  function tourStart() {
+    scene.classList.add("touring");
+    tourBtn.setAttribute("aria-pressed", "true");
+    tourBtn.textContent = "■ ツアーを おわる";
+    tourGo(0);
+  }
+  function tourEnd(dive) {
+    clearTimeout(tourTimer);
+    tour = null;
+    scene.classList.remove("touring");
+    tourBtn.setAttribute("aria-pressed", "false");
+    tourBtn.textContent = "▶ 見学ツアー";
+    lastSay = null;
+    fit();
+    frame();
+    if (dive) document.getElementById("hollow-cave").scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" });
+  }
+  tourBtn.addEventListener("click", () => (tour ? tourEnd(false) : tourStart()));
+  addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && tour) tourEnd(false);
+  });
 
   // ---------- 製作所だより（news.json） ----------
   const list = document.getElementById("news-list");
@@ -1219,5 +1304,5 @@ const factory = (() => {
     reduced: frozen != null,
   };
 
-  return { say, hour, season, newsReady, lines: LINES, genLines: GEN_LINES, pikuse: PIKUSE, story, frame: () => n, tools };
+  return { say, hour, season, tour: () => (tour ? { i: tour.i, z: cam.z } : null), stops: STOPS.length, newsReady, lines: LINES, genLines: GEN_LINES, pikuse: PIKUSE, story, frame: () => n, tools };
 })();
