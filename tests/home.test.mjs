@@ -188,6 +188,29 @@ export default {
     }
   },
 
+  async "ゲンさんの 一日：朝は 体操、昼は おべんとう（スズメ）、3じは おやつ、夕方は かたづけ、夜は うたたね"(t) {
+    const cases = [
+      [7, (s) => ["lUp", "lSide", "lDown"].includes(s(10).left) && s(10).say.includes("いち") && s(2).music, "ラジオ体操"],
+      [12, (s) => s(30).bento && s(52).say.includes("からあげ") && s(52).thief != null, "おべんとう"],
+      [15, (s) => s(30).taiyaki && s(30).say.includes("あんこ"), "おやつ"],
+      [17, (s) => s(40).broom != null && s(40).box && s(40).say.includes("どうぐ"), "かたづけ"],
+      [21, (s) => s(44).zz && s(44).closed && s(44).say.includes("Zzz"), "うたたね"],
+      [3, (s) => s(44).zz, "まよなかも うたたね"],
+      [10, (s) => ["rUp", "rHit"].includes(s(10).right), "ごぜんは しごと"],
+    ];
+    const { server, p } = await open(t, "?hour=14");
+    for (const [h, check, label] of cases) {
+      await p.goto(`${server.url}?hour=${h}&t=0`, 600);
+      const ok = await p.ev(`(${check.toString()})((n) => factory.story(n))`);
+      t.ok(ok, `${h} じ：${label}`);
+    }
+    await p.goto(`${server.url}?hour=21`, 800);
+    await p.click("#oji-btn");
+    t.ok((await said(p)).includes("あと 5ふん"), `うたたね中の ゲンさん: ${await said(p)}`);
+    t.noErrors(p);
+    await server.close();
+  },
+
   async "えんとつを おすと ぽっぽー、10 かいで けほっ"(t) {
     const { server, p } = await open(t);
     await p.click(".hot.chimney");

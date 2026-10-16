@@ -203,6 +203,15 @@ const factory = (() => {
     lWipe: [[0, 12, "ou"], [0, 11, "ou"], [1, 10, "us"], [2, 7, "ttttt"], [2, 8, "tss"]],
     lUp: [[0, 12, "ou"], [-1, 11, "ou"], [-2, 10, "ou"], [-2, 9, "ss"], [-2, 8, "ss"]],
     rUpEmpty: [[14, 12, "uo"], [15, 11, "uo"], [16, 10, "uo"], [16, 9, "ss"], [16, 8, "ss"]],
+    // ラジオ体操（よこに のばす）
+    lSide: [[-4, 12, "ssuuu"], [-4, 13, "ssuuu"]],
+    rSide: [[14, 12, "uuuss"], [14, 13, "uuuss"]],
+    // おべんとう・おやつ（まえで もつ、口へ はこぶ）
+    lHold: [[0, 12, "ou"], [1, 13, "uuu"], [3, 14, "ss"]],
+    rHold: [[14, 12, "uo"], [13, 13, "uuo"], [11, 14, "ss"]],
+    rEat: [[14, 12, "uo"], [14, 11, "uo"], [13, 10, "ss"], [12, 9, "ss"], [10, 9, "hh"]],
+    // ほうきを もつ
+    rBroom: [[14, 12, "uo"], [14, 13, "uo"], [14, 14, "uo"], [14, 15, "ss"]],
   };
   function ojisan(x, y, left, right, closed) {
     rows(OJI, x, y);
@@ -792,8 +801,8 @@ const factory = (() => {
   }
   // ラジカセ（チップチューンが ながれる）
   // おすと ほんとうに 鳴る（radio.js）。鳴っている あいだは 音符が ぴょこぴょこ
-  function boombox(n, x, y) {
-    const on = typeof radio !== "undefined" && radio.playing();
+  function boombox(n, x, y, music = false) {
+    const on = music || (typeof radio !== "undefined" && radio.playing());
     const beat = on ? radio.beat() : 0;
     rect(x, y - 2, 12, 1, "#5f6b78");
     rect(x, y, 12, 7, C.o);
@@ -839,7 +848,113 @@ const factory = (() => {
   const GROUND = OY + 23;
   const ON_BENCH = BY - 15;
   const REST_LINE = { spring: "ふう、いい ひよりだ", summer: "ふう、あっついなあ", autumn: "ふう、すずしく なったなあ", winter: "ふう、さむいけど からだは ぽかぽかだ" };
+  // ゲンさんの 一日の 小物（おべんとう・たいやき・ほうき・Zz・からあげを ねらう スズメ・どうぐばこ）
+  const TAIYAKI = [".yyyy.", "yyyyyY", "yYyyyy", ".yy.Y."];
+  const TAI = { y: "#e8a33a", Y: "#b8741c" };
+  function dayExtras(s, n) {
+    if (s.bento) {
+      rect(OX + 4, OY + 14, 8, 3, "#c0392b");
+      rect(OX + 5, OY + 14, 3, 1, "#ffffff"); // ごはん
+      dot(OX + 6, OY + 14, "#e0503c"); // うめぼし
+      if ((s.thief ?? 0) < 12) rect(OX + 9, OY + 14, 2, 1, "#c98a3a"); // からあげ
+      dot(OX + 11, OY + 14, "#5fbf62");
+    }
+    if (s.thief != null) {
+      // 電線から ぴょん → からあげを くわえて → にげる
+      const k = s.thief;
+      const [x, y] = k < 8 ? [96 + (OX + 9 - 96) * (k / 8), 70 + (OY + 10 - 70) * (k / 8)] : k < 12 ? [OX + 9, OY + 10] : [OX + 9 - (k - 12) * 8, OY + 10 - (k - 12) * 6];
+      rows(k % 2 ? SPARROW_PECK : SPARROW, Math.round(x), Math.round(y), C, k >= 12);
+      if (k >= 12) rect(Math.round(x) - 1, Math.round(y) + 2, 2, 1, "#c98a3a");
+    }
+    if (s.taiyaki) {
+      rows(TAIYAKI, OX + 9, OY + 7, TAI);
+      rows(TAIYAKI, s.px + 5, s.py - 4, TAI);
+    }
+    if (s.broom != null) {
+      const bx = OX + 15;
+      const by = OY + 16;
+      const tip = s.broom ? 6 : 2;
+      line(bx, by, bx + tip, GROUND - 3, "#a8713f");
+      rect(bx + tip - 2, GROUND - 3, 5, 3, "#d9b43a");
+      if (n % 2) for (const d of [-3, 4, 6]) dot(bx + tip + d, GROUND - 1 - (n % 3), "#c7bc9f"); // ほこり
+    }
+    if (s.box) {
+      rect(s.px + 3, s.py - 4, 10, 4, "#e0503c");
+      rect(s.px + 6, s.py - 5, 4, 1, "#8d99a6");
+    }
+    if (s.zz) {
+      for (let i = 0; i < 2; i++) {
+        const k = (n + i * 4) % 8;
+        rows(["oooo", "..o.", ".o..", "oooo"], OX + 13 + i * 4 + (k % 2), OY - 3 - k * 2, { o: "#ffffff" });
+      }
+    }
+  }
+
+  // ---------- ゲンさんの 一日（ほんとうの 時刻で かわる。?hour=0〜23 で ためせる） ----------
+  const hourNow = () => (params.has("hour") ? hour : new Date().getHours());
+  const routineAt = (h) => (h < 5 || h >= 19 ? "nap" : h < 9 ? "taiso" : h === 12 ? "lunch" : h === 15 ? "oyatsu" : h >= 17 ? "katazuke" : "work");
+  const routine = () => routineAt(hourNow());
   function story(t) {
+    const r = routine();
+    return r === "work" ? work(t) : DAY[r](t, { left: "lDown", right: "rDown", closed: false, px: HOME, py: GROUND - 16, carry: false, happy: false, laser: false, hammer: true, sparks: false, say: "", who: "o", sweat: false, step: false });
+  }
+  const DAY = {
+    // あさ：ラジオ体操
+    taiso(t, s) {
+      const beat = t % 4;
+      s.left = ["lUp", "lSide", "lDown", "lSide"][beat];
+      s.right = ["rUpEmpty", "rSide", "rDown", "rSide"][beat];
+      s.music = true;
+      s.happy = true;
+      s.py -= beat === 0 ? 3 : 0;
+      s.say = t < 8 ? "あさの ラジオ体操、はじめ！" : t % 8 < 4 ? "いち、に、さん、し" : "ご、ろく、しち、はち";
+      return s;
+    },
+    // おひる：おべんとう（スズメが からあげを ねらう）
+    lunch(t, s) {
+      s.bento = true;
+      s.left = "lHold";
+      s.right = t % 4 < 2 ? "rEat" : "rHold";
+      s.happy = true;
+      if (t < 20) s.say = "おひるだ！ おべんとう おべんとう♪";
+      else if (t < 40) s.say = "もぐもぐ";
+      else if (t < 50) Object.assign(s, { say: "あっ、スズメが……", who: "p", thief: t - 40 });
+      else if (t < 56) Object.assign(s, { say: "こらっ！ おれの からあげ！", left: "lUp", right: "rUpEmpty", thief: t - 40 });
+      else if (t < 70) Object.assign(s, { say: "……まあ いいか。ひとつ わけて やろう", thief: 16 });
+      return s;
+    },
+    // 3 じ：おやつ（たいやき）
+    oyatsu(t, s) {
+      Object.assign(s, { taiyaki: true, left: "lDown", right: t % 6 < 3 ? "rEat" : "rHold", happy: true });
+      if (t < 16) Object.assign(s, { say: "3じの おやつ！ たいやき もってきたよ", who: "p" });
+      else if (t < 40) s.say = "あんこ たっぷり！";
+      else if (t < 60) s.say = "しっぽまで あんこ……しあわせ";
+      return s;
+    },
+    // ゆうがた：かたづけ（ほうきで そうじ。ピクセは どうぐを しまう）
+    katazuke(t, s) {
+      s.right = "rBroom";
+      s.broom = t % 4 < 2 ? 0 : 1;
+      s.hammer = false;
+      const k = t % 32; // ピクセは ジャグの ほうへ 行ったり 来たり
+      s.px = HOME + (k < 16 ? k : 32 - k) * 1.5;
+      s.step = t % 2 === 1;
+      s.box = true;
+      if (t < 16) s.say = "そろそろ かたづけるか";
+      else if (t >= 30 && t < 46) Object.assign(s, { say: "どうぐ、しまってくるね", who: "p" });
+      else if (t >= 70 && t < 80) s.say = "きょうも おつかれさん";
+      else if (t >= 80 && t < 90) Object.assign(s, { say: "おつかれさま！", who: "p" });
+      return s;
+    },
+    // よる：うたたね（こっちは いつでも 晴れ だけど、ゲンさんは ねむい）
+    nap(t, s) {
+      Object.assign(s, { closed: true, zz: true });
+      if (t < 20) Object.assign(s, { say: "しーっ。ゲンさん、うたたね ちゅう", who: "p" });
+      else if (t >= 40 && t < 56) s.say = "Zzz……むにゃ";
+      return s;
+    },
+  };
+  function work(t) {
     const s = { left: "lDown", right: "rDown", closed: false, px: HOME, py: GROUND - 16, carry: false, happy: false, laser: false, hammer: true, sparks: false, say: "", who: "o", sweat: false, step: false };
     if (t < 36 || t >= 88) {
       const hit = t % 4 >= 2;
@@ -940,7 +1055,10 @@ const factory = (() => {
     }
     say(LINES[lineIndex++ % LINES.length]);
   });
-  ojiBtn.addEventListener("click", () => say(GEN_LINES[genIndex++ % GEN_LINES.length], "o"));
+  ojiBtn.addEventListener("click", () => {
+    if (routine() === "nap") return say("……むにゃ。あと 5ふん……", "o");
+    say(GEN_LINES[genIndex++ % GEN_LINES.length], "o");
+  });
   catBtn.addEventListener("click", () => say(CAT_LINES[catIndex++ % CAT_LINES.length], "n", 10));
   radioBtn.addEventListener("click", () => {
     const s = radio.next();
@@ -1028,7 +1146,7 @@ const factory = (() => {
     bachi(n);
     hakobi(n);
     lifton(n);
-    boombox(n, OX - 22, GROUND - 7);
+    boombox(n, OX - 22, GROUND - 7, !!s.music);
     jug(JUG + 4, OY + 4);
     bench(BX, BY, n, s.sparks, s.laser);
     if (s.hammer) {
@@ -1054,6 +1172,7 @@ const factory = (() => {
       if (season === "winter" && n % 2) dot(s.px + 7 + (n % 4 < 2 ? 0 : 1), s.py - 8, "#ffffff");
     }
     if (s.laser) line(s.px + 4, s.py + 8, BX + 8, BY - 3, "#3ee8ff");
+    dayExtras(s, n);
     falling(n);
     view.setTransform(1, 0, 0, 1, 0, 0);
 

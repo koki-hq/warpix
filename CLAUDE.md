@@ -29,6 +29,7 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 - 地下の なぞ：生き物が こたえる、石板の かけら 5 つで 石の ピクセ像の 伝説（v1.4）
 - 季節の 服：月で 春・夏・秋・冬に 着がえる（v1.5）。`?month=1〜12` で ためす。どの 季節も 晴れ
 - 工場見学ツアー：カメラ（`cam`）で よって まわる（v1.7）。絵の 位置あわせは `cssX`・`cssY`・`place()`（カメラ経由）
+- ゲンさんの 一日：時刻で `story()` が `DAY`（体操・おべんとう・おやつ・かたづけ・うたたね）か `work()`（しごと）を えらぶ（v1.8）
 - せいひん 展示室：warpix-link の 紹介（v1.6、第一版。中身は ユーザーと 育てる）。warpix-link の 機能が かわったら ここも 見なおす
 - 健康診断の 数字は、別の ウィンドウが 重い ときに 悪く でる（パソコン全体の CPU も 見て 書く）
 - テストで 地下の ボタンへ スクロールする ときは `behavior: "instant"`（ページは なめらかスクロール なので、まにあわない）
@@ -62,11 +63,11 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 
 ## 進め方
 
-- テスト：`node tests/run.mjs`（いまは 12 件・約 90 秒）。新しい 動きには テストを 足す
+- テスト：`node tests/run.mjs`（いまは 13 件・約 100 秒）。新しい 動きには テストを 足す
 - 健康診断：`node tools/health.mjs`（重さ・スマホでの 速さ・待機中 CPU・axe）。**公開の 前に テストと 健康診断を 両方**
-- 時刻を ためす：`?hour=0〜23`（あいさつと 時計塔）。お話の コマを とめる：`?t=0〜95`
+- 時刻を ためす：`?hour=0〜23`（あいさつ・時計塔・ゲンさんの 一日）。お話の コマを とめる：`?t=0〜95`
 - favicon は `node tools/favicon.mjs`（`factory.js` の ピクセから 作る）
-- 公開：`main` に push すると GitHub Pages に 出る。タグ `vX.Y`（いまは `v1.7`）と 仕様メモを セットで。公開後は 本番の URL で 変わった ことを 確かめる
+- 公開：`main` に push すると GitHub Pages に 出る。タグ `vX.Y`（いまは `v1.8`）と 仕様メモを セットで。公開後は 本番の URL で 変わった ことを 確かめる
   - Pages の 公開が「waiting」で 止まる ことが ある → `gh api -X POST repos/koki-hq/warpix/pages/builds` で 頼みなおすと 通る
 - コミット：git の メールは noreply 設定ずみ。メッセージの 最後に `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`
 
