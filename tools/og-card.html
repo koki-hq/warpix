@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>共有カード（tools/og.mjs が つかう）</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DotGothic16&display=block" rel="stylesheet">
+  <style>
+    /* 1200×630 の 共有カード。上は 青空の 工場まち、下は 地面の 帯に ひとこと */
+    html, body { margin: 0; }
+    .card {
+      position: relative;
+      width: 1200px;
+      height: 630px;
+      overflow: hidden;
+      background: #7b5236;
+      font-family: "DotGothic16", monospace;
+    }
+    .card img {
+      position: absolute;
+      left: -120px;
+      top: 0;
+      width: 1440px;
+      height: 528px;
+      image-rendering: pixelated;
+    }
+    .band {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 102px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 0 40px;
+      box-sizing: border-box;
+      background: #7b5236;
+      border-top: 6px solid #2b2f3a;
+      color: #fff8e7;
+      font-size: 30px;
+      text-shadow: 3px 3px 0 #4a3020;
+    }
+    .band small {
+      color: #ffd84a;
+      font-family: "Press Start 2P", monospace;
+      font-size: 16px;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <img src="../tests/.output/og-hero.png" alt="">
+    <div class="band">
+      <span>ドット絵と チップチューンの 世界を<br>ひとつずつ 組み立てる、ちいさな 町工場</span>
+      <small>WARPIX製作所</small>
+    </div>
+  </div>
+</body>
+</html>
