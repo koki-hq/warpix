@@ -1,4 +1,4 @@
-// WARPIX製作所の ホームページ：見取り図、ピクセ、えんとつ、製作所だより
+// WARPIX製作所の ホームページ：青空の 町工場、おじさんと ピクセ、えんとつ、製作所だより
 const NEWS = JSON.stringify({
   news: [
     { id: "old", date: "2020-01-01", title: "むかしの おしらせ", body: "ふるい", url: "https://example.com/old" },
@@ -17,58 +17,66 @@ async function open(t, query = "?hour=14", opts = {}) {
   await p.ev(`factory.newsReady`);
   return { server, p };
 }
+const said = (p) => p.ev(`document.getElementById("bubble").textContent`);
+const pikuseAt = (p) => p.ev(`(() => { const s = document.getElementById("pikuse-btn").style; return s.left + " " + s.top; })()`);
 
 export default {
-  async "見取り図：LINK工場は warpix-link へ、けんせつちゅうの へやは ピクセが こたえる"(t) {
+  async "青空の 町工場：看板、絵、あいさつ、おせる ところは キーボードで たどれる"(t) {
     const { server, p } = await open(t);
     t.eq(await p.ev(`document.title`), "WARPIX製作所", "タイトル");
-    t.eq(await p.ev(`document.querySelector('[data-room="link"]').href`), "https://koki-hq.github.io/warpix-link/", "LINK工場の 行き先");
-    t.ok(await p.ev(`document.querySelector('[data-room="link"]').textContent.includes("warpix-link へ ワープ")`), "LINK工場に 読み上げ用の 説明がない");
-    t.ok((await p.ev(`document.getElementById("bubble").textContent`)).includes("こんにちは"), "ひるの あいさつ");
-    await p.click('[data-room="soon-a"]');
-    t.ok((await p.ev(`document.getElementById("bubble").textContent`)).includes("けんせつちゅう"), "けんせつちゅうの へやの ことば");
-    // へやは キーボードで たどれる
-    const tabbable = await p.ev(`[...document.querySelectorAll(".room")].every((r) => r.tabIndex === 0)`);
-    t.ok(tabbable, "へやに Tab で いけない");
-    // ドットの 絵が ちゃんと 描かれている（まっしろ・まっくろ では ない）
-    t.ok(await p.ev(`(() => { const c = document.querySelector('.machine[data-sprite="gate"] canvas'); return c.width === 48 && c.getContext("2d").getImageData(0, 0, 48, 48).data.some((v, i) => i % 4 === 3 && v > 0); })()`), "ワープゲートの 絵が ない");
-    t.ok(await p.ev(`document.querySelectorAll(".goods canvas").length >= 32`), "ベルトコンベアの 荷物が たりない");
+    t.eq(await p.ev(`document.querySelector("h1").textContent`), "WARPIX製作所", "看板の 見出し");
+    t.ok((await said(p)).includes("こんにちは"), "ひるの あいさつ");
+    t.ok((await p.ev(`document.querySelector(".scene .say").textContent`)).includes("こんにちは"), "絵の ふきだしに あいさつが ない");
+    // 絵が ちゃんと 描かれている（空の 青が ある）
+    t.ok(await p.ev(`(() => { const d = document.querySelector(".scene canvas").getContext("2d").getImageData(0, 0, 192, 112).data; let blue = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 2] > 200 && d[i] < 120) blue++; return blue > 2000; })()`), "青空が 描かれていない");
+    t.ok(await p.ev(`[...document.querySelectorAll(".hot")].length === 3 && [...document.querySelectorAll(".hot")].every((b) => b.tabIndex === 0 && b.getAttribute("aria-label"))`), "おせる ところに Tab で いけない・名前が ない");
+    t.eq(await p.ev(`[...document.querySelectorAll(".guide a")].map((a) => a.getAttribute("href"))`), ["#products", "#news", "#pikuse", "#about"], "工場あんない");
+    t.eq(await p.ev(`document.querySelector('#products a').href`), "https://koki-hq.github.io/warpix-link/", "warpix-link への リンク");
     t.noErrors(p);
     await server.close();
   },
 
-  async "ピクセ：おすと しゃべって はねる。まよなかは ねていて、おすと おきる"(t) {
-    let { server, p } = await open(t);
-    await p.click("#pikuse-btn");
-    const said = await p.ev(`document.getElementById("bubble").textContent`);
-    t.ok(said.startsWith("ピクセ「") && (await p.ev(`factory.lines.some((l) => document.getElementById("bubble").textContent.includes(l))`)), `ピクセの セリフ: ${said}`);
-    t.ok(await p.ev(`document.getElementById("pikuse-btn").classList.contains("hop")`), "はねない");
+  async "お話：トンテンカン → 水を はこぶ → ごくごく → ふきふき → ぷはー"(t) {
+    const { server, p } = await open(t, "?hour=14&t=10");
+    const s = (n) => p.ev(`factory.story(${n})`);
+    t.ok(["rUp", "rHit"].includes((await s(10)).right), "はじめは かなづちを ふる");
+    t.ok((await s(53)).carry, "ピクセが 水を はこばない");
+    t.eq((await s(64)).right, "rDrink", "水を のまない");
+    t.eq((await s(76)).left, "lWipe", "汗を ふかない");
+    t.ok((await s(82)).say.includes("ぷはー"), "ぷはー が ない");
+    // ?t= で とめた コマでは、ピクセの ボタンも 絵の ピクセの 場所に いる
+    const home = await pikuseAt(p);
     t.noErrors(p);
     await server.close();
     await t.closeAll();
+    const again = await open(t, "?hour=14&t=44");
+    t.ok((await pikuseAt(again.p)) !== home, "ジャグへ あるいても ピクセの ボタンが うごかない");
+    t.noErrors(again.p);
+    await again.server.close();
+  },
 
-    ({ server, p } = await open(t, "?hour=2"));
-    t.ok(await p.ev(`factory.isAsleep() && document.getElementById("pikuse-btn").classList.contains("asleep")`), "まよなかなのに おきている");
-    t.ok((await p.ev(`document.getElementById("bubble").textContent`)).includes("ねている"), "ねている ことが わからない");
-    t.ok(await p.ev(`document.body.classList.contains("night")`), "よるに ならない");
-    const left = await p.ev(`document.getElementById("pikuse-btn").style.left`);
-    await t.sleep(5600);
-    t.eq(await p.ev(`document.getElementById("pikuse-btn").style.left`), left, "ねているのに あるいた");
+  async "工場の とけいで うごき、ピクセと おじさんは おすと しゃべる"(t) {
+    const { server, p } = await open(t);
+    const n0 = await p.ev(`factory.frame()`);
+    const img0 = await p.ev(`document.querySelector(".scene canvas").toDataURL()`);
+    await t.sleep(1500);
+    t.ok((await p.ev(`factory.frame()`)) > n0, "とけいが すすまない");
+    t.ok((await p.ev(`document.querySelector(".scene canvas").toDataURL()`)) !== img0, "絵が かわらない");
     await p.click("#pikuse-btn");
-    t.ok(!(await p.ev(`factory.isAsleep()`)) && (await p.ev(`document.getElementById("bubble").textContent`)).includes("ねてないよ"), "おきない");
+    const line = await said(p);
+    t.ok(line.startsWith("ピクセ「") && (await p.ev(`factory.lines.some((l) => document.getElementById("bubble").textContent.includes(l.replaceAll("\\n", " ")))`)), `ピクセの セリフ: ${line}`);
+    await p.click("#oji-btn");
+    t.ok((await said(p)).startsWith("おじさん「"), `おじさんの セリフ: ${await said(p)}`);
     t.noErrors(p);
     await server.close();
   },
 
-  async "ピクセは 中庭を あるき、えんとつを おすと けむりが ぽっ"(t) {
+  async "えんとつを おすと ぽっぽー、10 かいで けほっ"(t) {
     const { server, p } = await open(t);
-    const before = await p.ev(`document.getElementById("pikuse-btn").style.left`);
-    await t.sleep(5600);
-    t.ok((await p.ev(`document.getElementById("pikuse-btn").style.left`)) !== before, "あるかない");
-    await p.click(".chimney");
-    t.ok(await p.ev(`document.querySelector(".chimney").classList.contains("big") && document.getElementById("bubble").textContent.includes("ぽっぽー")`), "えんとつ");
-    for (let i = 0; i < 9; i++) await p.click(".chimney");
-    t.ok((await p.ev(`document.getElementById("bubble").textContent`)).includes("けほっ"), "10 かい おしたら けむい");
+    await p.click(".hot.chimney");
+    t.ok((await said(p)).includes("ぽっぽー"), "えんとつ");
+    for (let i = 0; i < 9; i++) await p.click(".hot.chimney");
+    t.ok((await said(p)).includes("けほっ"), "10 かい おしたら けむい");
     t.noErrors(p);
     await server.close();
   },
@@ -81,6 +89,7 @@ export default {
       { title: "むかしの おしらせ", link: "https://example.com/old", isNew: false, date: "2020-01-01" },
     ], "おしらせの ならび");
     t.eq(await p.ev(`document.getElementById("board-latest").textContent`), "NEWみらいの おしらせ", "けいじばん");
+    t.ok(await p.ev(`!!document.getElementById("news")`), "id=news の 場所が ない（warpix-link の フッターが とぶ 先）");
     t.noErrors(p);
     await server.close();
   },
@@ -119,10 +128,14 @@ export default {
     await t.closeAll();
 
     ({ server, p } = await open(t, "?hour=14", { reduced: true }));
-    const before = await p.ev(`document.getElementById("pikuse-btn").style.left`);
-    await t.sleep(5600);
-    t.eq(await p.ev(`document.getElementById("pikuse-btn").style.left`), before, "動きを へらしているのに あるいた");
+    const n0 = await p.ev(`factory.frame()`);
+    const before = await pikuseAt(p);
+    await t.sleep(2000);
+    t.eq(await p.ev(`factory.frame()`), n0, "動きを へらしているのに とけいが すすむ");
+    t.eq(await pikuseAt(p), before, "動きを へらしているのに ピクセが うごいた");
     t.eq(await p.ev(`document.getAnimations().filter((a) => a.playState === "running").length`), 0, "アニメーションが うごいている");
+    await p.click("#pikuse-btn");
+    t.ok((await said(p)).startsWith("ピクセ「"), "動きを へらしていても はなしかけられる");
     t.noErrors(p);
     await server.close();
   },

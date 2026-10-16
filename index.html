@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WARPIX製作所</title>
-  <meta name="description" content="ドット絵と チップチューンの 世界を ひとつずつ 組み立てる、ちいさな 町工場。ピクセが ヘルメットを かぶって まってます。">
-  <meta name="theme-color" content="#0f0b1e">
+  <meta name="description" content="青空の 下の、ちいさな 町工場。おじさんと 黄色い ヘルメットの ピクセが、作品を 製品に して 世に出しています。">
+  <meta name="theme-color" content="#3d9bf0">
   <meta property="og:title" content="WARPIX製作所">
-  <meta property="og:description" content="ドット絵の 町工場。踏み台リンクアプリ warpix-link など、ピクセの いる 製品を つくっています。">
+  <meta property="og:description" content="青空の 町工場。踏み台リンクアプリ warpix-link など、ドット絵の 製品を つくっています。">
   <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,83 +19,47 @@
 <body>
   <a class="skip" href="#news">おしらせへ とぶ</a>
 
+  <header class="hero">
+    <!-- 青空の 町工場。おじさんと ピクセが いっしょに はたらく。えんとつ・おじさん・ピクセは おせる -->
+    <figure class="scene">
+      <canvas width="192" height="112" role="img" aria-label="青空の 下の 町工場。黄色い ヘルメットの ピクセと、作業着の おじさんが いっしょに 作業を している。ときどき おじさんは 水を 飲んで、タオルで 汗を ふく。"></canvas>
+      <h1 class="sign">WARPIX<span>製作所</span></h1>
+      <button class="hot chimney" type="button" aria-label="えんとつ"></button>
+      <button class="hot oji" id="oji-btn" type="button" aria-label="おじさんに はなしかける"></button>
+      <button class="hot pikuse" id="pikuse-btn" type="button" aria-label="ピクセに はなしかける"></button>
+      <p class="say" aria-hidden="true"></p>
+    </figure>
+    <p class="sr-only" id="bubble" role="status" aria-live="polite"></p>
+  </header>
+
   <main>
-    <!-- 工場の 見取り図。部屋を おすと、その 製品や 場所へ ワープする -->
-    <section class="factory" aria-labelledby="sign">
-      <div class="sky" aria-hidden="true">
-        <canvas class="ufo" width="48" height="24" hidden></canvas>
-      </div>
+    <nav class="guide" aria-label="工場あんない">
+      <a href="#products">せいひん</a>
+      <a href="#news">だより</a>
+      <a href="#pikuse">ピクセ</a>
+      <a href="#about">じむしょ</a>
+    </nav>
 
-      <div class="rooftop">
-        <button class="chimney" type="button" aria-label="えんとつ">
-          <span class="smoke" aria-hidden="true"><i></i><i></i><i></i></span>
-        </button>
-        <h1 class="sign" id="sign">WARPIX<span>製作所</span></h1>
-      </div>
-      <div class="roof" aria-hidden="true"></div>
-
-      <div class="building">
-        <div class="floor">
-          <a class="room live" href="https://koki-hq.github.io/warpix-link/" data-room="link">
-            <span class="machine" data-sprite="gate" aria-hidden="true"></span>
-            <span class="room-name">LINK<small>工場</small></span>
-            <span class="room-state"><span class="lamp" aria-hidden="true"></span>かどうちゅう</span>
-            <span class="sr-only">warpix-link へ ワープ</span>
-          </a>
-          <button class="room soon" type="button" data-room="soon-a">
-            <span class="shutter" aria-hidden="true"></span>
-            <span class="room-name">???<small>工場</small></span>
-            <span class="room-state">けんせつちゅう</span>
-          </button>
-        </div>
-        <div class="floor">
-          <button class="room soon" type="button" data-room="soon-b">
-            <span class="shutter" aria-hidden="true"></span>
-            <span class="room-name">???<small>工場</small></span>
-            <span class="room-state">けんせつちゅう</span>
-          </button>
-          <a class="room" href="#pikuse" data-room="pikuse">
-            <span class="machine" data-sprite="bed" aria-hidden="true"></span>
-            <span class="room-name">ピクセの<small>へや</small></span>
-            <span class="room-state">あんないがかり</span>
-          </a>
-        </div>
-        <div class="floor ground">
-          <a class="room board" href="#news" data-room="news">
-            <span class="room-name">けいじばん</span>
-            <span class="board-latest" id="board-latest">よみこみちゅう…</span>
-          </a>
-          <a class="room" href="#about" data-room="office">
-            <span class="machine" data-sprite="desk" aria-hidden="true"></span>
-            <span class="room-name">じむしょ</span>
-            <span class="room-state">製作所について</span>
-          </a>
-        </div>
-        <!-- ベルトコンベアで できた ものを 出荷する -->
-        <div class="yard">
-          <div class="belt" aria-hidden="true"><div class="goods"></div></div>
-          <button class="pikuse" id="pikuse-btn" type="button" aria-label="ピクセに はなしかける" aria-describedby="bubble">
-            <canvas width="64" height="64"></canvas>
-          </button>
-        </div>
-      </div>
-      <p class="bubble" id="bubble" role="status" aria-live="polite"></p>
-    </section>
+    <a class="board" href="#news">
+      <span class="board-name">けいじばん</span>
+      <span class="board-latest" id="board-latest">よみこみちゅう…</span>
+    </a>
 
     <section class="panel" id="products" aria-labelledby="products-h">
       <h2 id="products-h">せいひん</h2>
+      <p class="lead">工場で くみたてた 作品を、製品に して 世に出しています。</p>
       <ul class="products">
         <li>
           <a href="https://koki-hq.github.io/warpix-link/">
             <span class="p-name">warpix-link</span>
-            <span class="p-state">かどうちゅう</span>
+            <span class="p-state"><span class="lamp" aria-hidden="true"></span>かどうちゅう</span>
             <span class="p-desc">いつもの 公式サイトへ、ピクセの いる 空間を とおって ワープする 踏み台リンクアプリ。</span>
           </a>
         </li>
         <li class="p-soon">
           <span class="p-name">???</span>
           <span class="p-state">けんせつちゅう</span>
-          <span class="p-desc">つぎの 工場を たてています。なにが できるかは、まだ ひみつ。</span>
+          <span class="p-desc">つぎの 製品を くみたてています。なにが できるかは、まだ ひみつ。</span>
         </li>
       </ul>
     </section>
@@ -110,8 +74,8 @@
       <div class="profile">
         <canvas class="portrait" width="96" height="96" aria-hidden="true"></canvas>
         <dl>
-          <dt>しごと</dt><dd>WARPIX製作所の あんないがかり</dd>
-          <dt>すきなもの</dt><dd>ワープ、チップチューン、ほめられること</dd>
+          <dt>しごと</dt><dd>WARPIX製作所の みならい。目の 光で 部品を しらべる</dd>
+          <dt>すきなもの</dt><dd>おじさんの「ありがとよ」、ワープ、チップチューン</dd>
           <dt>にがてなもの</dt><dd>ほうって おかれること（すねます）</dd>
           <dt>ひみつ</dt><dd>製品ごとに、すこしずつ ちがう ピクセが いるらしい</dd>
         </dl>
@@ -120,8 +84,8 @@
 
     <section class="panel" id="about" aria-labelledby="about-h" tabindex="-1">
       <h2 id="about-h">じむしょ</h2>
-      <p>WARPIX製作所は、ドット絵と チップチューンの 世界を ひとつずつ 組み立てる、ちいさな 町工場です。</p>
-      <p>できた 作品を、製品として 世に出します。だいいちだんは、踏み台リンクアプリ <a href="https://koki-hq.github.io/warpix-link/">warpix-link</a>。</p>
+      <p>WARPIX製作所は、作品を 製品に して 世に出す、ちいさな 町工場です。</p>
+      <p>なつかしい 道具と、未来の 機械を いっしょに つかって、ひとつずつ くみたてます。だいいちだんは、踏み台リンクアプリ <a href="https://koki-hq.github.io/warpix-link/">warpix-link</a>。</p>
       <h3>このページが のこすもの</h3>
       <p>このページは、あなたの ブラウザに なにも 保存しません。文字の 形（フォント）だけ Google Fonts から 読みこみます。</p>
       <h3>れんらく</h3>
