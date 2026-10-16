@@ -1286,7 +1286,7 @@ const factory = (() => {
   function tourLoop(now) {
     raf = 0;
     if (!tour) return;
-    const p = tour.dur ? Math.min(1, (now - tour.start) / tour.dur) : 1;
+    const p = tour.dur ? Math.min(1, Math.max(0, now - tour.start) / tour.dur) : 1;
     const e = p < 0.5 ? 2 * p * p : 1 - (-2 * p + 2) ** 2 / 2;
     for (const k of ["x", "y", "z"]) cam[k] = tour.from[k] + (tour.to[k] - tour.from[k]) * e;
     frame();
@@ -1310,6 +1310,35 @@ const factory = (() => {
     if (dive) document.getElementById("hollow-cave").scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" });
   }
   tourBtn.addEventListener("click", () => (tour ? tourEnd(false) : tourStart()));
+
+  // ---------- 図鑑から 会いに いく（絵まで もどって、カメラが その なかまに よる） ----------
+  const MEET = {
+    gen: { x: () => OX + 8, y: 150, text: () => "ゲンさん「おう、ここだ ここだ！ ゆっくり 見てってくれ。」" },
+    pikuse: { x: () => HOME + 8, y: 150, text: () => "ピクセ「ぼくは ここ！ ゲンさんの となりで はたらいてるよ。」" },
+    hakobi: { x: () => hakobiX(n) + 8, y: 150, text: () => "ハコビ「よいしょ、よいしょ。時計塔の まえを 行ったり 来たり してるよ。」" },
+    bachi: { x: () => 104, y: 112, text: () => "バチ「足場の 上だよ！ バチバチッ！」" },
+    arm: { x: () => 360, y: 100, text: () => "アームさん「ウィーン。倉庫の 屋根から こんにちは。」" },
+    lifton: { x: () => liftonX(n) + 8, y: 150, text: () => "リフトン「ピピッ。自販機の まえで 木箱を はこんでいます。」" },
+    drone: { x: () => 120, y: 86, text: () => "ブンブンは ときどき この 空を とおるよ。すこし まってみてね。" },
+    airship: { x: () => airshipX(n) + 20, y: 50, text: () => "ソラマメ号は、いまも 空の どこかを ゆっくり とんでいる。" },
+    cat: { x: () => 405, y: 116, text: () => "トタン「……にゃ。（自販機の 上で ひるね ちゅう）」" },
+    sparrow: { x: () => 70, y: 54, text: () => "スズメ「チュン！ 電線の 上から 見はってるよ。」" },
+  };
+  function meet(key) {
+    const m = MEET[key];
+    if (!m) return false;
+    scene.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+    const text = m.text();
+    const dur = reduced ? 0 : 1100;
+    scene.classList.add("touring");
+    tour = { i: -1, text, from: { ...cam }, to: camFor({ x: m.x(), y: m.y }), start: performance.now() + (reduced ? 0 : 400), dur };
+    bubble.textContent = text;
+    clearTimeout(tourTimer);
+    tourTimer = setTimeout(() => tourEnd(false), dur + 3600 + text.length * 50);
+    frame();
+    if (!raf) raf = requestAnimationFrame(tourLoop);
+    return true;
+  }
   addEventListener("keydown", (e) => {
     if (e.key === "Escape" && tour) tourEnd(false);
   });
@@ -1458,5 +1487,5 @@ const factory = (() => {
     reduced: frozen != null,
   };
 
-  return { say, hour, season, tour: () => (tour ? { i: tour.i, z: cam.z } : null), stops: STOPS.length, newsReady, lines: LINES, genLines: GEN_LINES, pikuse: PIKUSE, story, frame: () => n, tools };
+  return { say, hour, season, meet, tour: () => (tour ? { i: tour.i, z: cam.z } : null), stops: STOPS.length, newsReady, lines: LINES, genLines: GEN_LINES, pikuse: PIKUSE, story, frame: () => n, tools };
 })();

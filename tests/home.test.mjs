@@ -233,6 +233,26 @@ export default {
     await server.close();
   },
 
+  async "図鑑から 会いに いく：地上の なかまは カメラが よる、地下の なかまは その 場所で こたえる"(t) {
+    const { server, p } = await open(t, "?hour=14", { size: { width: 1440, height: 900 } });
+    await t.sleep(600);
+    t.eq(await p.ev(`document.querySelectorAll("#nakama .meet").length`), 14, "会いに いく ボタンの 数");
+    const meet = (k) => p.ev(`document.querySelector('.meet[data-meet="${k}"]').click()`);
+    await meet("gen");
+    t.ok((await p.ev(`factory.tour()`)) && (await said(p)).startsWith("ゲンさん「"), `ゲンさんに よらない: ${await said(p)}`);
+    await p.key("Escape");
+    t.eq(await p.ev(`factory.tour()`), null, "Esc で もどらない");
+    await meet("hakobi");
+    t.ok((await said(p)).startsWith("ハコビ「"), `ハコビに よらない: ${await said(p)}`);
+    await p.key("Escape");
+    await meet("horimaru");
+    t.ok((await p.ev(`document.getElementById("toast").textContent`)).includes("ホリマル"), "ホリマルが こたえない");
+    await meet("worm");
+    t.ok((await p.ev(`document.getElementById("toast").textContent`)).includes("ホタルミミズ"), "ホタルミミズの 場所へ いかない");
+    t.noErrors(p);
+    await server.close();
+  },
+
   async "えんとつを おすと ぽっぽー、10 かいで けほっ"(t) {
     const { server, p } = await open(t);
     await p.click(".hot.chimney");

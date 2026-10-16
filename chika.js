@@ -706,6 +706,26 @@ const chika = (() => {
     }
   }
 
+  // ---------- 図鑑から 会いに いく（地上は factory.meet、地下は その 場所へ もぐる） ----------
+  const UG = { horimaru: "ホリマル", jelly: "スイショウクラゲ", tomoshibi: "トモシビ族" };
+  function meetUnder(key) {
+    if (key === "worm") {
+      const y = top + (LAYERS[4].y + 16) * scale;
+      scrollTo({ top: y - innerHeight / 2, behavior: factory.tools.reduced ? "auto" : "smooth" });
+      return say("ホタルミミズは、この トンネルを はしっているよ。\nすこし まっていてね。");
+    }
+    const btn = [...wrap.querySelectorAll(".ug-hot")].find((b) => b.getAttribute("aria-label") === UG[key]);
+    if (!btn) return say(`${UG[key]}は、いまの 画面の はばでは かくれて いるみたい。\n画面を ひろげると 見つかるかも。`);
+    btn.scrollIntoView({ behavior: factory.tools.reduced ? "auto" : "smooth", block: "center" });
+    btn.focus({ preventScroll: true });
+    btn.click();
+  }
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest?.(".meet");
+    if (!b) return;
+    if (!factory.meet(b.dataset.meet)) meetUnder(b.dataset.meet);
+  });
+
   let timer = 0;
   const later = () => {
     clearTimeout(timer);

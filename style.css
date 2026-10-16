@@ -686,6 +686,27 @@ main {
   }
 }
 
+/* 図鑑から 会いに いく */
+.meet {
+  grid-column: 2;
+  justify-self: start;
+  margin-top: 8px;
+  padding: 4px 10px 3px;
+  border: 0;
+  background: #eaf6ff;
+  color: var(--navy);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 0 0 0 2px var(--navy);
+}
+.meet:hover {
+  background: #d4ecff;
+}
+.card-wide .meet {
+  margin-top: 4px;
+}
+
 /* パネルの ふちから のぞく キャラクター */
 .panel {
   position: relative;
