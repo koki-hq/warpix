@@ -262,14 +262,22 @@ const factory = (() => {
     } else if (season === "autumn") {
       // 秋は 高い 空に うろこ雲
       const rnd = seeded(9);
-      for (let row = 0; row < 8; row++) {
-        const from = 40 + row * 6 + Math.floor(rnd() * 20);
-        const to = 330 - row * 10;
-        for (let x = from + (row % 2) * 4; x < to; x += 7 + Math.floor(rnd() * 4)) {
-          const y = 18 + row * 5 + Math.round(3 * Math.sin(x / 35 + row * 0.7));
-          if (rnd() < 0.3) continue;
-          rect(x, y, 4, 1, "#ffffff");
-          rect(x + 1, y + 1, 3, 1, "#d6e7f8");
+      // ふっくら 丸い かたまりを 波もように ならべ、はしの ほうほど まばらに
+      const scale = (x, y, w) => {
+        rect(x + 1, y, w - 2, 1, "#ffffff");
+        rect(x, y + 1, w, 2, "#ffffff");
+        rect(x + 1, y + 3, w - 2, 1, "#d6e7f8");
+        dot(x + 1, y + 1, "#f4f9ff");
+      };
+      const cx = 200;
+      const cy = 40;
+      for (let row = 0; row < 11; row++) {
+        const y0 = 13 + row * 5;
+        for (let x = 20 + (row % 2) * 4; x < 380; x += 8 + Math.floor(rnd() * 2)) {
+          const y = y0 + Math.round(3 * Math.sin(x / 28 + row * 0.9));
+          const d = Math.hypot((x - cx) / 170, (y - cy) / 30); // まんなかから どれだけ はなれているか
+          if (d > 1 || rnd() < d * d * 0.9) continue;
+          scale(x, y, 5 + Math.floor(rnd() * 4) - Math.round(d * 2));
         }
       }
       thunderhead(400, 118, 80, 22, seeded(21));

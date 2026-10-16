@@ -65,7 +65,7 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 - 健康診断：`node tools/health.mjs`（重さ・スマホでの 速さ・待機中 CPU・axe）。**公開の 前に テストと 健康診断を 両方**
 - 時刻を ためす：`?hour=0〜23`（あいさつと 時計塔）。お話の コマを とめる：`?t=0〜95`
 - favicon は `node tools/favicon.mjs`（`factory.js` の ピクセから 作る）
-- 公開：`main` に push すると GitHub Pages に 出る。タグ `vX.Y`（いまは `v1.6`）と 仕様メモを セットで。公開後は 本番の URL で 変わった ことを 確かめる
+- 公開：`main` に push すると GitHub Pages に 出る。タグ `vX.Y`（いまは `v1.6.1`）と 仕様メモを セットで。公開後は 本番の URL で 変わった ことを 確かめる
   - Pages の 公開が「waiting」で 止まる ことが ある → `gh api -X POST repos/koki-hq/warpix/pages/builds` で 頼みなおすと 通る
 - コミット：git の メールは noreply 設定ずみ。メッセージの 最後に `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`
 
