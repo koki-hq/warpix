@@ -29,7 +29,7 @@ export default {
     t.ok((await p.ev(`document.querySelector(".scene .say").textContent`)).includes("こんにちは"), "絵の ふきだしに あいさつが ない");
     // 絵が ちゃんと 描かれている（空の 青が ある）
     t.ok(await p.ev(`(() => { const d = document.querySelector(".scene canvas").getContext("2d").getImageData(0, 0, document.querySelector(".scene canvas").width, 176).data; let blue = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 2] > 200 && d[i] < 120) blue++; return blue > 4000; })()`), "青空が 描かれていない");
-    t.ok(await p.ev(`[...document.querySelectorAll(".hot")].length === 4 && [...document.querySelectorAll(".hot")].filter((b) => !b.hidden).every((b) => b.tabIndex === 0 && b.getAttribute("aria-label"))`), "おせる ところに Tab で いけない・名前が ない");
+    t.ok(await p.ev(`[...document.querySelectorAll(".hot")].length === 5 && [...document.querySelectorAll(".hot")].filter((b) => !b.hidden).every((b) => b.tabIndex === 0 && b.getAttribute("aria-label"))`), "おせる ところに Tab で いけない・名前が ない");
     t.eq(await p.ev(`[...document.querySelectorAll(".guide a")].map((a) => a.getAttribute("href"))`), ["#products", "#news", "#nakama", "#about"], "工場あんない");
     t.eq(await p.ev(`document.querySelector('#products a').href`), "https://koki-hq.github.io/warpix-link/", "warpix-link への リンク");
     // じむしょの 芯の ことば（デザインが かわっても のこす）
@@ -79,6 +79,30 @@ export default {
     t.ok((await said(p)).startsWith("ゲンさん「"), `ゲンさんの セリフ: ${await said(p)}`);
     await p.click("#cat-btn");
     t.ok((await said(p)).startsWith("トタン「"), `ねこの セリフ: ${await said(p)}`);
+    t.noErrors(p);
+    await server.close();
+  },
+
+  async "ラジカセ：おす たびに 1 → 2 → 3 きょくめ、つぎで とまる。タブを かくすと とまる"(t) {
+    const { server, p } = await open(t);
+    const btn = "#radio-btn";
+    t.eq(await p.ev(`radio.playing()`), false, "さいしょから 鳴っている");
+    for (const [i, title] of ["こうじょうの あさ", "ゲンさんの ひとやすみ", "ちていの ふしぎ"].entries()) {
+      await p.click(btn);
+      t.ok(await p.ev(`radio.playing() && radio.current().title === ${JSON.stringify(title)}`), `${i + 1} きょくめが ながれない`);
+      t.ok((await said(p)).includes(`${i + 1}きょくめ「${title}」`), `ゲンさんが きょくめいを いわない: ${await said(p)}`);
+      t.eq(await p.ev(`document.querySelector("${btn}").getAttribute("aria-pressed")`), "true", "aria-pressed");
+    }
+    await t.sleep(700);
+    t.ok((await p.ev(`radio.beat()`)) >= 1, "はくが すすまない");
+    await p.click(btn);
+    t.ok(!(await p.ev(`radio.playing()`)) && (await said(p)).includes("とめたぞ"), "4 かいめで とまらない");
+    t.eq(await p.ev(`document.querySelector("${btn}").getAttribute("aria-pressed")`), "false", "とめたのに aria-pressed が true");
+    await p.click(btn);
+    await p.send("Emulation.setFocusEmulationEnabled", { enabled: false });
+    await p.ev(`(Object.defineProperty(document, "hidden", { value: true, configurable: true }), document.dispatchEvent(new Event("visibilitychange")))`);
+    t.ok(!(await p.ev(`radio.playing()`)), "タブを かくしても 鳴りつづける");
+    t.eq(await p.ev(`document.querySelector("${btn}").getAttribute("aria-pressed")`), "false", "かくして とまったのに aria-pressed が true");
     t.noErrors(p);
     await server.close();
   },

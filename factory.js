@@ -655,19 +655,24 @@ const factory = (() => {
     if (n % 3 !== 2) for (const [dx, dy] of [[-3, -2], [-1, -4], [-4, 1], [-2, 2], [-5, -3]]) dot(100 + dx, 118 + dy + (n % 2), n % 2 ? "#fff3a0" : "#ff9a3c");
   }
   // ラジカセ（チップチューンが ながれる）
-  function radio(n, x, y) {
+  // おすと ほんとうに 鳴る（radio.js）。鳴っている あいだは 音符が ぴょこぴょこ
+  function boombox(n, x, y) {
+    const on = typeof radio !== "undefined" && radio.playing();
+    const beat = on ? radio.beat() : 0;
     rect(x, y - 2, 12, 1, "#5f6b78");
     rect(x, y, 12, 7, C.o);
     rect(x + 1, y + 1, 10, 5, "#c0c7cf");
-    disc(x + 3, y + 3, 1, C.o);
-    disc(x + 8, y + 3, 1, C.o);
-    rect(x + 5, y + 1, 2, 2, n % 2 ? "#3ee8ff" : "#ff8fb8");
+    disc(x + 3, y + 3, on && beat % 2 ? 2 : 1, C.o);
+    disc(x + 8, y + 3, on && beat % 2 ? 2 : 1, C.o);
+    rect(x + 5, y + 1, 2, 2, on ? (beat % 2 ? "#3ee8ff" : "#ff8fb8") : n % 6 < 3 ? "#e0503c" : "#7a2a20");
+    if (!on) return;
     const colors = ["#ff8fb8", "#ffd84a", "#3ee8ff"];
-    for (let i = 0; i < 2; i++) {
-      const ph = (n + i * 5) % 10;
-      rows(NOTE, x + 4 + i * 5 + (ph % 4 < 2 ? 0 : 1), y - 6 - ph * 1.5, { o: colors[(Math.floor(n / 10) + i) % 3] });
+    for (let i = 0; i < 3; i++) {
+      const ph = (n + i * 4) % 12;
+      rows(NOTE, x + 2 + i * 5 + (ph % 4 < 2 ? 0 : 1), y - 6 - ph * 1.5, { o: colors[(Math.floor(n / 12) + i) % 3] });
     }
   }
+  const groove = () => (typeof radio !== "undefined" && radio.playing() && radio.beat() % 2 ? 1 : 0);
   function jug(x, y) {
     rect(x - 2, y + 10, 16, 9, "#a8713f");
     rect(x - 2, y + 13, 16, 1, "#7a4f2b");
@@ -753,7 +758,7 @@ const factory = (() => {
     "ここでは ドットを ひとつずつ くみたてて、\nせいひんに してるんだ。",
     "ブルーシートの 中は けんせつちゅう。\nなにが できるかは、まだ ひみつ。",
     "このヘルメット、にあう？\nあんぜん だいいち だからね。",
-    "ラジカセから ながれてるのは チップチューン。\nゲンさんの おきにいり。",
+    "ラジカセを おしてみて。\nゲンさんの おきにいりの チップチューンが ながれるよ。",
     "したの けいじばんに、製作所だよりが はってあるよ。",
     "warpix-link には、ぼくの きょうだいみたいな\nピクセが いるんだ。あいに いってみて。",
     "なかま図鑑も 見てね。\nみんなの こと、しょうかい してるよ。",
@@ -774,6 +779,7 @@ const factory = (() => {
   const pikuseBtn = document.getElementById("pikuse-btn");
   const ojiBtn = document.getElementById("oji-btn");
   const catBtn = document.getElementById("cat-btn");
+  const radioBtn = document.getElementById("radio-btn");
   const chimneyBtn = scene.querySelector(".hot.chimney");
   const signEl = scene.querySelector(".sign");
   let happyUntil = 0;
@@ -784,6 +790,13 @@ const factory = (() => {
   });
   ojiBtn.addEventListener("click", () => say(GEN_LINES[genIndex++ % GEN_LINES.length], "o"));
   catBtn.addEventListener("click", () => say(CAT_LINES[catIndex++ % CAT_LINES.length], "n", 10));
+  radioBtn.addEventListener("click", () => {
+    const s = radio.next();
+    radioBtn.setAttribute("aria-pressed", String(!!s));
+    if (s) say(`♪ ${radio.songs.indexOf(s) + 1}きょくめ「${s.title}」`, "o", 14);
+    else say("ラジカセ、とめたぞ。\nまた ききたく なったら おしてくれ。", "o", 14);
+  });
+  if (typeof radio !== "undefined") radio.onStop(() => radioBtn.setAttribute("aria-pressed", "false"));
   chimneyBtn.addEventListener("click", () => {
     puffs++;
     bigUntil = n + 8;
@@ -811,6 +824,7 @@ const factory = (() => {
     place(chimneyBtn, 298, 22, 16, 70);
     place(ojiBtn, OX - 2, OY - 1, 26, 25);
     place(catBtn, 396, 110, 18, 10);
+    place(radioBtn, OX - 24, GROUND - 10, 15, 11);
     lastSay = null;
   }
   const offset = () => (scene.clientWidth - visW * scale) / 2;
@@ -852,7 +866,7 @@ const factory = (() => {
     bachi(n);
     hakobi(n);
     lifton(n);
-    radio(n, OX - 22, GROUND - 7);
+    boombox(n, OX - 22, GROUND - 7);
     jug(JUG + 4, OY + 4);
     bench(BX, BY, n, s.sparks, s.laser);
     if (s.hammer) {
@@ -872,7 +886,7 @@ const factory = (() => {
       dot(OX + 15, OY + 3 - b, "#ffffff");
       dot(OX + 17, OY + 1 - ((b + 1) % 3), "#ffffff");
     }
-    pikuse(s.px, s.py, { happy: s.happy || n < happyUntil, step: s.step });
+    pikuse(s.px, s.py - groove(), { happy: s.happy || n < happyUntil || !!groove(), step: s.step });
     if (s.carry) rows(BOTTLE, s.px + 6, s.py - 5);
     if (s.laser) line(s.px + 4, s.py + 8, BX + 8, BY - 3, "#3ee8ff");
     view.setTransform(1, 0, 0, 1, 0, 0);
