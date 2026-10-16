@@ -254,7 +254,7 @@ main > .hollow {
 .tour-btn {
   position: absolute;
   right: 12px;
-  bottom: 12px;
+  top: 12px; /* 右上（おひさまの あたり）。下は なかまたちが いる */
   z-index: 2;
   padding: 8px 12px 6px;
   border: 0;
@@ -284,7 +284,6 @@ main > .hollow {
 }
 @media (max-width: 480px) {
   .say.narrate {
-    bottom: 66px;
     font-size: 14px;
   }
 }

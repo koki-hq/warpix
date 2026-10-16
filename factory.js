@@ -586,8 +586,9 @@ const factory = (() => {
     }
   }
   // 飛行船 ソラマメ号（ゆっくり）
+  const airshipX = (n) => Math.floor(((n * 0.12) % (W + 80)) - 60);
   function airship(n) {
-    const x = Math.floor(((n * 0.12) % (W + 80)) - 60);
+    const x = airshipX(n);
     const y = 46 + (Math.floor(n / 8) % 2);
     oval(x + 20, y, 20, 6, C.o);
     oval(x + 20, y, 19, 5, "#eef1f4");
@@ -770,6 +771,14 @@ const factory = (() => {
     if (n % 12 < 6) rows(["o.o", ".o.", "o.o"].map((r) => r.replaceAll("o", "z")), 400, 106 - (n % 6), { z: "#ffffff" });
   }
   // リフトン（木の 箱を はこぶ）
+  const liftonX = (n) => {
+    const t = n % 40;
+    return 410 + (t < 20 ? t : 40 - t);
+  };
+  const hakobiX = (n) => {
+    const t = n % 64;
+    return t < 28 ? 98 + t * 2 : t < 32 ? 154 : t < 60 ? 154 - (t - 32) * 2 : 98;
+  };
   function lifton(n) {
     const t = n % 40;
     const x = 410 + (t < 20 ? t : 40 - t);
@@ -990,7 +999,17 @@ const factory = (() => {
   // 絵の ふきだし（.say）に 出して、読み上げ用の #bubble にも 入れる
   const sayEl = scene.querySelector(".say");
   const bubble = document.getElementById("bubble");
-  const NAMES = { p: "ピクセ", o: "ゲンさん", n: "トタン" };
+  const NAMES = { p: "ピクセ", o: "ゲンさん", n: "トタン", h: "ハコビ", b: "バチ", l: "リフトン", a: "アームさん", r: "スズメ", s: "ソラマメ号" };
+  // なかまたちの ことば（おすと じゅんばんに）
+  const FRIEND_LINES = {
+    h: ["よいしょ、よいしょ。\nまっすぐ しか あるけないんだ。", "この ぶひん、どこに はこぶんだっけ……", "リフトンが また つみすぎてる！"],
+    b: ["バチバチッ！ ようせつ ちゅう。\nちかよると あぶないよ。", "ほんとうは 花火が すき。\nないしょ だよ。", "シートの 中？ まだ ひみつ。"],
+    l: ["ピピッ。木箱、はこびます。", "つみすぎ ちゅうい……ピピッ。", "ハコビに また おこられた。ピピ……"],
+    a: ["ウィーン。きょうも 点検 いじょう なし。", "よるは 星を かぞえて いるよ。\nきのうは 1024 こ。", "看板の まめ電球、1 こ とりかえた。"],
+    r: ["チュン！", "チュンチュン（おべんとうの じかんは まだかな）", "チュン……（ゲンさん、からあげ おいしかった）"],
+    s: ["……（ソラマメ号は、なにも いわずに ゆっくり すすんでいく）", "……（まどの おくで、なにかが 手を ふった きがした）"],
+  };
+  const friendIndex = {};
   let override = null; // { text, who, until }
   let bubbleTimer = 0;
   function say(text, who = "p", ticks = 18) {
@@ -1038,6 +1057,12 @@ const factory = (() => {
   const pikuseBtn = document.getElementById("pikuse-btn");
   const ojiBtn = document.getElementById("oji-btn");
   const catBtn = document.getElementById("cat-btn");
+  const friendBtns = Object.fromEntries(Object.keys(FRIEND_LINES).map((k) => [k, document.getElementById(`friend-${k}`)]));
+  for (const [k, btn] of Object.entries(friendBtns))
+    btn.addEventListener("click", () => {
+      friendIndex[k] = (friendIndex[k] ?? -1) + 1;
+      say(FRIEND_LINES[k][friendIndex[k] % FRIEND_LINES[k].length], k, 14);
+    });
   const radioBtn = document.getElementById("radio-btn");
   const chimneyBtn = scene.querySelector(".hot.chimney");
   const signEl = scene.querySelector(".sign");
@@ -1097,6 +1122,9 @@ const factory = (() => {
     place(ojiBtn, OX - 2, OY - 1, 26, 25);
     place(catBtn, 396, 110, 18, 10);
     place(radioBtn, OX - 24, GROUND - 10, 15, 11);
+    place(friendBtns.b, 100, 106, 18, 18);
+    place(friendBtns.a, 340, 84, 30, 24);
+    place(friendBtns.r, 42, 46, 62, 14);
     lastSay = null;
   }
   const offset = () => (scene.clientWidth - visW * scale) / 2;
@@ -1104,6 +1132,9 @@ const factory = (() => {
   const cssX = (x) => (x - cam.x) * cam.z * scale + offset();
   const cssY = (y) => (y - cam.y) * cam.z * scale;
   function place(el, x, y, w, h) {
+    const key = `${cssX(x)}|${cssY(y)}|${w * cam.z * scale}|${h * cam.z * scale}`;
+    if (el.dataset.at === key) return; // かわった ときだけ 書きかえる（電池に やさしく）
+    el.dataset.at = key;
     el.style.left = `${cssX(x)}px`;
     el.style.top = `${cssY(y)}px`;
     el.style.width = `${w * cam.z * scale}px`;
@@ -1178,6 +1209,9 @@ const factory = (() => {
 
     // おせる ピクセを 絵の ピクセに あわせる
     place(pikuseBtn, s.px, s.py, 16, 15);
+    place(friendBtns.h, hakobiX(n), 146, 16, 21);
+    place(friendBtns.l, liftonX(n), 150, 16, 18);
+    place(friendBtns.s, airshipX(n) - 2, 39, 44, 18);
 
     if (tour) {
       // ツアー中は 看板が カメラに ついていき、ピクセの あんないは 下の まんなかに
@@ -1194,7 +1228,8 @@ const factory = (() => {
     // ふきだし：おされた ときの ことばが さき、なければ お話の セリフ
     const text = override ? override.text : s.say;
     const who = override ? override.who : s.who;
-    const [x, y] = who === "o" ? [OX + 8, OY - 2] : who === "n" ? [405, 108] : [s.px + 8, s.py - 1];
+    const POS = { o: [OX + 8, OY - 2], n: [405, 108], h: [hakobiX(n) + 8, 150], b: [110, 106], l: [liftonX(n) + 7, 153], a: [356, 86], r: [72, 48], s: [airshipX(n) + 20, 38] };
+    const [x, y] = POS[who] ?? [s.px + 8, s.py - 1];
     const key = `${text}|${x}|${y}|${scale}`;
     if (key !== lastSay) {
       lastSay = key;

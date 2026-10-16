@@ -29,7 +29,7 @@ export default {
     t.ok((await p.ev(`document.querySelector(".scene .say").textContent`)).includes("こんにちは"), "絵の ふきだしに あいさつが ない");
     // 絵が ちゃんと 描かれている（空の 青が ある）
     t.ok(await p.ev(`(() => { const d = document.querySelector(".scene canvas").getContext("2d").getImageData(0, 0, document.querySelector(".scene canvas").width, 176).data; let blue = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 2] > 200 && d[i] < 120) blue++; return blue > 4000; })()`), "青空が 描かれていない");
-    t.ok(await p.ev(`[...document.querySelectorAll(".hot")].length === 5 && [...document.querySelectorAll(".hot")].filter((b) => !b.hidden).every((b) => b.tabIndex === 0 && b.getAttribute("aria-label"))`), "おせる ところに Tab で いけない・名前が ない");
+    t.ok(await p.ev(`[...document.querySelectorAll(".hot")].length === 11 && [...document.querySelectorAll(".hot")].filter((b) => !b.hidden).every((b) => b.tabIndex === 0 && b.getAttribute("aria-label"))`), "おせる ところに Tab で いけない・名前が ない");
     t.eq(await p.ev(`[...document.querySelectorAll(".guide a")].map((a) => a.getAttribute("href"))`), ["#products", "#news", "#nakama", "#about"], "工場あんない");
     t.eq(await p.ev(`document.querySelector('#products a').href`), "https://koki-hq.github.io/warpix-link/", "warpix-link への リンク");
     // せいひん 展示室：warpix-link の 絵（説明つき）、ひらく ボタン、コード
@@ -82,6 +82,14 @@ export default {
     t.ok((await said(p)).startsWith("ゲンさん「"), `ゲンさんの セリフ: ${await said(p)}`);
     await p.click("#cat-btn");
     t.ok((await said(p)).startsWith("トタン「"), `ねこの セリフ: ${await said(p)}`);
+    // 図鑑の なかまも みんな しゃべる（うごく なかまは ボタンも ついていく）
+    for (const [id, name] of [["h", "ハコビ"], ["b", "バチ"], ["l", "リフトン"], ["a", "アームさん"], ["r", "スズメ"]]) {
+      await p.click(`#friend-${id}`);
+      t.ok((await said(p)).startsWith(`${name}「`), `${name} が しゃべらない: ${await said(p)}`);
+    }
+    const h0 = await p.ev(`document.getElementById("friend-h").style.left`);
+    await t.sleep(1300);
+    t.ok((await p.ev(`document.getElementById("friend-h").style.left`)) !== h0, "ハコビの ボタンが ハコビに ついていかない");
     t.noErrors(p);
     await server.close();
   },
