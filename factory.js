@@ -1007,11 +1007,13 @@ const factory = (() => {
   // うごく ものは ぜんぶ この 1 つの とけいで いっしょに 1 コマ すすめる。
   // ばらばらに うごかすと 画面を なんども 描きなおして、電池を つかうから。
   const lamp = document.querySelector(".lamp");
+  const others = []; // ほかの 絵（地下の 世界 など）も この とけいで うごかす
   function tick() {
     if (document.hidden) return;
     n++;
-    frame();
+    if (scene.getBoundingClientRect().bottom > 0) frame(); // 地下を 見ている あいだは 地上を 描かない
     lamp.classList.toggle("off", n % 4 >= 2);
+    for (const fn of others) fn(n);
   }
 
   // ---------- はじまり ----------
@@ -1028,5 +1030,16 @@ const factory = (() => {
   });
   if (frozen == null) setInterval(tick, 300);
 
-  return { say, hour, newsReady, lines: LINES, genLines: GEN_LINES, pikuse: PIKUSE, story, frame: () => n };
+  // 地下の 世界（chika.js）が つかう 道具
+  const tools = {
+    use: (ctx) => (g = ctx),
+    rect, dot, rows, patch, disc, oval, line, seeded, paper, drawOn,
+    C, PIKU, PIKUSE,
+    scale: () => scale,
+    heroBottom: () => scene.getBoundingClientRect().bottom + scrollY,
+    onTick: (fn) => others.push(fn),
+    reduced: frozen != null,
+  };
+
+  return { say, hour, newsReady, lines: LINES, genLines: GEN_LINES, pikuse: PIKUSE, story, frame: () => n, tools };
 })();

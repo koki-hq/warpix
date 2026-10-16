@@ -37,6 +37,9 @@ export default {
     // なかま図鑑：キャラクターの 絵が 描かれている
     t.ok(await p.ev(`[...document.querySelectorAll("#nakama canvas[data-sprite]")].length >= 10 && [...document.querySelectorAll("#nakama canvas[data-sprite]")].every((c) => c.width > 0)`), "図鑑の 絵が ない");
     t.ok(await p.ev(`!!document.getElementById("pikuse")`), "id=pikuse の 場所が ない");
+    // 地面の 下の 世界：パネルの うしろ いっぱいに 描かれ、ふかい ほど くらい
+    await t.sleep(400);
+    t.ok(await p.ev(`(() => { const w = document.querySelector(".underground"), c = w.querySelector("canvas"); if (!c.width || w.offsetHeight < document.querySelector("main").offsetHeight) return false; const x = c.getContext("2d"); const lum = (y) => { const d = x.getImageData(0, y, 1, 1).data; return d[0] + d[1] + d[2]; }; return lum(2) > lum(c.height - 4); })()`), "地下の 世界が 描かれていない・ふかい ほうが あかるい");
     t.noErrors(p);
     await server.close();
   },

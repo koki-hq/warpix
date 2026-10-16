@@ -26,12 +26,9 @@ html {
 }
 
 body {
+  position: relative;
   margin: 0;
-  /* 工場の 中庭の コンクリート */
-  background:
-    linear-gradient(#e2d9c0 2px, transparent 2px) 0 0 / 64px 64px,
-    linear-gradient(90deg, #e2d9c0 2px, transparent 2px) 0 0 / 64px 64px,
-    var(--page);
+  background: #7b5236; /* 地面の 下の 土（絵が でる まで） */
   color: var(--ink);
   font-family: "DotGothic16", "Press Start 2P", monospace;
   font-size: 16px;
@@ -169,6 +166,35 @@ a {
 }
 .say.edge-right::after {
   left: 86%;
+}
+
+/* ---------- 地面の 下の 世界（JS が 絵を 描く） ---------- */
+.underground {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.underground canvas {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  translate: -50% 0;
+  display: block;
+}
+main,
+footer {
+  position: relative;
+  z-index: 1;
+}
+/* パネルの あいだの 空洞（ここに 地下の 生き物や 遺跡が 見える） */
+.hollow {
+  height: 150px;
+}
+.hollow.deep {
+  height: 260px;
 }
 
 /* ---------- 工場あんない・けいじばん ---------- */
@@ -405,6 +431,10 @@ main {
 .card:focus {
   outline: none;
 }
+.card canvas.deep {
+  padding: 6px;
+  background: #2a2033;
+}
 .card canvas {
   grid-row: 1 / 3;
   justify-self: center;
@@ -485,13 +515,22 @@ main {
   top: -18px;
 }
 
+/* いちばん 下：最深部の 石の プレート */
 footer {
-  width: var(--w);
-  margin: 40px auto 0;
-  padding: 0 0 32px;
-  color: var(--muted);
+  width: fit-content;
+  max-width: var(--w);
+  margin: 0 auto;
+  padding: 12px 20px;
+  background: #2a2033;
+  color: #efe6d6;
   font-size: 14px;
   text-align: center;
+  box-shadow: 0 0 0 var(--px) #4c3f5a, 0 0 0 calc(var(--px) + 2px) #140f1a;
+}
+body::after {
+  content: "";
+  display: block;
+  height: 40px;
 }
 footer p {
   margin: 4px 0;

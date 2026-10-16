@@ -33,6 +33,9 @@
     <p class="sr-only" id="bubble" role="status" aria-live="polite"></p>
   </header>
 
+  <!-- 地面の 下の 世界（スクロールする ほど ふかく もぐる） -->
+  <div class="underground" aria-hidden="true"><canvas></canvas></div>
+
   <main>
     <div class="topbar">
       <nav class="guide" aria-label="工場あんない">
@@ -85,9 +88,12 @@
       </section>
     </div>
 
+    <!-- 地下の 世界を のぞく 空洞（洞窟） -->
+    <div class="hollow" id="hollow-cave" aria-hidden="true"></div>
+
     <section class="panel" id="nakama" aria-labelledby="nakama-h" tabindex="-1">
       <h2 id="nakama-h">なかま図鑑</h2>
-      <p class="lead">WARPIX製作所で はたらく なかまたち。上の 絵の どこかに、みんな いるよ。</p>
+      <p class="lead">WARPIX製作所で はたらく なかまたちと、ご近所さん。上の 絵の どこかや、地面の 下の どこかに、みんな いるよ。</p>
 
       <h3 class="tribe"><span>にんげん</span><small>ドットを くみたてる 職人</small></h3>
       <ul class="cards">
@@ -161,8 +167,34 @@
           <p class="c-desc">電線の 上から、毎日 工場を 見はっている。ゲンさんの おべんとうを ねらっている という うわさ。</p>
         </li>
       </ul>
+
+      <h3 class="tribe"><span>ちてい族</span><small>地面の 下の、だれも 知らない 世界</small></h3>
+      <ul class="cards">
+        <li class="card">
+          <canvas class="deep" data-sprite="horimaru" data-scale="3" aria-hidden="true"></canvas>
+          <p class="c-name">ホリマル<small>ちか 120m</small></p>
+          <p class="c-desc">はなが ドリルに なっている。うまった カセットテープを あつめて いるらしい。</p>
+        </li>
+        <li class="card">
+          <canvas class="deep" data-sprite="jelly" data-scale="3" aria-hidden="true"></canvas>
+          <p class="c-name">スイショウクラゲ<small>ちか 800m</small></p>
+          <p class="c-desc">地底湖に うかぶ、光る クラゲ。さわると、ちょっと だけ つめたい。</p>
+        </li>
+        <li class="card">
+          <canvas class="deep" data-sprite="tomoshibi" data-scale="3" aria-hidden="true"></canvas>
+          <p class="c-name">トモシビ族<small>ちか 3000m</small></p>
+          <p class="c-desc">ランタンを もって くらす、古代文明の 人たち。なぜか ピクセそっくりの 石像を たいせつに している。</p>
+        </li>
+        <li class="card">
+          <canvas class="deep" data-sprite="worm" data-scale="2" aria-hidden="true"></canvas>
+          <p class="c-name">ホタルミミズ<small>ちか ????m</small></p>
+          <p class="c-desc">トンネルを はしる、光る ミミズ。トモシビ族の でんしゃ でもある。</p>
+        </li>
+      </ul>
     </section>
 
+    <!-- 地下の 世界を のぞく 空洞（古代文明と 最深部） -->
+    <div class="hollow deep" id="hollow-deep" aria-hidden="true"></div>
   </main>
 
   <footer>
@@ -171,5 +203,6 @@
   </footer>
 
   <script src="factory.js"></script>
+  <script src="chika.js"></script>
 </body>
 </html>
