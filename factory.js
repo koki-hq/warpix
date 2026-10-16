@@ -1,18 +1,22 @@
-// ---------- WARPIX製作所：青空の 町工場を うごかす ----------
-// 192×112 ドットの 絵を、工場の とけい（0.3 秒ごとの tick）で 1 コマずつ 描きなおす。
-// おじさんが トンテンカン → ピクセが 水を とってくる → ごくごく → 汗を ふく → ぷはー → また しごと。
-// えんとつ・おじさん・ピクセは おせる。けいじばんと 製作所だよりは news.json。
-// ブラウザには なにも 保存しない。?hour=0〜23 で あいさつの 時刻、?t=0〜95 で その コマに とめる。
+// ---------- WARPIX製作所：青空の 工場まちを うごかす ----------
+// 480×176 ドットの 横長の 絵。画面の はばに あわせて 2〜6 倍に して、はみだす ぶんは 左右を けずる。
+// うごかない 景色（空・山・町・工場）は さいしょに 1 回だけ 描いて おいて、
+// 工場の とけい（0.3 秒ごとの tick）で、うごく もの だけを 上に かさねる。
+// お話：ゲンさんが トンテンカン → ピクセが 水を とってくる → ごくごく → 汗を ふく → ぷはー → また しごと。
+// えんとつ・ゲンさん・ピクセ・ねこは おせる。けいじばんと 製作所だよりは news.json。
+// ブラウザには なにも 保存しない。?hour=0〜23 で あいさつと 時計塔の 時刻、?t=0〜95 で その コマに とめる。
 const factory = (() => {
   const params = new URLSearchParams(location.search);
   const hour = params.has("hour") ? Number(params.get("hour")) % 24 : new Date().getHours();
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const frozen = params.has("t") ? Number(params.get("t")) : reduced ? 64 : null;
 
-  const W = 192;
-  const H = 112;
-  const canvas = document.querySelector(".scene canvas");
-  const ctx = canvas.getContext("2d");
+  const W = 480;
+  const H = 176;
+  const scene = document.querySelector(".scene");
+  const canvas = scene.querySelector("canvas");
+  const view = canvas.getContext("2d");
+  let g = view; // いま 描いている 紙
 
   // 絵の 色（1 文字 ＝ 1 色）
   const C = {
@@ -30,20 +34,28 @@ const factory = (() => {
     m: "#8d99a6", // はがね
     M: "#5f6b78",
     h: "#a8713f", // 木
+    y: "#ffd84a",
+    Y: "#e8a33a",
+    c: "#3ee8ff", // 未来の 光
+    n: "#f0a040", // ねこ
+    N: "#c87828",
+    r: "#8a5a3a", // スズメ
   };
-  const PIKU = { o: "#2b2f3a", w: "#f4f4f4", p: "#ff8fb8", c: "#3ee8ff", y: "#ffd84a" };
-  const SKY = ["#3d9bf0", "#4ea7f4", "#5fb2f7", "#76bff9", "#8ccbfb", "#a6d8fd", "#bfe4ff"];
+  const PIKU = { o: "#2b2f3a", w: "#f4f4f4", p: "#ff8fb8", c: "#3ee8ff", y: "#ffd84a", M: "#3d4656" };
+  const HAKOBI = { ...PIKU, y: "#5a9cf5" };
+  const BACHI = { ...PIKU, y: "#ff6b5a" };
 
   // ---------- ちいさな 道具 ----------
   const rect = (x, y, w, h, c) => {
-    ctx.fillStyle = c;
-    ctx.fillRect(Math.round(x), Math.round(y), w, h);
+    g.fillStyle = c;
+    g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
   };
   const dot = (x, y, c) => rect(x, y, 1, 1, c);
-  function rows(list, x, y, map = C) {
+  function rows(list, x, y, map = C, flip = false) {
+    const w = list[0].length;
     list.forEach((row, j) =>
       [...row].forEach((ch, i) => {
-        if (map[ch]) dot(x + i, y + j, map[ch]);
+        if (map[ch]) dot(x + (flip ? w - 1 - i : i), y + j, map[ch]);
       })
     );
   }
@@ -54,20 +66,45 @@ const factory = (() => {
       rect(cx - half, cy + y, half * 2 + 1, 1, c);
     }
   };
+  const oval = (cx, cy, a, b, c) => {
+    for (let y = -b; y <= b; y++) {
+      const half = Math.round(a * Math.sqrt(Math.max(0, 1 - (y * y) / (b * b + 0.5))));
+      rect(cx - half, cy + y, half * 2 + 1, 1, c);
+    }
+  };
   const line = (x0, y0, x1, y1, c, size = 1) => {
     const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) || 1;
     for (let i = 0; i <= n; i++) rect(x0 + ((x1 - x0) * i) / n, y0 + ((y1 - y0) * i) / n, size, size, c);
   };
-  // べつの canvas に ドット絵を 1 まい 描く（プロフィールの え など）
+  const sag = (x0, y0, x1, y1, depth, c) => {
+    for (let x = x0; x <= x1; x++) {
+      const t = (x - x0) / (x1 - x0);
+      dot(x, Math.round(y0 + (y1 - y0) * t + depth * 4 * t * (1 - t)), c);
+    }
+  };
+  // いつも おなじ ならびに なる 乱数（景色を 毎回 おなじに する）
+  const seeded = (seed) => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+  // べつの 紙に 1 回だけ 描く
+  function paper(paint, w = W, h = H) {
+    const c = document.createElement("canvas");
+    c.width = w;
+    c.height = h;
+    const keep = g;
+    g = c.getContext("2d");
+    paint();
+    g = keep;
+    return c;
+  }
+  // ドット絵を 1 まい、べつの canvas に（図鑑や かざり）
   function drawOn(target, list, scale, map) {
     target.width = list[0].length * scale;
     target.height = list.length * scale;
-    const g = target.getContext("2d");
+    const t = target.getContext("2d");
     list.forEach((row, y) =>
       [...row].forEach((ch, x) => {
         if (!map[ch]) return;
-        g.fillStyle = map[ch];
-        g.fillRect(x * scale, y * scale, scale, scale);
+        t.fillStyle = map[ch];
+        t.fillRect(x * scale, y * scale, scale, scale);
       })
     );
   }
@@ -102,13 +139,25 @@ const factory = (() => {
     return over ? [...row].map((ch, x) => (over[x] !== "." ? over[x] : ch)).join("") : row;
   });
   const HAPPY = [[1, 7, "owwowwwwwwowwo"], [1, 8, "owowowwwwowowo"]]; // にっこり（^ ^）
-  function pikuse(x, y, happy) {
-    rows(PIKUSE, x, y, PIKU);
-    if (happy) patch(HAPPY, x, y, PIKU);
+  const VISOR = [[1, 7, "oMMMMMMMMMMMMo"], [1, 8, "oMcMMMMMMMMcMo"]]; // バチの ようせつの 面
+  const STEP = [[4, 14, "oo....oo"]]; // あるく あし
+  const withPatch = (list, p) => {
+    const out = [...list];
+    for (const [dx, dy, row] of p) out[dy] = out[dy].slice(0, dx) + row + out[dy].slice(dx + row.length);
+    return out;
+  };
+  function pikuse(x, y, { happy = false, map = PIKU, visor = false, step = false } = {}) {
+    rows(PIKUSE, x, y, map);
+    if (happy) patch(HAPPY, x, y, map);
+    if (visor) patch(VISOR, x, y, map);
+    if (step) {
+      rect(x + 4, y + 14, 8, 1, map.w);
+      patch(STEP, x, y, map);
+    }
   }
   const BOTTLE = [".W.", "aaa", "aaa", "aaa", "aaa"];
 
-  // ---------- おじさん（16×23。うでは あとから かさねる） ----------
+  // ---------- ゲンさん（16×23。うでは あとから かさねる） ----------
   const OJI = [
     "......oooo......",
     "....ooWWWWoo....",
@@ -138,17 +187,11 @@ const factory = (() => {
   const ARM = {
     lDown: [[0, 12, "ou"], [0, 13, "ou"], [0, 14, "ou"], [0, 15, "ou"], [0, 16, "ss"], [0, 17, "ss"]],
     rDown: [[14, 12, "uo"], [14, 13, "uo"], [14, 14, "uo"], [14, 15, "uo"], [14, 16, "ss"], [14, 17, "ss"]],
-    // かなづちを ふりあげる
     rUp: [[14, 12, "uo"], [14, 11, "uuo"], [15, 10, "uuo"], [16, 9, "ss"], [16, 8, "ss"], [17, 3, "h"], [17, 4, "h"], [17, 5, "h"], [17, 6, "h"], [17, 7, "h"], [15, 1, "mmmmm"], [15, 2, "MMMMM"]],
-    // かなづちを ふりおろす
     rHit: [[14, 12, "uuu"], [14, 13, "uuuss"], [19, 13, "hh"], [21, 11, "mM"], [21, 12, "mM"], [21, 13, "mM"], [21, 14, "mM"], [21, 15, "mM"]],
-    // ピクセから 水を うけとる
     rReach: [[14, 12, "uuu"], [14, 13, "uuuuss"]],
-    // ごくごく（ボトルを 口に）
     rDrink: [[14, 12, "uo"], [14, 11, "uo"], [13, 10, "ss"], [12, 9, "ss"], [8, 10, "W"], [9, 9, "aa"], [10, 8, "aaa"], [11, 7, "aaa"], [12, 6, "aa"], [13, 5, "W"]],
-    // タオルで おでこを ふく
     lWipe: [[0, 12, "ou"], [0, 11, "ou"], [1, 10, "us"], [2, 7, "ttttt"], [2, 8, "tss"]],
-    // ばんざい
     lUp: [[0, 12, "ou"], [-1, 11, "ou"], [-2, 10, "ou"], [-2, 9, "ss"], [-2, 8, "ss"]],
     rUpEmpty: [[14, 12, "uo"], [15, 11, "uo"], [16, 10, "uo"], [16, 9, "ss"], [16, 8, "ss"]],
   };
@@ -159,192 +202,321 @@ const factory = (() => {
     patch(ARM[right], x, y);
   }
 
-  // ---------- 空と 雲 ----------
-  function sky() {
-    const band = 10;
+  // ---------- いきもの・きかい ----------
+  const CAT = [
+    ".o..o.........",
+    "onoono.oooooo.",
+    "onnnnnonNnNnno",
+    "oononnnnnnnnno",
+    "onnnnnnNnNnnno",
+    ".oWWooooooooo.",
+  ];
+  const SPARROW = [".rr..", "rWor.", ".rrrr", "..o.."];
+  const SPARROW_PECK = [".....", ".rr..", "rWorr", ".rrro"];
+  const LIFTON = [
+    "..oooooo.......",
+    "..occcco.......",
+    "..ocoocoo......",
+    "..occcco.m.....",
+    "oooooooooom....",
+    "oyyyyyyyyom....",
+    "oyyYYYYyyom....",
+    "oyyyyyyyyom....",
+    "oyyyyyyyyommmmm",
+    "oooooooooo.....",
+    ".oMo..oMo......",
+    "..o....o.......",
+  ];
+  const NOTE = ["..oo", "..oo", "..o.", "ooo.", "ooo."];
+
+  // ================= うごかない 景色（さいしょに 1 回） =================
+  const SKY = ["#2f86e6", "#3a91ec", "#469cf0", "#53a7f3", "#62b1f6", "#73bbf8", "#86c6fa", "#9bd1fc", "#b1dcfd", "#c8e7fe"];
+  const back = paper(() => {
+    const band = 12;
     SKY.forEach((c, i) => rect(0, i * band, W, band + 1, c));
-    // さかいめを ドットで まぜる
-    for (let i = 1; i < SKY.length; i++)
-      for (let x = (i % 2) * 2; x < W; x += 4) dot(x, i * band, SKY[i - 1]);
-    rect(0, SKY.length * band, W, 40, SKY[SKY.length - 1]);
-  }
-  function sun(n) {
-    const cx = 170;
-    const cy = 15;
-    if (n % 4 < 2) {
-      for (const [dx, dy] of [[-13, 0], [13, 0], [0, -12], [0, 12], [-9, -9], [9, -9], [-9, 9], [9, 9]])
-        rect(cx + dx - 1, cy + dy - 1, 2, 2, "#fff3a0");
+    for (let i = 1; i < SKY.length; i++) for (let x = (i % 2) * 2; x < W; x += 4) dot(x, i * band, SKY[i - 1]);
+    rect(0, SKY.length * band, W, H, SKY[SKY.length - 1]);
+    // おひさま（ひかりの わ）
+    disc(418, 30, 20, "#8fcbfa");
+    disc(418, 30, 16, "#b9e0fd");
+    disc(418, 30, 12, "#ffe680");
+    disc(418, 30, 10, "#fff3a0");
+    disc(415, 27, 4, "#fffbe0");
+    // 入道雲（ひだりに 大きく、みぎに ちいさく）
+    thunderhead(110, 118, 170, 104, seeded(7));
+    thunderhead(392, 118, 110, 62, seeded(21));
+  });
+  function thunderhead(cx, base, w, h, rnd) {
+    const puffs = [];
+    for (let i = 0; i < 18; i++) {
+      const t = i / 17;
+      const y = base - t * h;
+      const spread = w * (0.48 - 0.3 * t);
+      for (let j = 0; j < 3; j++) {
+        const x = cx + (rnd() - 0.5) * 2 * spread;
+        const r = Math.round(w * 0.13 * (1 - 0.45 * t) + rnd() * 5);
+        puffs.push([x, y, r]);
+      }
     }
-    disc(cx, cy, 8, "#ffd84a");
-    disc(cx, cy, 6, "#fff3a0");
+    for (const [x, y, r] of puffs) disc(x + 3, y + 3, r, "#bcd3ec");
+    for (const [x, y, r] of puffs) disc(x, y, r, "#e4eef9");
+    for (const [x, y, r] of puffs) disc(x - 2, y - 2, Math.max(1, r - 3), "#ffffff");
   }
+
+  const mid = paper(() => {
+    // とおくの 山（雪が すこし のこる）
+    for (let x = 0; x < W; x++) {
+      const h = Math.round(16 + 10 * Math.sin(x / 31 + 0.6) + 7 * Math.sin(x / 13 + 2) + 4 * Math.sin(x / 5.3));
+      const top = 118 - h;
+      rect(x, top, 1, h + 2, "#93b7d6");
+      if (h > 27) rect(x, top, 1, Math.min(4, h - 27), "#f2f7fc");
+      rect(x, top + Math.round(h * 0.55), 1, 3, "#8aaecf");
+    }
+    // みどりの 丘
+    for (let x = 0; x < W; x++) {
+      const a = Math.round(8 + 4 * Math.sin(x / 23) + 2 * Math.sin(x / 9 + 1));
+      rect(x, 120 - a, 1, a + 30, "#a6d39a");
+      const b = Math.round(5 + 3 * Math.sin(x / 17 + 3));
+      rect(x, 128 - b, 1, b + 30, "#8cc47f");
+    }
+    // 町（屋根は トタンの 赤・青・みどり）
+    const rnd = seeded(5);
+    const roofs = ["#d0604a", "#4f7fc0", "#5a9a5a", "#c98a3a"];
+    for (let x = 2; x < W; x += 9 + Math.floor(rnd() * 8)) {
+      const base = 128 + Math.floor(rnd() * 6);
+      if (rnd() < 0.3) {
+        disc(x + 3, base - 4, 3 + Math.floor(rnd() * 2), "#5fa35a");
+        dot(x + 2, base - 6, "#7fbf6f");
+        continue;
+      }
+      const w = 7 + Math.floor(rnd() * 5);
+      const hh = 4 + Math.floor(rnd() * 4);
+      rect(x, base - hh, w, hh, "#f1e6cf");
+      rect(x - 1, base - hh - 2, w + 2, 2, roofs[Math.floor(rnd() * roofs.length)]);
+      rect(x + 2, base - hh + 1, 1, 1, "#7d93a8");
+      if (w > 8) rect(x + w - 3, base - hh + 1, 1, 1, "#7d93a8");
+    }
+    // 高架（電車が はしる）
+    rect(0, 128, W, 3, "#b7ab97");
+    rect(0, 127, W, 1, "#d8cfbd");
+    rect(0, 131, W, 1, "#8f8473");
+    for (let x = 6; x < W; x += 24) {
+      rect(x, 132, 4, 20, "#a99d88");
+      rect(x + 4, 132, 1, 20, "#8f8473");
+    }
+    for (let x = 0; x < W; x += 6) dot(x, 126, "#8f8473"); // 架線の 柱
+  });
+
+  const front = paper(() => {
+    // ---------- タワークレーン ----------
+    rect(30, 18, 12, 6, "#a7a7a0"); // おもり
+    for (let x = 30; x < 152; x++) {
+      dot(x, 14, "#f2b632");
+      dot(x, 17, "#f2b632");
+      if (x % 4 === 0) line(x, 14, x + 2, 17, "#c98f17");
+    }
+    line(79, 5, 32, 14, "#5f6b78");
+    line(80, 5, 150, 14, "#5f6b78");
+    rect(78, 4, 3, 10, "#f2b632");
+    for (let y = 18; y < 152; y++) {
+      dot(76, y, "#f2b632");
+      dot(82, y, "#f2b632");
+      if (y % 6 === 0) line(76, y, 82, y + 5, "#c98f17");
+    }
+    rect(70, 18, 8, 7, "#f2b632");
+    rect(71, 19, 6, 3, "#9fe3ff");
+    // ---------- 足場と ブルーシート（中で なにかを 建造中） ----------
+    oval(78, 128, 34, 30, "#2f66b5");
+    oval(76, 126, 32, 28, "#3f7fd6");
+    rect(44, 128, 68, 24, "#3f7fd6");
+    for (const x of [54, 66, 90, 102]) rect(x, 104, 1, 48, "#2f66b5"); // シートの しわ
+    // 「？？？」
+    const Q = ["oo.", "..o", ".o.", "...", ".o."];
+    for (let i = 0; i < 3; i++) rows(Q, 69 + i * 5, 118, { o: "#ffffff" });
+    for (const x of [40, 54, 68, 82, 96, 110]) rect(x, 92, 1, 60, "#8d99a6");
+    for (const y of [108, 124, 140]) {
+      rect(38, y, 76, 2, "#a8713f");
+      rect(38, y + 2, 76, 1, "#7a4f2b");
+    }
+    for (const x of [40, 68, 96]) line(x, 124, x + 14, 108, "#8d99a6");
+    // ---------- 電柱と 電線 ----------
+    rect(122, 64, 3, 88, "#7a6a5c");
+    rect(116, 68, 15, 2, "#5f5247");
+    rect(118, 74, 11, 2, "#5f5247");
+    dot(117, 67, C.W);
+    dot(129, 67, C.W);
+    sag(0, 52, 117, 68, 9, "#3d4656");
+    sag(0, 60, 119, 74, 8, "#3d4656");
+    sag(129, 68, 170, 66, 3, "#3d4656");
+    // ---------- 時計塔（事務所） ----------
+    rect(130, 62, 44, 90, C.o);
+    rect(132, 64, 40, 88, "#e3dccd");
+    rect(164, 64, 8, 88, "#cfc6b3");
+    rect(130, 62, 44, 3, "#9a8f7c");
+    for (const y of [94, 106, 118, 130]) for (const x of [136, 146, 156]) {
+      rect(x, y, 7, 6, C.o);
+      rect(x + 1, y + 1, 5, 4, "#9fe3ff");
+      dot(x + 1, y + 1, "#e6f8ff");
+    }
+    rect(146, 140, 12, 12, "#5f6b78");
+    rect(147, 141, 10, 11, "#8d99a6");
+    rect(152, 141, 1, 11, "#5f6b78");
+    disc(152, 79, 11, C.o);
+    disc(152, 79, 10, "#fff8e7");
+    for (const [dx, dy] of [[0, -8], [8, 0], [0, 8], [-8, 0]]) rect(152 + dx - (dx ? 0 : 0), 79 + dy, 1, 1, C.o);
+    rect(151, 46, 2, 16, "#5f6b78"); // アンテナ
+    rect(148, 50, 8, 1, "#5f6b78");
+    // ---------- えんとつ（紅白、うしろに 2 本） ----------
+    const stack = (x, top, w) => {
+      for (let y = top; y < 92; y++) rect(x, y, w, 1, Math.floor((y - top) / 7) % 2 ? "#f7f7f2" : "#e0503c");
+      rect(x - 1, top, w + 2, 2, C.o);
+      rect(x + w - 2, top + 2, 2, 90 - top, "rgba(0,0,0,0.12)");
+    };
+    stack(302, 26, 9);
+    stack(318, 46, 7);
+    // ---------- 本工場（のこぎり屋根・トタン） ----------
+    const x0 = 172;
+    const x1 = 334;
+    const P = (x1 - x0) / 6;
+    for (let x = x0; x < x1; x++) {
+      const t = (x - x0) % P;
+      const top = 88 + Math.floor((t / P) * 18);
+      rect(x, top, 1, 107 - top, t < 4 ? "#9fe3ff" : "#56687a");
+      dot(x, top, t < 4 ? "#e6f8ff" : "#7d93a8");
+      if (t >= 4 && x % 3 === 0) rect(x, top + 2, 1, 105 - top - 2, "#4d5e70");
+    }
+    rect(x0, 106, x1 - x0, 2, C.o);
+    rect(x0, 108, x1 - x0, 44, "#c9d1d9");
+    for (let x = x0 + 1; x < x1; x += 3) rect(x, 108, 1, 44, "#b3bdc7");
+    for (const [x, len] of [[180, 9], [207, 5], [279, 11], [318, 7]]) {
+      rect(x, 108, 2, len, "#c4683f");
+      rect(x, 108 + len, 1, 3, "#c4683f");
+    }
+    for (const wx of [180, 200, 282, 304]) {
+      rect(wx - 1, 116, 14, 12, C.o);
+      rect(wx, 117, 12, 10, "#9fe3ff");
+      rect(wx, 121, 12, 1, C.o);
+      rect(wx + 6, 117, 1, 10, C.o);
+      dot(wx + 1, 118, "#e6f8ff");
+      dot(wx + 2, 118, "#e6f8ff");
+    }
+    rect(226, 112, 48, 40, C.o);
+    rect(228, 114, 44, 38, "#33404f");
+    for (let y = 114; y < 122; y += 2) rect(228, y, 44, 1, "#8d99a6");
+    rect(236, 126, 28, 26, "#4a5b6e");
+    rect(238, 128, 24, 10, "#1e2b38");
+    // 看板の あし と わく（文字は HTML の 見出し）
+    for (const x of [200, 244, 290]) rect(x, 80, 2, 10, C.o);
+    rect(190, 58, 112, 23, C.o);
+    rect(191, 59, 110, 21, "#e0503c");
+    rect(193, 61, 106, 17, "#fff8e7");
+    // ---------- かまぼこ倉庫 ----------
+    oval(364, 122, 31, 18, C.o);
+    oval(364, 122, 30, 17, "#b9c3cc");
+    for (let x = 336; x < 394; x += 3) rect(x, 105, 1, 18, "#a3adb7");
+    rect(333, 122, 62, 30, C.o);
+    rect(334, 122, 60, 30, "#d0c7b4");
+    for (let x = 335; x < 394; x += 4) rect(x, 122, 1, 30, "#c0b59f");
+    rect(350, 128, 28, 24, "#3b3f46");
+    rect(352, 140, 8, 12, "#a8713f");
+    rect(361, 144, 8, 8, "#a8713f");
+    rect(352, 143, 8, 1, "#7a4f2b");
+    // ---------- じめん ----------
+    rect(0, 150, W, 26, "#ddd3bb");
+    rect(0, 150, W, 2, "#c7bc9f");
+    for (let x = 0; x < W; x += 32) rect(x, 152, 1, 24, "#d2c7ab");
+    rect(0, 172, W, 4, "#cfc4a8");
+    const rnd = seeded(11);
+    for (let i = 0; i < 14; i++) {
+      const x = Math.floor(rnd() * W);
+      const y = 154 + Math.floor(rnd() * 16);
+      rect(x, y, 3, 1, "#c7bc9f");
+    }
+    for (const x of [6, 34, 120, 176, 330, 398, 470]) {
+      dot(x, 151, "#5fbf62");
+      dot(x + 1, 150, "#3f9446");
+      dot(x + 2, 151, "#5fbf62");
+    }
+    // ---------- ひまわり ----------
+    const flower = (x, top) => {
+      rect(x, top, 1, 168 - top, "#3f9446");
+      rect(x + 1, top + 8, 3, 2, "#5fbf62");
+      rect(x - 3, top + 14, 3, 2, "#5fbf62");
+      disc(x, top, 4, "#ffc21a");
+      disc(x, top, 2, "#7a4f2b");
+    };
+    for (const [x, top] of [[8, 138], [16, 132], [25, 140], [455, 134], [464, 140], [472, 130]]) flower(x, top);
+    // ---------- 自動販売機・木の 箱 ----------
+    rect(397, 119, 16, 33, C.o);
+    rect(398, 120, 14, 31, "#e0503c");
+    rect(400, 122, 10, 12, "#fff3c4");
+    ["#3c8ce0", "#3fa45a", "#ff9a3c", "#e0503c", "#7a5be0"].forEach((c, i) => rect(401 + (i % 3) * 3, 124 + Math.floor(i / 3) * 5, 2, 3, c));
+    rect(400, 137, 10, 3, C.o);
+    rect(400, 143, 10, 4, "#b23a2a");
+    for (const [x, y] of [[434, 158], [446, 158], [440, 148]]) {
+      rect(x, y, 11, 10, "#a8713f");
+      rect(x, y + 4, 11, 1, "#7a4f2b");
+      rect(x, y, 11, 1, "#c58d55");
+    }
+  });
+
+  // ================= うごく もの（毎コマ） =================
   const CLOUDS = [
-    { x: 8, y: 10, s: 1, v: 0.2 },
-    { x: 96, y: 4, s: 0.8, v: 0.3 },
-    { x: 140, y: 30, s: 0.6, v: 0.45 },
+    { x: 20, y: 24, s: 1.1, v: 0.18 },
+    { x: 180, y: 10, s: 0.8, v: 0.26 },
+    { x: 300, y: 42, s: 0.6, v: 0.4 },
+    { x: 420, y: 66, s: 0.5, v: 0.32 },
   ];
   function cloud(x, y, s) {
-    const puff = (dx, dy, r) => disc(x + dx * s, y + dy * s, Math.round(r * s), "#d3e9fb");
-    const puffW = (dx, dy, r) => disc(x + dx * s, y + dy * s - 1, Math.round(r * s), "#ffffff");
-    for (const f of [puff, puffW]) {
-      f(8, 8, 6);
-      f(17, 5, 8);
-      f(27, 8, 6);
-      f(34, 10, 4);
+    const puff = (dx, dy, r, c) => disc(x + dx * s, y + dy * s, Math.round(r * s), c);
+    for (const [c, oy] of [["#d3e9fb", 0], ["#ffffff", -1]]) {
+      puff(8, 8 + oy, 6, c);
+      puff(17, 5 + oy, 8, c);
+      puff(27, 8 + oy, 6, c);
+      puff(34, 10 + oy, 4, c);
     }
     rect(x + 4 * s, y + 10 * s, 32 * s, 4 * s, "#ffffff");
     rect(x + 4 * s, y + 14 * s, 32 * s, 1, "#d3e9fb");
   }
   function clouds(n) {
     for (const c of CLOUDS) {
-      const span = W + 50;
-      const x = ((c.x + n * c.v) % span) - 46;
-      cloud(Math.floor(x), c.y, c.s);
+      const span = W + 60;
+      cloud(Math.floor(((c.x + n * c.v) % span) - 50), c.y, c.s);
     }
   }
-
-  // ---------- とおくの 町 ----------
-  function town() {
-    for (let x = 0; x < W; x++) {
-      const h = Math.round(6 + 4 * Math.sin(x / 17) + 3 * Math.sin(x / 7 + 1));
-      rect(x, 60 - h, 1, h + 6, "#b9d6ec");
-    }
-    rect(0, 64, W, 24, "#a9cbe6");
-    rect(0, 66, W, 22, "#a1c3df");
-    // いえ（さんかくの 屋根）
-    const house = (x, w, h) => {
-      rect(x, 86 - h, w, h, "#93b9da");
-      for (let i = 0; i < w / 2 + 1; i++) rect(x + i - 1, 86 - h - i + 1, w - i * 2 + 2, 1, "#86acd0");
-    };
-    house(2, 10, 12);
-    house(14, 12, 9);
-    house(166, 12, 10);
-    house(180, 10, 14);
-    // 給水塔
-    rect(180, 52, 10, 8, "#86acd0");
-    rect(181, 50, 8, 2, "#86acd0");
-    line(181, 60, 179, 72, "#86acd0");
-    line(188, 60, 190, 72, "#86acd0");
-    line(181, 64, 188, 68, "#86acd0");
+  // 飛行船 ソラマメ号（ゆっくり）
+  function airship(n) {
+    const x = Math.floor(((n * 0.12) % (W + 80)) - 60);
+    const y = 46 + (Math.floor(n / 8) % 2);
+    oval(x + 20, y, 20, 6, C.o);
+    oval(x + 20, y, 19, 5, "#eef1f4");
+    rect(x + 3, y - 1, 34, 2, "#e0503c");
+    oval(x + 22, y - 3, 12, 1, "#ffffff");
+    rect(x - 1, y - 6, 4, 5, "#e0503c");
+    rect(x - 1, y + 2, 4, 4, "#e0503c");
+    rect(x + 15, y + 6, 10, 3, "#56687a");
+    rect(x + 16, y + 7, 2, 1, "#9fe3ff");
+    rect(x + 20, y + 7, 2, 1, "#9fe3ff");
+    rect(x - 3, y - 1 + (n % 2) * 2, 1, 1, C.o);
   }
-
-  // ---------- 電柱と 電線 ----------
-  function pole() {
-    rect(16, 26, 3, 62, "#7a6a5c");
-    rect(10, 30, 15, 2, "#5f5247");
-    rect(13, 36, 9, 2, "#5f5247");
-    dot(11, 29, C.W);
-    dot(23, 29, C.W);
-    // 電線（ゆるく たれる）
-    for (const [y0, sag] of [[30, 10], [36, 8]]) {
-      for (let x = 24; x < W; x++) {
-        const t = (x - 24) / (W - 24);
-        dot(x, y0 + Math.round(sag * 4 * t * (1 - t)), "#3d4656");
-      }
+  // 鳥の むれ（ときどき）
+  function birds(n) {
+    const t = n % 240;
+    if (t > 120) return;
+    for (const [dx, dy] of [[0, 0], [-6, 3], [-12, 6], [-6, -3]]) {
+      const x = W + 10 - t * 4.5 + dx;
+      const y = 70 - t * 0.3 + dy;
+      const up = (n + dx) % 2;
+      dot(x, y, C.o);
+      dot(x - 1, y - up, C.o);
+      dot(x + 1, y - up, C.o);
     }
   }
-
-  // ---------- 工場 ----------
-  function building(n) {
-    // のこぎり屋根（たての 面は ガラス）
-    const x0 = 28;
-    const x1 = 164;
-    const P = (x1 - x0) / 5;
-    for (let x = x0; x < x1; x++) {
-      const t = (x - x0) % P;
-      const top = 34 + Math.floor((t / P) * 12);
-      rect(x, top, 1, 47 - top, t < 3 ? "#9fe3ff" : "#56687a");
-      dot(x, top, t < 3 ? "#e6f8ff" : "#7d93a8");
-    }
-    rect(x0, 46, x1 - x0, 2, C.o);
-    // トタンの かべ
-    rect(x0, 48, x1 - x0, 40, "#c9d1d9");
-    for (let x = x0 + 1; x < x1; x += 3) rect(x, 48, 1, 40, "#b3bdc7");
-    // さびの すじ
-    for (const [x, len] of [[34, 8], [61, 5], [131, 9], [150, 6]]) {
-      rect(x, 48, 2, len, "#c4683f");
-      rect(x, 48 + len, 1, 2, "#c4683f");
-    }
-    rect(x0, 86, x1 - x0, 2, "#98a3ae");
-    // まど（左右）
-    for (const wx of [36, 54, 132, 148]) {
-      rect(wx - 1, 57, 12, 11, C.o);
-      rect(wx, 58, 10, 9, "#9fe3ff");
-      rect(wx, 62, 10, 1, C.o);
-      rect(wx + 5, 58, 1, 9, C.o);
-      dot(wx + 1, 59, "#e6f8ff");
-      dot(wx + 2, 59, "#e6f8ff");
-    }
-    // 大きな シャッター（あいている。中では 未来の 機械が 光る）
-    rect(78, 54, 44, 34, C.o);
-    rect(80, 56, 40, 32, "#33404f");
-    for (let y = 56; y < 63; y += 2) rect(80, y, 40, 1, "#8d99a6");
-    rect(88, 68, 24, 20, "#4a5b6e");
-    rect(90, 70, 20, 8, "#1e2b38");
-    const lit = n % 3;
-    for (let i = 0; i < 6; i++) rect(91 + i * 3, 72, 2, 2, i % 3 === lit ? "#3ee8ff" : "#1aa6c4");
-    rect(92, 75, 16, 1, n % 2 ? "#3ee8ff" : "#1aa6c4");
-    rect(98, 64, 4, 4, "#5f6b78");
-    rect(99, 62, 2, 2, n % 4 < 2 ? "#ff9a3c" : "#ffd84a");
-  }
-
-  // ---------- えんとつ（紅白）と けむり ----------
-  let bigUntil = 0; // おされたら しばらく もくもく
-  function chimney(n) {
-    for (let y = 12; y < 46; y++) rect(40, y, 7, 1, Math.floor((y - 12) / 6) % 2 ? "#f7f7f2" : "#e0503c");
-    rect(39, 12, 9, 2, C.o);
-    const big = n < bigUntil;
-    for (let i = 0; i < (big ? 5 : 3); i++) {
-      const phase = big ? (n * 3 + i * 3) % 15 : (n + i * 4) % 12;
-      const r = 2 + Math.floor(phase / 3) + (big ? 1 : 0);
-      disc(43 + Math.floor(phase * 0.9), 9 - phase * 1.6, r, phase > 8 ? "#e9f3fb" : "#ffffff");
-    }
-  }
-
-  // ---------- 屋上の 看板（文字は HTML の 見出しを かさねる） ----------
-  function sign(n) {
-    rect(70, 31, 2, 6, C.o);
-    rect(128, 31, 2, 6, C.o);
-    rect(98, 31, 2, 4, C.o);
-    rect(62, 18, 76, 14, "#e0503c");
-    rect(63, 19, 74, 12, "#fff8e7");
-    // まめ電球（じゅんばんに 光る）
-    for (let i = 0; i < 10; i++) dot(65 + i * 8, 17, (i + n) % 3 === 0 ? "#fff3a0" : "#ffd84a");
-  }
-
-  // ---------- ロボットアーム（看板を 溶接して なおしている） ----------
-  const POSES = [
-    [-2.0, -0.9], // 看板へ
-    [-2.2, -0.6],
-    [-1.6, -1.6], // 上へ
-    [-1.2, 0.6], // ひとやすみ
-  ];
-  function robot(n) {
-    const bx = 150;
-    const by = 36;
-    rect(bx - 4, by, 9, 4, "#5f6b78");
-    rect(bx - 3, by - 1, 7, 1, "#8d99a6");
-    const pose = POSES[Math.floor(n / 6) % POSES.length];
-    const ex = bx + Math.round(Math.cos(pose[0]) * 11);
-    const ey = by + Math.round(Math.sin(pose[0]) * 11);
-    const hx = ex + Math.round(Math.cos(pose[0] + pose[1]) * 9);
-    const hy = ey + Math.round(Math.sin(pose[0] + pose[1]) * 9);
-    line(bx, by, ex, ey, "#f0f2f5", 2);
-    line(ex, ey, hx, hy, "#f0f2f5", 2);
-    rect(bx - 1, by - 1, 3, 3, "#3ee8ff");
-    rect(ex - 1, ey - 1, 3, 3, "#3ee8ff");
-    rect(hx - 1, hy - 1, 3, 2, C.o);
-    if (hx <= 140 && n % 2 === 0) {
-      for (const [dx, dy] of [[-2, -1], [-1, 2], [-3, 1], [0, -2]]) dot(hx + dx, hy + dy, n % 4 ? "#fff3a0" : "#ff9a3c");
-    }
-  }
-
-  // ---------- ドローン（ときどき 荷物を はこぶ） ----------
   function drone(n) {
-    const t = n % 96;
-    if (t > 70) return;
-    const x = -16 + t * 3;
-    const y = 40 + (t % 4 < 2 ? 0 : 1);
+    const t = n % 160;
+    if (t > 110) return;
+    const x = -16 + t * 5;
+    const y = 86 + (t % 4 < 2 ? 0 : 1);
     rect(x, y, 12, 2, "#56687a");
     rect(x + 4, y - 1, 4, 1, "#3ee8ff");
     const blade = t % 2 ? 4 : 2;
@@ -354,32 +526,147 @@ const factory = (() => {
     rect(x + 3, y + 5, 7, 5, "#c99a5b");
     rect(x + 3, y + 7, 7, 1, "#a87a40");
   }
-
-  // ---------- じめん・自動販売機・ウォータージャグ ----------
-  function ground() {
-    rect(0, 88, W, 24, "#ddd3bb");
-    rect(0, 88, W, 1, "#c7bc9f");
-    for (const [x, y] of [[20, 96], [60, 106], [150, 104], [176, 95], [110, 108]]) {
-      rect(x, y, 4, 1, "#c7bc9f");
-      dot(x + 4, y + 1, "#c7bc9f");
+  // 電車（高架を はしる。クリームと オレンジ、みどりの おび）
+  function train(n) {
+    const t = n % 288;
+    if (t > 200) return;
+    const x0 = W + 10 - t * 3;
+    for (let i = 0; i < 4; i++) {
+      const x = x0 + i * 25;
+      if (x > W || x < -26) continue;
+      rect(x, 116, 24, 11, C.o);
+      rect(x + 1, 117, 22, 5, "#f3e7c9");
+      rect(x + 1, 122, 22, 4, "#e8732e");
+      rect(x + 1, 121, 22, 1, "#2f7d4f");
+      for (let w = 0; w < 4; w++) rect(x + 3 + w * 5, 118, 3, 2, "#5f8fb8");
+      rect(x + 4, 126, 3, 1, C.o);
+      rect(x + 17, 126, 3, 1, C.o);
+      if (i === 0) {
+        rect(x, 117, 2, 4, "#5f8fb8");
+        line(x + 8, 115, x + 12, 112, C.o);
+      }
     }
-    for (const x of [6, 9, 30, 160, 186]) {
-      dot(x, 87, "#5fbf62");
-      dot(x + 1, 86, "#3f9446");
-      dot(x + 2, 87, "#5fbf62");
-    }
-    rect(0, 109, W, 3, "#c7bc9f");
   }
-  function vending(n) {
-    const x = 168;
-    const y = 62;
-    rect(x - 1, y - 1, 16, 32, C.o);
-    rect(x, y, 14, 30, "#e0503c");
-    rect(x + 2, y + 2, 10, 12, n % 8 === 0 ? "#fffbe0" : "#fff3c4");
-    const cans = ["#3c8ce0", "#3fa45a", "#ff9a3c", "#e0503c", "#7a5be0"];
-    for (let i = 0; i < 5; i++) rect(x + 3 + (i % 3) * 3, y + 4 + Math.floor(i / 3) * 5, 2, 3, cans[i]);
-    rect(x + 2, y + 17, 10, 3, "#2b2f3a");
-    rect(x + 2, y + 23, 10, 4, "#b23a2a");
+  function crane(n) {
+    if (n % 6 < 3) rect(79, 2, 2, 2, "#ff4a3a");
+    const tx = 104 + Math.round(30 * (0.5 - 0.5 * Math.cos(n / 40)));
+    rect(tx - 2, 17, 6, 3, "#5f6b78");
+    line(tx, 20, tx, 52, "#3d4656");
+    rect(tx - 1, 52, 3, 2, "#e8a33a");
+    rect(tx - 10, 54, 22, 2, "#8d99a6");
+    rect(tx - 10, 56, 22, 1, "#5f6b78");
+  }
+  // 時計塔の はり（ほんとうの 時刻）
+  function clockHands() {
+    const now = new Date();
+    const h = params.has("hour") ? hour : now.getHours();
+    const m = now.getMinutes();
+    const am = ((h % 12) + m / 60) * (Math.PI / 6) - Math.PI / 2;
+    const mm = m * (Math.PI / 30) - Math.PI / 2;
+    line(152, 79, 152 + Math.round(Math.cos(am) * 5), 79 + Math.round(Math.sin(am) * 5), C.o);
+    line(152, 79, 152 + Math.round(Math.cos(mm) * 8), 79 + Math.round(Math.sin(mm) * 8), "#e0503c");
+    dot(152, 79, C.o);
+  }
+  function antenna(n) {
+    rect(151, 44, 2, 2, n % 4 < 2 ? "#3ee8ff" : "#1aa6c4");
+  }
+  let bigUntil = 0; // えんとつを おされたら しばらく もくもく
+  function smoke(n) {
+    const big = n < bigUntil;
+    for (const [cx, top, k] of [[306, 24, 0], [321, 44, 5]]) {
+      for (let i = 0; i < (big ? 6 : 3); i++) {
+        const phase = big ? (n * 3 + i * 3 + k) % 18 : (n + i * 4 + k) % 12;
+        const r = 2 + Math.floor(phase / 3) + (big ? 1 : 0);
+        disc(cx + Math.floor(phase * 1.1), top - 2 - phase * 1.8, r, phase > 8 ? "#e9f3fb" : "#ffffff");
+      }
+    }
+  }
+  function signBulbs(n) {
+    for (let i = 0; i < 14; i++) rect(193 + i * 8, 56, 2, 2, (i + n) % 3 === 0 ? "#fff3a0" : "#e8a33a");
+  }
+  function machine(n) {
+    const lit = n % 3;
+    for (let i = 0; i < 7; i++) rect(240 + i * 3, 131, 2, 2, i % 3 === lit ? "#3ee8ff" : "#1aa6c4");
+    rect(240, 135, 20, 1, n % 2 ? "#3ee8ff" : "#1aa6c4");
+    rect(247, 122, 6, 4, "#5f6b78");
+    rect(249, 120, 2, 2, n % 4 < 2 ? "#ff9a3c" : "#ffd84a");
+  }
+  // 倉庫の 屋根の ロボットアーム（アームさん）
+  const POSES = [[-2.4, -0.4], [-2.6, -0.2], [-1.6, -1.4], [-1.0, 0.8]];
+  function robot(n) {
+    const bx = 364;
+    const by = 104;
+    rect(bx - 4, by, 9, 3, "#5f6b78");
+    const pose = POSES[Math.floor(n / 6) % POSES.length];
+    const ex = bx + Math.round(Math.cos(pose[0]) * 13);
+    const ey = by + Math.round(Math.sin(pose[0]) * 13);
+    const hx = ex + Math.round(Math.cos(pose[0] + pose[1]) * 11);
+    const hy = ey + Math.round(Math.sin(pose[0] + pose[1]) * 11);
+    line(bx, by, ex, ey, "#f0f2f5", 2);
+    line(ex, ey, hx, hy, "#f0f2f5", 2);
+    rect(bx - 1, by - 1, 3, 3, "#3ee8ff");
+    rect(ex - 1, ey - 1, 3, 3, "#3ee8ff");
+    rect(hx - 1, hy - 1, 3, 2, C.o);
+    if (hx < 345 && n % 2 === 0) for (const [dx, dy] of [[-2, -1], [-1, 2], [-3, 1], [0, -2]]) dot(hx + dx, hy + dy, n % 4 ? "#fff3a0" : "#ff9a3c");
+  }
+  // スズメ（電線の 上）
+  function sparrows(n) {
+    for (const [x, k] of [[46, 0], [58, 3], [96, 5]]) {
+      const y = Math.round(52 + (68 - 52) * (x / 117) + 9 * 4 * (x / 117) * (1 - x / 117)) - 4;
+      rows((n + k) % 10 === 0 ? SPARROW_PECK : SPARROW, x, y, C, (n + k) % 20 > 12);
+    }
+  }
+  // ねこの トタン（自販機の 上で ひるね）
+  function cat(n) {
+    rows(CAT, 398, 113);
+    const up = n % 8 < 2;
+    rect(412, up ? 113 : 116, 1, 3, C.n);
+    dot(413, up ? 112 : 118, C.N);
+    if (n % 12 < 6) rows(["o.o", ".o.", "o.o"].map((r) => r.replaceAll("o", "z")), 400, 106 - (n % 6), { z: "#ffffff" });
+  }
+  // リフトン（木の 箱を はこぶ）
+  function lifton(n) {
+    const t = n % 40;
+    const x = 410 + (t < 20 ? t : 40 - t);
+    const flip = t >= 20;
+    rows(LIFTON, x, 156, C, flip);
+    if (!flip) {
+      rect(x + 10, 151, 6, 5, "#a8713f");
+      rect(x + 10, 153, 6, 1, "#7a4f2b");
+    }
+    if (n % 4 < 2) dot(flip ? x + 11 : x + 3, 157, "#ffffff");
+  }
+  // ハコビ（青ヘルメット。部品を 頭に のせて 時計塔と 足場を 行ったり 来たり）
+  function hakobi(n) {
+    const t = n % 64;
+    const x = t < 28 ? 98 + t * 2 : t < 32 ? 154 : t < 60 ? 154 - (t - 32) * 2 : 98;
+    const walking = (t < 28 || (t >= 32 && t < 60));
+    const y = 152 - (walking && n % 2 ? 1 : 0);
+    rect(x + 3, 167, 10, 1, "#c7bc9f");
+    pikuse(x, y, { map: HAKOBI, step: walking && n % 2 === 1 });
+    if (t < 30) {
+      rect(x + 4, y - 4, 8, 4, "#c99a5b");
+      rect(x + 4, y - 3, 8, 1, "#a87a40");
+    }
+  }
+  // バチ（赤ヘルメット。足場の 上で ようせつ）
+  function bachi(n) {
+    pikuse(102, 108, { map: BACHI, visor: true });
+    if (n % 3 !== 2) for (const [dx, dy] of [[-3, -2], [-1, -4], [-4, 1], [-2, 2], [-5, -3]]) dot(100 + dx, 118 + dy + (n % 2), n % 2 ? "#fff3a0" : "#ff9a3c");
+  }
+  // ラジカセ（チップチューンが ながれる）
+  function radio(n, x, y) {
+    rect(x, y - 2, 12, 1, "#5f6b78");
+    rect(x, y, 12, 7, C.o);
+    rect(x + 1, y + 1, 10, 5, "#c0c7cf");
+    disc(x + 3, y + 3, 1, C.o);
+    disc(x + 8, y + 3, 1, C.o);
+    rect(x + 5, y + 1, 2, 2, n % 2 ? "#3ee8ff" : "#ff8fb8");
+    const colors = ["#ff8fb8", "#ffd84a", "#3ee8ff"];
+    for (let i = 0; i < 2; i++) {
+      const ph = (n + i * 5) % 10;
+      rows(NOTE, x + 4 + i * 5 + (ph % 4 < 2 ? 0 : 1), y - 6 - ph * 1.5, { o: colors[(Math.floor(n / 10) + i) % 3] });
+    }
   }
   function jug(x, y) {
     rect(x - 2, y + 10, 16, 9, "#a8713f");
@@ -390,59 +677,42 @@ const factory = (() => {
     rect(x + 3, y - 3, 6, 2, "#f7f7f2");
     rect(x + 12, y + 7, 2, 2, "#5f6b78");
   }
-
-  // ---------- 作業台と つくっている もの ----------
   function bench(x, y, n, sparking, glow) {
     rect(x, y, 22, 3, "#a8713f");
     rect(x, y + 3, 22, 1, "#7a4f2b");
-    rect(x + 1, y + 4, 2, 11, "#7a4f2b");
-    rect(x + 19, y + 4, 2, 11, "#7a4f2b");
-    rect(x + 1, y + 10, 20, 1, "#7a4f2b");
+    rect(x + 1, y + 4, 2, 7, "#7a4f2b");
+    rect(x + 19, y + 4, 2, 7, "#7a4f2b");
     rect(x + 3, y - 4, 7, 4, "#8d99a6");
     rect(x + 4, y - 5, 5, 1, "#5f6b78");
     rect(x + 5, y - 3, 3, 2, glow ? "#3ee8ff" : "#1aa6c4");
-    if (sparking) {
-      for (const [dx, dy] of [[-2, -7], [1, -9], [4, -8], [7, -6], [-1, -5]]) dot(x + 3 + dx, y + dy + (n % 2), n % 3 ? "#fff3a0" : "#ff9a3c");
-    }
+    if (sparking) for (const [dx, dy] of [[-2, -7], [1, -9], [4, -8], [7, -6], [-1, -5]]) dot(x + 3 + dx, y + dy + (n % 2), n % 3 ? "#fff3a0" : "#ff9a3c");
   }
 
   // ---------- お話の 流れ（96 コマ ≒ 29 秒で ひとまわり） ----------
-  const OX = 70; // おじさんの 位置
-  const OY = 78;
+  const OX = 200; // ゲンさんの 位置
+  const OY = 145;
   const BX = OX + 17; // 作業台
   const BY = OY + 16;
   const HOME = BX + 24; // ピクセの いつもの 場所
-  const JUG = 138;
-  const GROUND = 101;
+  const JUG = OX + 68;
+  const GROUND = OY + 23;
   const ON_BENCH = BY - 15;
   function story(t) {
-    const s = { left: "lDown", right: "rDown", closed: false, px: HOME, py: GROUND - 16, carry: false, happy: false, laser: false, hammer: true, sparks: false, say: "", who: "o", sweat: false };
+    const s = { left: "lDown", right: "rDown", closed: false, px: HOME, py: GROUND - 16, carry: false, happy: false, laser: false, hammer: true, sparks: false, say: "", who: "o", sweat: false, step: false };
     if (t < 36 || t >= 88) {
       const hit = t % 4 >= 2;
-      s.right = hit ? "rHit" : "rUp";
-      s.hammer = false;
-      s.sparks = hit;
-      s.laser = t % 2 === 0;
-      s.sweat = true;
+      Object.assign(s, { right: hit ? "rHit" : "rUp", hammer: false, sparks: hit, laser: t % 2 === 0, sweat: true });
       if (t >= 4 && t < 16) s.say = "トンテン カンッ！";
     } else if (t < 40) {
-      s.say = "ふう、あっついなあ";
-      s.sweat = true;
+      Object.assign(s, { say: "ふう、あっついなあ", sweat: true });
     } else if (t < 48) {
-      s.px = HOME + (t - 39) * 4; // ジャグへ
-      s.say = "まってて！";
-      s.who = "p";
-      s.sweat = true;
+      Object.assign(s, { px: HOME + (t - 39) * 4, say: "まってて！", who: "p", sweat: true, step: t % 2 === 1 });
     } else if (t < 50) {
-      s.px = JUG - 2;
-      s.carry = t === 49;
+      Object.assign(s, { px: JUG - 2, carry: t === 49 });
     } else if (t < 58) {
-      s.px = JUG - 2 - (t - 49) * 4;
-      s.carry = true;
+      Object.assign(s, { px: JUG - 2 - (t - 49) * 4, carry: true, step: t % 2 === 1 });
     } else if (t < 60) {
-      s.px = BX + 12; // 作業台に ぴょん
-      s.py = t === 58 ? GROUND - 24 : ON_BENCH;
-      s.carry = true;
+      Object.assign(s, { px: BX + 12, py: t === 58 ? GROUND - 24 : ON_BENCH, carry: true });
     } else if (t < 61) {
       Object.assign(s, { px: BX + 12, py: ON_BENCH, right: "rReach", say: "おみず どうぞ！", who: "p" });
     } else if (t < 72) {
@@ -454,22 +724,21 @@ const factory = (() => {
     } else if (t < 84) {
       Object.assign(s, { px: BX + 12, py: ON_BENCH - (t % 2) * 3, left: "lUp", right: "rUpEmpty", closed: true, happy: true, say: "ぷはーっ！ いきかえった！" });
     } else {
-      s.px = BX + 12 + (t - 83) * 3;
-      s.py = t === 84 ? GROUND - 22 : GROUND - 16;
-      s.say = "よし、もう ひとふんばり！";
+      Object.assign(s, { px: BX + 12 + (t - 83) * 3, py: t === 84 ? GROUND - 22 : GROUND - 16, say: "よし、もう ひとふんばり！" });
     }
     return s;
   }
 
   // ---------- ことば ----------
   // 絵の ふきだし（.say）に 出して、読み上げ用の #bubble にも 入れる
-  const sayEl = document.querySelector(".scene .say");
+  const sayEl = scene.querySelector(".say");
   const bubble = document.getElementById("bubble");
+  const NAMES = { p: "ピクセ", o: "ゲンさん", n: "トタン" };
   let override = null; // { text, who, until }
   let bubbleTimer = 0;
   function say(text, who = "p", ticks = 18) {
     override = { text, who, until: n + ticks };
-    bubble.textContent = `${who === "o" ? "おじさん" : "ピクセ"}「${text.replaceAll("\n", " ")}」`;
+    bubble.textContent = `${NAMES[who]}「${text.replaceAll("\n", " ")}」`;
     clearTimeout(bubbleTimer);
     bubbleTimer = setTimeout(() => (bubble.textContent = ""), ticks * 300 + 1000);
     if (frozen != null) setTimeout(() => { override = null; frame(); }, ticks * 300);
@@ -477,43 +746,82 @@ const factory = (() => {
   }
   const greeting =
     hour < 5 ? "こんばんは！ よふかしだね。\nこっちは いつでも 晴れてるよ。"
-    : hour < 11 ? "おはよう！ WARPIX製作所へ ようこそ。"
-    : hour < 19 ? "こんにちは！ WARPIX製作所へ ようこそ。"
-    : "こんばんは！ WARPIX製作所へ ようこそ。";
+    : hour < 11 ? "おはよう！ WARPIX製作所へ ようこそ。\nきょうも ドットを くみたてるよ。"
+    : hour < 19 ? "こんにちは！ WARPIX製作所へ ようこそ。\nぼくや ゲンさんを おすと おはなし できるよ。"
+    : "こんばんは！ WARPIX製作所へ ようこそ。\nこっちは まだ 晴れてるよ。";
   const LINES = [
-    "ぼく、ピクセ！ この工場の みならいだよ。",
-    "目の 光で、部品の できを しらべてるんだ。",
-    "おじさんは うでの いい しょくにんさん。\nかなづち 一本で なんでも つくる。",
+    "ここでは ドットを ひとつずつ くみたてて、\nせいひんに してるんだ。",
+    "ブルーシートの 中は けんせつちゅう。\nなにが できるかは、まだ ひみつ。",
     "このヘルメット、にあう？\nあんぜん だいいち だからね。",
-    "屋上の ロボットアームは、看板の しゅうりがかり。",
-    "warpix-link には、ぼくの きょうだいみたいな\nピクセが いるんだ。",
+    "ラジカセから ながれてるのは チップチューン。\nゲンさんの おきにいり。",
+    "したの けいじばんに、製作所だよりが はってあるよ。",
+    "warpix-link には、ぼくの きょうだいみたいな\nピクセが いるんだ。あいに いってみて。",
+    "なかま図鑑も 見てね。\nみんなの こと、しょうかい してるよ。",
     "えんとつ、おしてみた？",
   ];
-  const OJI_LINES = [
+  const GEN_LINES = [
     "おう、いらっしゃい！ ゆっくり 見てってくれ。",
     "ピクセは よく はたらく。\nたまに つまみぐい するけどな。",
     "むかしの 道具も、未来の 機械も、\nつかいよう ってもんよ。",
-    "あついなあ。でも 晴れてる 日は いい しごとが できる。",
+    "ピコピコ した 音楽が すきでな。\nしごとが はかどるんだ。",
   ];
+  const CAT_LINES = ["にゃあ", "……zzz", "ふにゃ（ひなたぼっこ ちゅう）"];
   let lineIndex = Math.floor(Math.random() * LINES.length);
-  let ojiIndex = 0;
+  let genIndex = 0;
+  let catIndex = 0;
 
   // ---------- おせる ところ ----------
   const pikuseBtn = document.getElementById("pikuse-btn");
   const ojiBtn = document.getElementById("oji-btn");
-  const chimneyBtn = document.querySelector(".hot.chimney");
+  const catBtn = document.getElementById("cat-btn");
+  const chimneyBtn = scene.querySelector(".hot.chimney");
+  const signEl = scene.querySelector(".sign");
   let happyUntil = 0;
   let puffs = 0;
   pikuseBtn.addEventListener("click", () => {
     happyUntil = n + 6;
     say(LINES[lineIndex++ % LINES.length]);
   });
-  ojiBtn.addEventListener("click", () => say(OJI_LINES[ojiIndex++ % OJI_LINES.length], "o"));
+  ojiBtn.addEventListener("click", () => say(GEN_LINES[genIndex++ % GEN_LINES.length], "o"));
+  catBtn.addEventListener("click", () => say(CAT_LINES[catIndex++ % CAT_LINES.length], "n", 10));
   chimneyBtn.addEventListener("click", () => {
     puffs++;
-    bigUntil = n + 6;
+    bigUntil = n + 8;
     say(puffs >= 10 ? "けほっ けほっ……\nもう けむりで まえが みえないよ！" : puffs >= 5 ? "ぽっぽー！ ぽっぽー！\nフルかどう！" : "ぽっぽー！\nきょうも げんきに かどうちゅう。");
   });
+
+  // ---------- 画面の はばに あわせる ----------
+  // 整数の 倍率に して ドットを くっきり。はみだす ぶんは 左右を けずる（まんなかは ゲンさんたち）
+  let scale = 2;
+  let cropX = 0;
+  let visW = W;
+  function fit() {
+    const cssW = scene.clientWidth || innerWidth;
+    scale = Math.max(2, Math.ceil(cssW / W));
+    visW = Math.min(W, Math.ceil(cssW / scale));
+    cropX = Math.max(0, Math.min(W - visW, Math.round(244 - visW / 2)));
+    canvas.width = visW;
+    canvas.height = H;
+    canvas.style.width = `${visW * scale}px`;
+    canvas.style.height = `${H * scale}px`;
+    scene.style.height = `${H * scale}px`;
+    // 看板の 見出し
+    place(signEl, 193, 61, 106, 17);
+    signEl.style.fontSize = `${Math.floor((106 * scale) / 10.5)}px`;
+    place(chimneyBtn, 298, 22, 16, 70);
+    place(ojiBtn, OX - 2, OY - 1, 26, 25);
+    place(catBtn, 396, 110, 18, 10);
+    lastSay = null;
+  }
+  const offset = () => (scene.clientWidth - visW * scale) / 2;
+  function place(el, x, y, w, h) {
+    const left = (x - cropX) * scale + offset();
+    el.style.left = `${left}px`;
+    el.style.top = `${y * scale}px`;
+    el.style.width = `${w * scale}px`;
+    el.style.height = `${h * scale}px`;
+    el.hidden = x + w < cropX || x > cropX + visW; // 見えない ところの ボタンは かくす
+  }
 
   // ---------- 1 コマ 描く ----------
   let n = frozen ?? 0;
@@ -522,19 +830,30 @@ const factory = (() => {
     const t = n % 96;
     const s = story(t);
     if (override && n >= override.until && frozen == null) override = null;
-    sky();
-    sun(n);
+    view.setTransform(1, 0, 0, 1, -cropX, 0);
+    g = view;
+    g.drawImage(back, 0, 0);
     clouds(n);
-    town();
+    birds(n);
+    airship(n);
+    g.drawImage(mid, 0, 0);
+    train(n);
     drone(n);
-    pole();
-    chimney(n);
-    building(n);
-    sign(n);
+    smoke(n);
+    g.drawImage(front, 0, 0);
+    crane(n);
+    clockHands();
+    antenna(n);
+    signBulbs(n);
+    machine(n);
     robot(n);
-    ground();
-    vending(n);
-    jug(JUG + 4, 82);
+    sparrows(n);
+    cat(n);
+    bachi(n);
+    hakobi(n);
+    lifton(n);
+    radio(n, OX - 22, GROUND - 7);
+    jug(JUG + 4, OY + 4);
     bench(BX, BY, n, s.sparks, s.laser);
     if (s.hammer) {
       rect(BX + 13, BY - 1, 6, 1, "#a8713f");
@@ -545,10 +864,7 @@ const factory = (() => {
     ojisan(OX, OY, s.left, s.right, s.closed);
     if (s.sweat) {
       const fall = n % 6;
-      if (fall < 4) {
-        dot(OX + 2, OY + 6 + fall, "#7fd0ff");
-        dot(OX + 2, OY + 7 + fall, "#7fd0ff");
-      }
+      if (fall < 4) rect(OX + 2, OY + 6 + fall, 1, 2, "#7fd0ff");
       if ((n + 3) % 6 < 3) dot(OX + 14, OY + 7 + ((n + 3) % 6), "#7fd0ff");
     }
     if (s.closed && s.right === "rDrink") {
@@ -556,26 +872,28 @@ const factory = (() => {
       dot(OX + 15, OY + 3 - b, "#ffffff");
       dot(OX + 17, OY + 1 - ((b + 1) % 3), "#ffffff");
     }
-    pikuse(s.px, s.py, s.happy || n < happyUntil);
+    pikuse(s.px, s.py, { happy: s.happy || n < happyUntil, step: s.step });
     if (s.carry) rows(BOTTLE, s.px + 6, s.py - 5);
     if (s.laser) line(s.px + 4, s.py + 8, BX + 8, BY - 3, "#3ee8ff");
+    view.setTransform(1, 0, 0, 1, 0, 0);
 
     // おせる ピクセを 絵の ピクセに あわせる
-    pikuseBtn.style.left = `${(s.px / W) * 100}%`;
-    pikuseBtn.style.top = `${(s.py / H) * 100}%`;
+    place(pikuseBtn, s.px, s.py, 16, 15);
 
     // ふきだし：おされた ときの ことばが さき、なければ お話の セリフ
     const text = override ? override.text : s.say;
     const who = override ? override.who : s.who;
-    const x = who === "o" ? OX + 8 : s.px + 8;
-    const key = `${text}|${x}`;
+    const [x, y] = who === "o" ? [OX + 8, OY - 2] : who === "n" ? [405, 108] : [s.px + 8, s.py - 1];
+    const key = `${text}|${x}|${y}|${scale}`;
     if (key !== lastSay) {
       lastSay = key;
       sayEl.textContent = text;
-      sayEl.style.left = `${(x / W) * 100}%`;
-      sayEl.style.whiteSpace = text.includes("\n") ? "pre" : "";
-      sayEl.classList.toggle("edge-right", x > W * 0.62);
-      sayEl.classList.toggle("edge-left", x < W * 0.3);
+      const left = (x - cropX) * scale + offset();
+      sayEl.style.left = `${left}px`;
+      sayEl.style.top = `${y * scale - 10}px`;
+      const box = scene.clientWidth;
+      sayEl.classList.toggle("edge-right", left > box * 0.7);
+      sayEl.classList.toggle("edge-left", left < box * 0.3);
     }
   }
 
@@ -626,8 +944,64 @@ const factory = (() => {
   }
   const newsReady = loadNews();
 
-  // ---------- プロフィールの え ----------
-  drawOn(document.querySelector(".portrait"), PIKUSE, 6, PIKU);
+  // ---------- なかま図鑑と かざりの え ----------
+  // data-sprite の 名前で、ページの あちこちに キャラクターを 描く
+  const portraits = {
+    pikuse: [PIKUSE, PIKU],
+    hakobi: [PIKUSE, HAKOBI],
+    bachi: [withPatch(PIKUSE, VISOR), BACHI],
+    gen: [OJI, C],
+    cat: [CAT, C],
+    sparrow: [SPARROW, C],
+    lifton: [LIFTON, C],
+  };
+  const drawn = {
+    arm: () => paper(() => {
+      rect(10, 26, 10, 4, "#5f6b78");
+      line(15, 26, 8, 14, "#f0f2f5", 2);
+      line(8, 14, 20, 6, "#f0f2f5", 2);
+      rect(14, 25, 3, 3, "#3ee8ff");
+      rect(7, 13, 3, 3, "#3ee8ff");
+      rect(20, 5, 3, 2, C.o);
+      dot(24, 4, "#fff3a0");
+      dot(25, 7, "#ff9a3c");
+    }, 30, 30),
+    drone: () => paper(() => {
+      const x = 2;
+      const y = 6;
+      rect(x, y, 12, 2, "#56687a");
+      rect(x + 4, y - 1, 4, 1, "#3ee8ff");
+      rect(x - 1, y - 2, 4, 1, C.o);
+      rect(x + 9, y - 2, 4, 1, C.o);
+      line(x + 6, y + 2, x + 6, y + 4, C.o);
+      rect(x + 3, y + 5, 7, 5, "#c99a5b");
+      rect(x + 3, y + 7, 7, 1, "#a87a40");
+    }, 16, 16),
+    airship: () => paper(() => {
+      oval(22, 8, 20, 6, C.o);
+      oval(22, 8, 19, 5, "#eef1f4");
+      rect(5, 7, 34, 2, "#e0503c");
+      oval(24, 5, 12, 1, "#ffffff");
+      rect(1, 2, 4, 5, "#e0503c");
+      rect(1, 10, 4, 4, "#e0503c");
+      rect(17, 14, 10, 3, "#56687a");
+      rect(18, 15, 2, 1, "#9fe3ff");
+      rect(22, 15, 2, 1, "#9fe3ff");
+    }, 44, 18),
+  };
+  for (const c of document.querySelectorAll("canvas[data-sprite]")) {
+    const name = c.dataset.sprite;
+    const scaleOf = Number(c.dataset.scale || 4);
+    if (portraits[name]) drawOn(c, portraits[name][0], scaleOf, portraits[name][1]);
+    else if (drawn[name]) {
+      const src = drawn[name]();
+      c.width = src.width * scaleOf;
+      c.height = src.height * scaleOf;
+      const t = c.getContext("2d");
+      t.imageSmoothingEnabled = false;
+      t.drawImage(src, 0, 0, c.width, c.height);
+    }
+  }
 
   // ---------- 工場の とけい ----------
   // うごく ものは ぜんぶ この 1 つの とけいで いっしょに 1 コマ すすめる。
@@ -641,9 +1015,18 @@ const factory = (() => {
   }
 
   // ---------- はじまり ----------
+  fit();
   frame();
   say(greeting, "p", 20);
+  let resizeTimer = 0;
+  addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      fit();
+      frame();
+    }, 120);
+  });
   if (frozen == null) setInterval(tick, 300);
 
-  return { say, hour, newsReady, lines: LINES, ojiLines: OJI_LINES, pikuse: PIKUSE, story, frame: () => n };
+  return { say, hour, newsReady, lines: LINES, genLines: GEN_LINES, pikuse: PIKUSE, story, frame: () => n };
 })();

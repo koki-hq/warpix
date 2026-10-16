@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WARPIX製作所</title>
-  <meta name="description" content="青空の 下の、ちいさな 町工場。おじさんと 黄色い ヘルメットの ピクセが、作品を 製品に して 世に出しています。">
-  <meta name="theme-color" content="#3d9bf0">
+  <meta name="description" content="ドット絵と チップチューンの 世界を ひとつずつ 組み立てる、ちいさな 町工場。ピクセが ヘルメットを かぶって まってます。">
+  <meta name="theme-color" content="#2f86e6">
   <meta property="og:title" content="WARPIX製作所">
-  <meta property="og:description" content="青空の 町工場。踏み台リンクアプリ warpix-link など、ドット絵の 製品を つくっています。">
+  <meta property="og:description" content="ドット絵の 町工場。踏み台リンクアプリ warpix-link など、ピクセの いる 製品を つくっています。">
   <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,77 +20,149 @@
   <a class="skip" href="#news">おしらせへ とぶ</a>
 
   <header class="hero">
-    <!-- 青空の 町工場。おじさんと ピクセが いっしょに はたらく。えんとつ・おじさん・ピクセは おせる -->
-    <figure class="scene">
-      <canvas width="192" height="112" role="img" aria-label="青空の 下の 町工場。黄色い ヘルメットの ピクセと、作業着の おじさんが いっしょに 作業を している。ときどき おじさんは 水を 飲んで、タオルで 汗を ふく。"></canvas>
+    <!-- 青空の 工場まち。えんとつ・ゲンさん・ピクセ・ねこは おせる -->
+    <div class="scene">
+      <canvas width="480" height="176" role="img" aria-label="入道雲の そびえる 青空の 下に、WARPIX製作所の 工場まちが ひろがる。時計塔、紅白の えんとつ、かまぼこ屋根の 倉庫、タワークレーン、ブルーシートの 下で 建造中の なにか。うしろの 高架を レトロな 電車が はしり、空には 飛行船。まんなかでは 職人の ゲンさんと 黄色い ヘルメットの ピクセが いっしょに 作業を していて、ときどき ゲンさんは 水を 飲んで タオルで 汗を ふく。"></canvas>
       <h1 class="sign">WARPIX<span>製作所</span></h1>
       <button class="hot chimney" type="button" aria-label="えんとつ"></button>
-      <button class="hot oji" id="oji-btn" type="button" aria-label="おじさんに はなしかける"></button>
-      <button class="hot pikuse" id="pikuse-btn" type="button" aria-label="ピクセに はなしかける"></button>
+      <button class="hot" id="oji-btn" type="button" aria-label="ゲンさんに はなしかける"></button>
+      <button class="hot" id="pikuse-btn" type="button" aria-label="ピクセに はなしかける"></button>
+      <button class="hot" id="cat-btn" type="button" aria-label="ねこの トタンを なでる"></button>
       <p class="say" aria-hidden="true"></p>
-    </figure>
+    </div>
     <p class="sr-only" id="bubble" role="status" aria-live="polite"></p>
   </header>
 
   <main>
-    <nav class="guide" aria-label="工場あんない">
-      <a href="#products">せいひん</a>
-      <a href="#news">だより</a>
-      <a href="#pikuse">ピクセ</a>
-      <a href="#about">じむしょ</a>
-    </nav>
+    <div class="topbar">
+      <nav class="guide" aria-label="工場あんない">
+        <a href="#products">せいひん</a>
+        <a href="#news">だより</a>
+        <a href="#nakama">なかま</a>
+        <a href="#about">じむしょ</a>
+      </nav>
+      <a class="board" href="#news">
+        <span class="board-name">けいじばん</span>
+        <span class="board-latest" id="board-latest">よみこみちゅう…</span>
+      </a>
+    </div>
 
-    <a class="board" href="#news">
-      <span class="board-name">けいじばん</span>
-      <span class="board-latest" id="board-latest">よみこみちゅう…</span>
-    </a>
+    <div class="cols">
+      <section class="panel" id="products" aria-labelledby="products-h">
+        <canvas class="peek peek-pikuse" data-sprite="pikuse" data-scale="3" aria-hidden="true"></canvas>
+        <h2 id="products-h">せいひん</h2>
+        <ul class="products">
+          <li>
+            <a href="https://koki-hq.github.io/warpix-link/">
+              <span class="p-name">warpix-link</span>
+              <span class="p-state"><span class="lamp" aria-hidden="true"></span>かどうちゅう</span>
+              <span class="p-desc">いつもの 公式サイトへ、ピクセの いる 空間を とおって ワープする 踏み台リンクアプリ。</span>
+            </a>
+          </li>
+          <li class="p-soon">
+            <span class="p-name">???</span>
+            <span class="p-state">けんせつちゅう</span>
+            <span class="p-desc">つぎの 工場を たてています。なにが できるかは、まだ ひみつ。</span>
+          </li>
+        </ul>
+      </section>
 
-    <section class="panel" id="products" aria-labelledby="products-h">
-      <h2 id="products-h">せいひん</h2>
-      <p class="lead">工場で くみたてた 作品を、製品に して 世に出しています。</p>
-      <ul class="products">
-        <li>
-          <a href="https://koki-hq.github.io/warpix-link/">
-            <span class="p-name">warpix-link</span>
-            <span class="p-state"><span class="lamp" aria-hidden="true"></span>かどうちゅう</span>
-            <span class="p-desc">いつもの 公式サイトへ、ピクセの いる 空間を とおって ワープする 踏み台リンクアプリ。</span>
-          </a>
+      <section class="panel" id="news" aria-labelledby="news-h" tabindex="-1">
+        <canvas class="peek peek-cat" data-sprite="cat" data-scale="3" aria-hidden="true"></canvas>
+        <h2 id="news-h">製作所だより</h2>
+        <ol class="news" id="news-list"></ol>
+      </section>
+
+      <section class="panel" id="about" aria-labelledby="about-h" tabindex="-1">
+        <canvas class="peek peek-sparrow" data-sprite="sparrow" data-scale="4" aria-hidden="true"></canvas>
+        <h2 id="about-h">じむしょ</h2>
+        <p>WARPIX製作所は、ドット絵と チップチューンの 世界を ひとつずつ 組み立てる、ちいさな 町工場です。</p>
+        <p>できた 作品を、製品として 世に出します。だいいちだんは、踏み台リンクアプリ <a href="https://koki-hq.github.io/warpix-link/">warpix-link</a>。</p>
+        <h3>このページが のこすもの</h3>
+        <p>このページは、あなたの ブラウザに なにも 保存しません。文字の 形（フォント）だけ Google Fonts から 読みこみます。</p>
+        <h3>れんらく</h3>
+        <p>SNS を じゅんびちゅうです。</p>
+      </section>
+    </div>
+
+    <section class="panel" id="nakama" aria-labelledby="nakama-h" tabindex="-1">
+      <h2 id="nakama-h">なかま図鑑</h2>
+      <p class="lead">WARPIX製作所で はたらく なかまたち。上の 絵の どこかに、みんな いるよ。</p>
+
+      <h3 class="tribe"><span>にんげん</span><small>ドットを くみたてる 職人</small></h3>
+      <ul class="cards">
+        <li class="card">
+          <canvas data-sprite="gen" data-scale="3" aria-hidden="true"></canvas>
+          <p class="c-name">ゲンさん<small>職人</small></p>
+          <p class="c-desc">かなづち 一本で なんでも つくる。暑がりで、水と タオルが 手ばなせない。ラジカセの チップチューンが すき。</p>
         </li>
-        <li class="p-soon">
-          <span class="p-name">???</span>
-          <span class="p-state">けんせつちゅう</span>
-          <span class="p-desc">つぎの 製品を くみたてています。なにが できるかは、まだ ひみつ。</span>
+      </ul>
+
+      <h3 class="tribe"><span>ピクセ族</span><small>ヘルメットの 色で しごとが わかる</small></h3>
+      <ul class="cards">
+        <li class="card card-wide" id="pikuse" tabindex="-1">
+          <canvas class="portrait" data-sprite="pikuse" data-scale="5" aria-hidden="true"></canvas>
+          <div>
+            <p class="c-name">ピクセ<small>きいろ・あんないがかり</small></p>
+            <dl>
+              <dt>しごと</dt><dd>WARPIX製作所の あんないがかり</dd>
+              <dt>すきなもの</dt><dd>ワープ、チップチューン、ほめられること</dd>
+              <dt>にがてなもの</dt><dd>ほうって おかれること（すねます）</dd>
+              <dt>ひみつ</dt><dd>製品ごとに、すこしずつ ちがう ピクセが いるらしい</dd>
+            </dl>
+          </div>
+        </li>
+        <li class="card">
+          <canvas data-sprite="hakobi" data-scale="3" aria-hidden="true"></canvas>
+          <p class="c-name">ハコビ<small>あお・はこびや</small></p>
+          <p class="c-desc">部品を 頭に のせて、時計塔と 足場を 行ったり 来たり。まっすぐ しか あるけない。</p>
+        </li>
+        <li class="card">
+          <canvas data-sprite="bachi" data-scale="3" aria-hidden="true"></canvas>
+          <p class="c-name">バチ<small>あか・ようせつや</small></p>
+          <p class="c-desc">顔を おおう 面を つけて、足場の 上で 火花を ちらす。ほんとうは 花火が すき。</p>
+        </li>
+      </ul>
+
+      <h3 class="tribe"><span>きかい族</span><small>未来から きた 機械たち</small></h3>
+      <ul class="cards">
+        <li class="card">
+          <canvas data-sprite="arm" data-scale="3" aria-hidden="true"></canvas>
+          <p class="c-name">アームさん<small>ロボットアーム</small></p>
+          <p class="c-desc">倉庫の 屋根の 上で、ようせつと 点検。夜は 星を かぞえて いるらしい。</p>
+        </li>
+        <li class="card">
+          <canvas data-sprite="lifton" data-scale="3" aria-hidden="true"></canvas>
+          <p class="c-name">リフトン<small>フォークリフト</small></p>
+          <p class="c-desc">木の 箱を はこぶ のが とくい。たまに つみすぎて、ハコビに おこられる。</p>
+        </li>
+        <li class="card">
+          <canvas data-sprite="drone" data-scale="3" aria-hidden="true"></canvas>
+          <p class="c-name">ブンブン<small>ドローン</small></p>
+          <p class="c-desc">空の はいたつや。荷物の 中身は、ブンブンも 知らない。</p>
+        </li>
+        <li class="card">
+          <canvas data-sprite="airship" data-scale="2" aria-hidden="true"></canvas>
+          <p class="c-name">ソラマメ号<small>飛行船</small></p>
+          <p class="c-desc">製作所の 空を のんびり とぶ。だれが のっているかは、だれも 知らない。</p>
+        </li>
+      </ul>
+
+      <h3 class="tribe"><span>いきもの</span><small>工場の ご近所さん</small></h3>
+      <ul class="cards">
+        <li class="card">
+          <canvas data-sprite="cat" data-scale="3" aria-hidden="true"></canvas>
+          <p class="c-name">トタン<small>工場ねこ</small></p>
+          <p class="c-desc">自販機の 上が いつもの 場所。トタン屋根で ひなたぼっこ するから、トタン。</p>
+        </li>
+        <li class="card">
+          <canvas data-sprite="sparrow" data-scale="4" aria-hidden="true"></canvas>
+          <p class="c-name">スズメたち<small>見物にん</small></p>
+          <p class="c-desc">電線の 上から、毎日 工場を 見はっている。ゲンさんの おべんとうを ねらっている という うわさ。</p>
         </li>
       </ul>
     </section>
 
-    <section class="panel" id="news" aria-labelledby="news-h" tabindex="-1">
-      <h2 id="news-h">製作所だより</h2>
-      <ol class="news" id="news-list"></ol>
-    </section>
-
-    <section class="panel" id="pikuse" aria-labelledby="pikuse-h" tabindex="-1">
-      <h2 id="pikuse-h">ピクセ</h2>
-      <div class="profile">
-        <canvas class="portrait" width="96" height="96" aria-hidden="true"></canvas>
-        <dl>
-          <dt>しごと</dt><dd>WARPIX製作所の みならい。目の 光で 部品を しらべる</dd>
-          <dt>すきなもの</dt><dd>おじさんの「ありがとよ」、ワープ、チップチューン</dd>
-          <dt>にがてなもの</dt><dd>ほうって おかれること（すねます）</dd>
-          <dt>ひみつ</dt><dd>製品ごとに、すこしずつ ちがう ピクセが いるらしい</dd>
-        </dl>
-      </div>
-    </section>
-
-    <section class="panel" id="about" aria-labelledby="about-h" tabindex="-1">
-      <h2 id="about-h">じむしょ</h2>
-      <p>WARPIX製作所は、作品を 製品に して 世に出す、ちいさな 町工場です。</p>
-      <p>なつかしい 道具と、未来の 機械を いっしょに つかって、ひとつずつ くみたてます。だいいちだんは、踏み台リンクアプリ <a href="https://koki-hq.github.io/warpix-link/">warpix-link</a>。</p>
-      <h3>このページが のこすもの</h3>
-      <p>このページは、あなたの ブラウザに なにも 保存しません。文字の 形（フォント）だけ Google Fonts から 読みこみます。</p>
-      <h3>れんらく</h3>
-      <p>SNS を じゅんびちゅうです。</p>
-    </section>
   </main>
 
   <footer>

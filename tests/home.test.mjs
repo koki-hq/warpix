@@ -1,4 +1,4 @@
-// WARPIX製作所の ホームページ：青空の 町工場、おじさんと ピクセ、えんとつ、製作所だより
+// WARPIX製作所の ホームページ：青空の 工場まち、ゲンさんと ピクセ、えんとつ、なかま図鑑、製作所だより
 const NEWS = JSON.stringify({
   news: [
     { id: "old", date: "2020-01-01", title: "むかしの おしらせ", body: "ふるい", url: "https://example.com/old" },
@@ -28,10 +28,15 @@ export default {
     t.ok((await said(p)).includes("こんにちは"), "ひるの あいさつ");
     t.ok((await p.ev(`document.querySelector(".scene .say").textContent`)).includes("こんにちは"), "絵の ふきだしに あいさつが ない");
     // 絵が ちゃんと 描かれている（空の 青が ある）
-    t.ok(await p.ev(`(() => { const d = document.querySelector(".scene canvas").getContext("2d").getImageData(0, 0, 192, 112).data; let blue = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 2] > 200 && d[i] < 120) blue++; return blue > 2000; })()`), "青空が 描かれていない");
-    t.ok(await p.ev(`[...document.querySelectorAll(".hot")].length === 3 && [...document.querySelectorAll(".hot")].every((b) => b.tabIndex === 0 && b.getAttribute("aria-label"))`), "おせる ところに Tab で いけない・名前が ない");
-    t.eq(await p.ev(`[...document.querySelectorAll(".guide a")].map((a) => a.getAttribute("href"))`), ["#products", "#news", "#pikuse", "#about"], "工場あんない");
+    t.ok(await p.ev(`(() => { const d = document.querySelector(".scene canvas").getContext("2d").getImageData(0, 0, document.querySelector(".scene canvas").width, 176).data; let blue = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 2] > 200 && d[i] < 120) blue++; return blue > 4000; })()`), "青空が 描かれていない");
+    t.ok(await p.ev(`[...document.querySelectorAll(".hot")].length === 4 && [...document.querySelectorAll(".hot")].filter((b) => !b.hidden).every((b) => b.tabIndex === 0 && b.getAttribute("aria-label"))`), "おせる ところに Tab で いけない・名前が ない");
+    t.eq(await p.ev(`[...document.querySelectorAll(".guide a")].map((a) => a.getAttribute("href"))`), ["#products", "#news", "#nakama", "#about"], "工場あんない");
     t.eq(await p.ev(`document.querySelector('#products a').href`), "https://koki-hq.github.io/warpix-link/", "warpix-link への リンク");
+    // じむしょの 芯の ことば（デザインが かわっても のこす）
+    t.ok((await p.ev(`document.getElementById("about").textContent`)).includes("ドット絵と チップチューンの 世界"), "じむしょの 説明から 芯の ことばが きえた");
+    // なかま図鑑：キャラクターの 絵が 描かれている
+    t.ok(await p.ev(`[...document.querySelectorAll("#nakama canvas[data-sprite]")].length >= 10 && [...document.querySelectorAll("#nakama canvas[data-sprite]")].every((c) => c.width > 0)`), "図鑑の 絵が ない");
+    t.ok(await p.ev(`!!document.getElementById("pikuse")`), "id=pikuse の 場所が ない");
     t.noErrors(p);
     await server.close();
   },
@@ -55,8 +60,10 @@ export default {
     await again.server.close();
   },
 
-  async "工場の とけいで うごき、ピクセと おじさんは おすと しゃべる"(t) {
-    const { server, p } = await open(t);
+  async "工場の とけいで うごき、ピクセ・ゲンさん・ねこは おすと しゃべる"(t) {
+    // ねこは 絵の みぎの ほう。せまい 画面では 見えない ので、ひろい 画面で
+    const { server, p } = await open(t, "?hour=14", { size: { width: 1280, height: 900 } });
+    t.ok(!(await p.ev(`document.getElementById("cat-btn").hidden`)), "ひろい 画面なのに ねこが かくれている");
     const n0 = await p.ev(`factory.frame()`);
     const img0 = await p.ev(`document.querySelector(".scene canvas").toDataURL()`);
     await t.sleep(1500);
@@ -66,7 +73,9 @@ export default {
     const line = await said(p);
     t.ok(line.startsWith("ピクセ「") && (await p.ev(`factory.lines.some((l) => document.getElementById("bubble").textContent.includes(l.replaceAll("\\n", " ")))`)), `ピクセの セリフ: ${line}`);
     await p.click("#oji-btn");
-    t.ok((await said(p)).startsWith("おじさん「"), `おじさんの セリフ: ${await said(p)}`);
+    t.ok((await said(p)).startsWith("ゲンさん「"), `ゲンさんの セリフ: ${await said(p)}`);
+    await p.click("#cat-btn");
+    t.ok((await said(p)).startsWith("トタン「"), `ねこの セリフ: ${await said(p)}`);
     t.noErrors(p);
     await server.close();
   },
@@ -123,6 +132,7 @@ export default {
   async "スマホの はばでも よこに はみださない。動きを へらす せっていでは とまる"(t) {
     let { server, p } = await open(t, "?hour=14", { mobile: [360, 800] });
     t.ok(await p.ev(`document.documentElement.scrollWidth <= innerWidth`), `よこに はみだす: ${await p.ev(`document.documentElement.scrollWidth`)}`);
+    t.ok(await p.ev(`document.getElementById("cat-btn").hidden`), "せまい 画面で 見えない ねこの ボタンが のこっている");
     t.noErrors(p);
     await server.close();
     await t.closeAll();
