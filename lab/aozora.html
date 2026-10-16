@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>青空の 町工場（ためし）</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DotGothic16&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --sky: #5fb2f7;
+      --sky-hi: #3d9bf0;
+      --sky-lo: #bfe4ff;
+      --ink: #2b2f3a;
+      --paper: #fff8e7;
+      --red: #e0503c;
+      --navy: #24406b;
+      --ground: #ddd3bb;
+      --w: min(760px, calc(100vw - 32px));
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: linear-gradient(var(--sky-hi), var(--sky) 40%, var(--sky-lo) 75%, var(--ground) 75.1%);
+      background-attachment: fixed;
+      color: var(--ink);
+      font-family: "DotGothic16", monospace;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+    main { width: var(--w); margin: 0 auto; padding: 16px 0 32px; }
+    .scene {
+      position: relative;
+      container-type: inline-size;
+      margin: 0;
+    }
+    .scene canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      image-rendering: pixelated;
+      box-shadow: 0 4px 0 0 var(--ink);
+    }
+    /* 屋上の 看板（文字は ほんものの 見出し） */
+    .sign {
+      position: absolute;
+      left: 32.8%;
+      top: 17.2%;
+      width: 36.4%;
+      height: 10.6%;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3em;
+      color: var(--red);
+      font-family: "Press Start 2P", monospace;
+      font-size: 2.6cqw;
+      font-weight: normal;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .sign span {
+      color: var(--navy);
+      font-family: "DotGothic16", monospace;
+      font-size: 1.15em;
+    }
+    /* ふきだし（え の 一部。読み上げは しない） */
+    .say {
+      position: absolute;
+      bottom: 41%;
+      translate: -50% 0;
+      padding: 0.3em 0.6em;
+      background: #fff;
+      color: var(--ink);
+      font-size: max(11px, 1.9cqw);
+      line-height: 1.3;
+      white-space: nowrap;
+      box-shadow: 0 0 0 2px var(--ink), 3px 3px 0 2px var(--ink);
+    }
+    .say::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 100%;
+      border: 6px solid transparent;
+      border-top-color: var(--ink);
+      translate: -50% 2px;
+    }
+    .say:empty { display: none; }
+    .note { margin: 24px 0 0; font-size: 14px; color: var(--ink); }
+  </style>
+</head>
+<body>
+  <main>
+    <figure class="scene">
+      <canvas role="img" aria-label="青空の 下の 町工場。黄色い ヘルメットの ピクセと、作業着の おじさんが いっしょに 作業を している。ときどき おじさんは 水を 飲んで、タオルで 汗を ふく。"></canvas>
+      <h1 class="sign">WARPIX<span>製作所</span></h1>
+      <p class="say" aria-hidden="true"></p>
+    </figure>
+    <p class="note">ためしの 1 場面。?t=0〜95 で 場面を とめて 見られます。</p>
+  </main>
+  <script src="aozora.js"></script>
+</body>
+</html>
