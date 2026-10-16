@@ -142,6 +142,27 @@ export default {
     await server.close();
   },
 
+  async "季節の 服：春は さくら、夏は 入道雲、秋は すずしい、冬は 雪と おちゃ（どれも 晴れ）"(t) {
+    const count = (p, test) => p.ev(`(() => { const c = document.querySelector(".scene canvas"); const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; let k = 0; for (let i = 0; i < d.length; i += 4) { const [r, g, b] = [d[i], d[i + 1], d[i + 2]]; if (${test}) k++; } return k; })()`);
+    const cases = [
+      [4, "spring", "ふう、いい ひよりだ", "r > 240 && g > 170 && g < 215 && b > 195 && b < 230"], // さくらの ピンク
+      [7, "summer", "ふう、あっついなあ", "r > 240 && g > 180 && g < 210 && b < 40"], // ひまわりの 黄色
+      [10, "autumn", "ふう、すずしく なったなあ", "r > 210 && g > 80 && g < 110 && b < 70"], // もみじの 赤
+      [1, "winter", "ふう、さむいけど からだは ぽかぽかだ", "r > 238 && g > 242 && b > 245"], // 雪の しろ
+    ];
+    for (const [m, season, rest, test] of cases) {
+      const { server, p } = await open(t, `?hour=14&t=40&month=${m}`, { size: { width: 1440, height: 900 } }); // 1440 なら 絵が ぜんぶ 見える
+      t.eq(await p.ev(`factory.season`), season, `${m} 月の 季節`);
+      t.eq((await p.ev(`factory.story(37)`)).say, rest, `${season} の ひとやすみの セリフ`);
+      t.ok((await count(p, test)) > 60, `${season} の 色が 見あたらない`);
+      t.ok((await count(p, "b > 200 && r < 140")) > 3000, `${season} でも 青空`);
+      if (season === "winter") t.eq((await p.ev(`factory.story(60)`)).say, "おちゃ どうぞ！", "冬は おちゃ");
+      t.noErrors(p);
+      await server.close();
+      await t.closeAll();
+    }
+  },
+
   async "えんとつを おすと ぽっぽー、10 かいで けほっ"(t) {
     const { server, p } = await open(t);
     await p.click(".hot.chimney");

@@ -10,6 +10,15 @@ const factory = (() => {
   const hour = params.has("hour") ? Number(params.get("hour")) % 24 : new Date().getHours();
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const frozen = params.has("t") ? Number(params.get("t")) : reduced ? 64 : null;
+  // 季節の 服（どの 季節も 晴れ）。?month=1〜12 で ためせる
+  const month = params.has("month") ? ((Number(params.get("month")) + 11) % 12) + 1 : new Date().getMonth() + 1;
+  const season = month >= 3 && month <= 5 ? "spring" : month >= 6 && month <= 8 ? "summer" : month >= 9 && month <= 11 ? "autumn" : "winter";
+  const SEASON = {
+    spring: { sky: ["#4c9cec", "#58a5ef", "#65aef2", "#74b8f5", "#85c2f7", "#97ccf9", "#aad6fb", "#bddffc", "#d0e9fd", "#e2f2fe"], hill: ["#b8e0a0", "#9fd28a"], ground: ["#ddd3bb", "#c7bc9f"] },
+    summer: { sky: ["#2f86e6", "#3a91ec", "#469cf0", "#53a7f3", "#62b1f6", "#73bbf8", "#86c6fa", "#9bd1fc", "#b1dcfd", "#c8e7fe"], hill: ["#a6d39a", "#8cc47f"], ground: ["#ddd3bb", "#c7bc9f"] },
+    autumn: { sky: ["#2a7ee2", "#3489e8", "#3f94ec", "#4b9ff0", "#5aaaf3", "#6bb4f6", "#7fbff8", "#95cafa", "#acd6fc", "#c4e3fd"], hill: ["#c9b06a", "#b6944e"], ground: ["#ddd0b4", "#c7b996"] },
+    winter: { sky: ["#6aa8e6", "#75b0ea", "#81b8ed", "#8ec0f0", "#9bc8f3", "#a9d0f5", "#b8d9f8", "#c7e2fa", "#d6ebfc", "#e6f3fd"], hill: ["#e9eef4", "#d8e0e9"], ground: ["#f2f5f8", "#dbe3ec"] },
+  }[season];
 
   const W = 480;
   const H = 176;
@@ -230,7 +239,7 @@ const factory = (() => {
   const NOTE = ["..oo", "..oo", "..o.", "ooo.", "ooo."];
 
   // ================= うごかない 景色（さいしょに 1 回） =================
-  const SKY = ["#2f86e6", "#3a91ec", "#469cf0", "#53a7f3", "#62b1f6", "#73bbf8", "#86c6fa", "#9bd1fc", "#b1dcfd", "#c8e7fe"];
+  const SKY = SEASON.sky;
   const back = paper(() => {
     const band = 12;
     SKY.forEach((c, i) => rect(0, i * band, W, band + 1, c));
@@ -242,9 +251,35 @@ const factory = (() => {
     disc(418, 30, 12, "#ffe680");
     disc(418, 30, 10, "#fff3a0");
     disc(415, 27, 4, "#fffbe0");
-    // 入道雲（ひだりに 大きく、みぎに ちいさく）
-    thunderhead(110, 118, 170, 104, seeded(7));
-    thunderhead(392, 118, 110, 62, seeded(21));
+    if (season === "summer") {
+      // 入道雲（ひだりに 大きく、みぎに ちいさく）
+      thunderhead(110, 118, 170, 104, seeded(7));
+      thunderhead(392, 118, 110, 62, seeded(21));
+    } else if (season === "spring") {
+      // 春は ふんわり ちいさめの 雲
+      thunderhead(120, 118, 120, 44, seeded(7));
+      thunderhead(380, 118, 90, 30, seeded(21));
+    } else if (season === "autumn") {
+      // 秋は 高い 空に うろこ雲
+      const rnd = seeded(9);
+      for (let row = 0; row < 8; row++) {
+        const from = 40 + row * 6 + Math.floor(rnd() * 20);
+        const to = 330 - row * 10;
+        for (let x = from + (row % 2) * 4; x < to; x += 7 + Math.floor(rnd() * 4)) {
+          const y = 18 + row * 5 + Math.round(3 * Math.sin(x / 35 + row * 0.7));
+          if (rnd() < 0.3) continue;
+          rect(x, y, 4, 1, "#ffffff");
+          rect(x + 1, y + 1, 3, 1, "#d6e7f8");
+        }
+      }
+      thunderhead(400, 118, 80, 22, seeded(21));
+    } else {
+      // 冬は うすい すじ雲
+      for (const [x, y, w] of [[40, 30, 140], [220, 18, 110], [120, 52, 90], [300, 60, 120]]) {
+        rect(x, y, w, 1, "#ffffff");
+        rect(x + 10, y + 2, w - 30, 1, "#eef6fd");
+      }
+    }
   });
   function thunderhead(cx, base, w, h, rnd) {
     const puffs = [];
@@ -269,15 +304,20 @@ const factory = (() => {
       const h = Math.round(16 + 10 * Math.sin(x / 31 + 0.6) + 7 * Math.sin(x / 13 + 2) + 4 * Math.sin(x / 5.3));
       const top = 118 - h;
       rect(x, top, 1, h + 2, "#93b7d6");
-      if (h > 27) rect(x, top, 1, Math.min(4, h - 27), "#f2f7fc");
+      const snowLine = season === "winter" ? 14 : season === "summer" ? 27 : 22;
+      if (h > snowLine) rect(x, top, 1, Math.min(season === "winter" ? 12 : 4, h - snowLine), "#f2f7fc");
       rect(x, top + Math.round(h * 0.55), 1, 3, "#8aaecf");
     }
-    // みどりの 丘
+    // 丘（季節で 色が かわる）
+    const hillRnd = seeded(13);
     for (let x = 0; x < W; x++) {
       const a = Math.round(8 + 4 * Math.sin(x / 23) + 2 * Math.sin(x / 9 + 1));
-      rect(x, 120 - a, 1, a + 30, "#a6d39a");
+      rect(x, 120 - a, 1, a + 30, SEASON.hill[0]);
       const b = Math.round(5 + 3 * Math.sin(x / 17 + 3));
-      rect(x, 128 - b, 1, b + 30, "#8cc47f");
+      rect(x, 128 - b, 1, b + 30, SEASON.hill[1]);
+      // 春は 山ざくら、秋は 紅葉の つぶ
+      if (season === "spring" && hillRnd() < 0.12) disc(x, 121 - a + Math.floor(hillRnd() * 4), 1, "#ffc8dc");
+      if (season === "autumn" && hillRnd() < 0.18) disc(x, 121 - a + Math.floor(hillRnd() * 5), 1, hillRnd() < 0.5 ? "#e0603a" : "#f0a030");
     }
     // 町（屋根は トタンの 赤・青・みどり）
     const rnd = seeded(5);
@@ -422,22 +462,25 @@ const factory = (() => {
     rect(361, 144, 8, 8, "#a8713f");
     rect(352, 143, 8, 1, "#7a4f2b");
     // ---------- じめん ----------
-    rect(0, 150, W, 26, "#ddd3bb");
-    rect(0, 150, W, 2, "#c7bc9f");
-    for (let x = 0; x < W; x += 32) rect(x, 152, 1, 24, "#d2c7ab");
-    rect(0, 172, W, 4, "#cfc4a8");
+    const [gr, grDark] = SEASON.ground;
+    rect(0, 150, W, 26, gr);
+    rect(0, 150, W, 2, grDark);
+    for (let x = 0; x < W; x += 32) rect(x, 152, 1, 24, season === "winter" ? "#e6ecf2" : "#d2c7ab");
+    rect(0, 172, W, 4, season === "winter" ? "#e3e9f0" : "#cfc4a8");
     const rnd = seeded(11);
     for (let i = 0; i < 14; i++) {
       const x = Math.floor(rnd() * W);
       const y = 154 + Math.floor(rnd() * 16);
-      rect(x, y, 3, 1, "#c7bc9f");
+      rect(x, y, 3, 1, grDark);
     }
-    for (const x of [6, 34, 120, 176, 330, 398, 470]) {
-      dot(x, 151, "#5fbf62");
-      dot(x + 1, 150, "#3f9446");
-      dot(x + 2, 151, "#5fbf62");
+    if (season !== "winter") {
+      for (const x of [6, 34, 120, 176, 330, 398, 470]) {
+        dot(x, 151, "#5fbf62");
+        dot(x + 1, 150, "#3f9446");
+        dot(x + 2, 151, "#5fbf62");
+      }
     }
-    // ---------- ひまわり ----------
+    // ---------- 季節の 草木（夏：ひまわり、春：さくら、秋：もみじ、冬：ゆきだるま） ----------
     const flower = (x, top) => {
       rect(x, top, 1, 168 - top, "#3f9446");
       rect(x + 1, top + 8, 3, 2, "#5fbf62");
@@ -445,7 +488,32 @@ const factory = (() => {
       disc(x, top, 4, "#ffc21a");
       disc(x, top, 2, "#7a4f2b");
     };
-    for (const [x, top] of [[8, 138], [16, 132], [25, 140], [455, 134], [464, 140], [472, 130]]) flower(x, top);
+    const tree = (x, colors) => {
+      rect(x - 1, 140, 3, 28, "#7a5a40");
+      line(x, 146, x - 6, 140, "#7a5a40");
+      line(x, 144, x + 6, 139, "#7a5a40");
+      const r = seeded(x);
+      for (let i = 0; i < 16; i++) disc(x - 12 + Math.floor(r() * 24), 126 + Math.floor(r() * 16), 4 + Math.floor(r() * 3), colors[i % colors.length]);
+      for (let i = 0; i < 10; i++) dot(x - 12 + Math.floor(r() * 24), 124 + Math.floor(r() * 18), colors[colors.length - 1]);
+    };
+    const snowman = (x) => {
+      disc(x, 160, 7, "#ffffff");
+      disc(x, 148, 5, "#ffffff");
+      dot(x - 2, 147, C.o);
+      dot(x + 2, 147, C.o);
+      rect(x, 149, 3, 1, "#ff9a3c");
+      rect(x - 5, 141, 10, 2, "#e0503c"); // バケツの かわりに ヘルメット
+      rect(x - 3, 139, 6, 2, "#ffd84a");
+      line(x - 6, 155, x - 11, 151, "#7a5a40");
+      line(x + 6, 155, x + 11, 151, "#7a5a40");
+    };
+    if (season === "summer") for (const [x, top] of [[8, 138], [16, 132], [25, 140], [455, 134], [464, 140], [472, 130]]) flower(x, top);
+    if (season === "spring") for (const x of [18, 464]) tree(x, ["#ffb7d0", "#ffc8dc", "#ffd9e6", "#ffffff"]);
+    if (season === "autumn") for (const x of [18, 464]) tree(x, ["#e0603a", "#f0a030", "#c8442a", "#ffd04a"]);
+    if (season === "winter") {
+      snowman(18);
+      snowman(464);
+    }
     // ---------- 自動販売機・木の 箱 ----------
     rect(397, 119, 16, 33, C.o);
     rect(398, 120, 14, 31, "#e0503c");
@@ -457,6 +525,30 @@ const factory = (() => {
       rect(x, y, 11, 10, "#a8713f");
       rect(x, y + 4, 11, 1, "#7a4f2b");
       rect(x, y, 11, 1, "#c58d55");
+    }
+    // ---------- 冬は 雪化粧 ----------
+    if (season === "winter") {
+      const SNOW = "#ffffff";
+      rect(30, 12, 122, 2, SNOW); // クレーン
+      rect(190, 56, 112, 2, SNOW); // 看板
+      rect(130, 60, 44, 3, SNOW); // 時計塔
+      rect(301, 24, 11, 2, SNOW); // えんとつ
+      rect(317, 44, 9, 2, SNOW);
+      rect(397, 117, 16, 2, SNOW); // 自販機
+      for (const y of [107, 123, 139]) rect(38, y, 76, 1, SNOW); // 足場
+      for (const [x, y] of [[434, 157], [446, 157], [440, 147]]) rect(x, y, 11, 1, SNOW); // 木箱
+      // のこぎり屋根の ななめの 面
+      for (let x = 172; x < 334; x++) {
+        const t = (x - 172) % 27;
+        if (t >= 4) dot(x, 88 + Math.floor((t / 27) * 18) - 1, SNOW);
+        if (t >= 6) dot(x, 88 + Math.floor((t / 27) * 18), SNOW);
+      }
+      // かまぼこ屋根
+      for (let x = 334; x < 395; x++) {
+        const dx = (x - 364) / 31;
+        dot(x, Math.round(122 - 18 * Math.sqrt(Math.max(0, 1 - dx * dx))) - 1, SNOW);
+        dot(x, Math.round(122 - 18 * Math.sqrt(Math.max(0, 1 - dx * dx))), SNOW);
+      }
     }
   });
 
@@ -499,8 +591,34 @@ const factory = (() => {
     rect(x + 20, y + 7, 2, 1, "#9fe3ff");
     rect(x - 3, y - 1 + (n % 2) * 2, 1, 1, C.o);
   }
-  // 鳥の むれ（ときどき）
+  // 季節の とりや むし（夏：鳥の むれ、春：つばめ、秋：赤とんぼ、冬：なし）
   function birds(n) {
+    if (season === "winter") return;
+    if (season === "spring") {
+      for (const [k, y0] of [[0, 60], [37, 84]]) {
+        const t = (n + k) % 90;
+        const x = -10 + t * 6;
+        const y = y0 + Math.round(8 * Math.sin(t / 6));
+        const up = n % 2;
+        rect(x, y, 3, 1, "#1e2b4a");
+        dot(x - 1, y - 1 - up, "#1e2b4a");
+        dot(x - 2, y - 2 - up, "#1e2b4a");
+        dot(x + 3, y + 1, "#1e2b4a"); // ふたまたの しっぽ
+        dot(x + 3, y - 1, "#1e2b4a");
+        dot(x + 1, y, "#ffffff");
+      }
+      return;
+    }
+    if (season === "autumn") {
+      for (const [k, cx, cy] of [[0, 120, 138], [11, 300, 128], [23, 420, 142], [31, 60, 112]]) {
+        const x = cx + Math.round(14 * Math.sin((n + k) / 9));
+        const y = cy + Math.round(5 * Math.sin((n + k) / 5));
+        rect(x, y, 5, 1, "#d8402a");
+        dot(x + 1, y - 1 - (n % 2), "#e8eef4");
+        dot(x + 2, y - 1 - ((n + 1) % 2), "#e8eef4");
+      }
+      return;
+    }
     const t = n % 240;
     if (t > 120) return;
     for (const [dx, dy] of [[0, 0], [-6, 3], [-12, 6], [-6, -3]]) {
@@ -510,6 +628,24 @@ const factory = (() => {
       dot(x, y, C.o);
       dot(x - 1, y - up, C.o);
       dot(x + 1, y - up, C.o);
+    }
+  }
+  // ふって くる もの（春：花びら、秋：落ち葉、冬：雪）。いつも おなじ ならびで、毎コマ すこし うごく
+  const FLAKES = Array.from({ length: 46 }, (_, i) => ({ x: (i * 97) % W, y: (i * 53) % H, v: 0.5 + ((i * 7) % 5) * 0.15, k: i }));
+  function falling(n) {
+    if (season === "summer") return;
+    const colors = season === "spring" ? ["#ffc8dc", "#ffb7d0", "#ffffff"] : season === "autumn" ? ["#e0603a", "#f0a030", "#c8442a"] : ["#ffffff", "#ffffff", "#eef6fd"];
+    const count = season === "winter" ? 46 : 18;
+    for (let i = 0; i < count; i++) {
+      const f = FLAKES[i];
+      const y = (f.y + n * f.v) % H;
+      const x = (f.x + Math.round(6 * Math.sin((n + f.k * 5) / 8)) + n * (season === "winter" ? 0.1 : 0.6)) % W;
+      const c = colors[i % 3];
+      if (season === "winter") rect(x, y, i % 4 === 0 ? 2 : 1, i % 4 === 0 ? 2 : 1, c);
+      else {
+        dot(x, y, c);
+        dot(x + ((n + i) % 2 ? 1 : -1), y + 1, c);
+      }
     }
   }
   function drone(n) {
@@ -702,6 +838,7 @@ const factory = (() => {
   const JUG = OX + 68;
   const GROUND = OY + 23;
   const ON_BENCH = BY - 15;
+  const REST_LINE = { spring: "ふう、いい ひよりだ", summer: "ふう、あっついなあ", autumn: "ふう、すずしく なったなあ", winter: "ふう、さむいけど からだは ぽかぽかだ" };
   function story(t) {
     const s = { left: "lDown", right: "rDown", closed: false, px: HOME, py: GROUND - 16, carry: false, happy: false, laser: false, hammer: true, sparks: false, say: "", who: "o", sweat: false, step: false };
     if (t < 36 || t >= 88) {
@@ -709,7 +846,7 @@ const factory = (() => {
       Object.assign(s, { right: hit ? "rHit" : "rUp", hammer: false, sparks: hit, laser: t % 2 === 0, sweat: true });
       if (t >= 4 && t < 16) s.say = "トンテン カンッ！";
     } else if (t < 40) {
-      Object.assign(s, { say: "ふう、あっついなあ", sweat: true });
+      Object.assign(s, { say: REST_LINE[season], sweat: true });
     } else if (t < 48) {
       Object.assign(s, { px: HOME + (t - 39) * 4, say: "まってて！", who: "p", sweat: true, step: t % 2 === 1 });
     } else if (t < 50) {
@@ -719,7 +856,7 @@ const factory = (() => {
     } else if (t < 60) {
       Object.assign(s, { px: BX + 12, py: t === 58 ? GROUND - 24 : ON_BENCH, carry: true });
     } else if (t < 61) {
-      Object.assign(s, { px: BX + 12, py: ON_BENCH, right: "rReach", say: "おみず どうぞ！", who: "p" });
+      Object.assign(s, { px: BX + 12, py: ON_BENCH, right: "rReach", say: season === "winter" ? "おちゃ どうぞ！" : "おみず どうぞ！", who: "p" });
     } else if (t < 72) {
       Object.assign(s, { px: BX + 12, py: ON_BENCH, right: "rDrink", closed: true, happy: true });
       if (t < 66) s.say = "ごくっ ごくっ";
@@ -754,7 +891,14 @@ const factory = (() => {
     : hour < 11 ? "おはよう！ WARPIX製作所へ ようこそ。\nきょうも ドットを くみたてるよ。"
     : hour < 19 ? "こんにちは！ WARPIX製作所へ ようこそ。\nぼくや ゲンさんを おすと おはなし できるよ。"
     : "こんばんは！ WARPIX製作所へ ようこそ。\nこっちは まだ 晴れてるよ。";
+  const SEASON_LINE = {
+    spring: "さくらが さいたね。\nゲンさんは はなより だんご だって。",
+    summer: "なつだ！ 入道雲が でっかい！",
+    autumn: "あきの 空は たかいね。\nあかとんぼが とんでる。",
+    winter: "ゆきだるま、ぼくが つくったんだ。\nヘルメットも かぶせて あげた。",
+  };
   const LINES = [
+    SEASON_LINE[season],
     "ここでは ドットを ひとつずつ くみたてて、\nせいひんに してるんだ。",
     "ブルーシートの 中は けんせつちゅう。\nなにが できるかは、まだ ひみつ。",
     "このヘルメット、にあう？\nあんぜん だいいち だからね。",
@@ -895,8 +1039,12 @@ const factory = (() => {
       dot(OX + 17, OY + 1 - ((b + 1) % 3), "#ffffff");
     }
     pikuse(s.px, s.py - groove(), { happy: s.happy || n < happyUntil || !!groove(), step: s.step });
-    if (s.carry) rows(BOTTLE, s.px + 6, s.py - 5);
+    if (s.carry) {
+      rows(BOTTLE, s.px + 6, s.py - 5, season === "winter" ? { ...C, a: "#c9a25a" } : C); // 冬は あったかい おちゃ
+      if (season === "winter" && n % 2) dot(s.px + 7 + (n % 4 < 2 ? 0 : 1), s.py - 8, "#ffffff");
+    }
     if (s.laser) line(s.px + 4, s.py + 8, BX + 8, BY - 3, "#3ee8ff");
+    falling(n);
     view.setTransform(1, 0, 0, 1, 0, 0);
 
     // おせる ピクセを 絵の ピクセに あわせる
@@ -1063,5 +1211,5 @@ const factory = (() => {
     reduced: frozen != null,
   };
 
-  return { say, hour, newsReady, lines: LINES, genLines: GEN_LINES, pikuse: PIKUSE, story, frame: () => n, tools };
+  return { say, hour, season, newsReady, lines: LINES, genLines: GEN_LINES, pikuse: PIKUSE, story, frame: () => n, tools };
 })();
