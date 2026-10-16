@@ -1,0 +1,18 @@
+{
+  "news": [
+    {
+      "id": "2026-10-16-home",
+      "date": "2026-10-16",
+      "title": "WARPIX製作所の ホームページが できました",
+      "body": "ドット絵の 町工場、WARPIX製作所の 見取り図です。ピクセが ヘルメットを かぶって まってます。",
+      "url": "https://koki-hq.github.io/warpix/"
+    },
+    {
+      "id": "2026-10-15-link",
+      "date": "2026-10-15",
+      "title": "踏み台リンクアプリ warpix-link を リリースしました",
+      "body": "いつもの 公式サイトへ、ピクセの いる 空間を とおって ワープ。WARPIX製作所の 第一弾です。",
+      "url": "https://koki-hq.github.io/warpix-link/"
+    }
+  ]
+}

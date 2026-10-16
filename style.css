@@ -1,0 +1,581 @@
+/* WARPIX製作所：warpix-link と おなじ 紺・ピンク・シアンの 夜空で、ドットの 町工場 */
+:root {
+  --bg: #0f0b1e;
+  --bg-grid: #1a1433;
+  --fg: #f4f4f4;
+  --accent: #ff4fa3;
+  --accent-2: #3ee8ff;
+  --btn: #2a2150;
+  --btn-hover: #3d2f78;
+  --shadow: #000;
+  --muted: #8a80b8;
+  --gold: #ffd84a;
+  --wall: #1d1740;
+  --muted-hi: #b4acdf; /* ボタンの 地の うえでも 読める うすむらさき */
+  --px: 4px;
+  --w: min(560px, calc(100vw - 32px));
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(var(--bg-grid) 2px, transparent 2px),
+    linear-gradient(90deg, var(--bg-grid) 2px, transparent 2px);
+  background-size: 32px 32px;
+  color: var(--fg);
+  font-family: "DotGothic16", "Press Start 2P", monospace;
+  font-size: 16px;
+  line-height: 1.7;
+  -webkit-font-smoothing: none;
+  overflow-x: hidden;
+}
+
+/* CRT の 走査線 */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom, transparent 0, transparent 2px, rgba(0, 0, 0, 0.22) 3px);
+}
+
+canvas {
+  image-rendering: pixelated;
+}
+
+a {
+  color: var(--accent-2);
+}
+
+:focus-visible {
+  outline: var(--px) solid var(--gold);
+  outline-offset: var(--px);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip {
+  position: absolute;
+  left: 16px;
+  top: -100px;
+  z-index: 30;
+  padding: 8px 12px;
+  background: var(--gold);
+  color: var(--shadow);
+}
+.skip:focus {
+  top: 16px;
+}
+
+main {
+  width: var(--w);
+  margin: 0 auto;
+  padding: 24px 0 8px;
+}
+
+/* ---------- 工場 ---------- */
+.factory {
+  position: relative;
+  padding-top: 72px;
+}
+
+.sky {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 72px;
+  pointer-events: none;
+}
+.ufo {
+  position: absolute;
+  top: 4px;
+  left: -60px;
+  width: 48px;
+  height: 24px;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.ufo.fly {
+  animation: ufo-fly 9s steps(30) forwards;
+}
+@keyframes ufo-fly {
+  from { translate: 0 0; }
+  50% { translate: calc(var(--w) / 2 + 30px) 8px; }
+  to { translate: calc(var(--w) + 120px) 0; }
+}
+
+.rooftop {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 12px;
+}
+
+/* えんとつ（おすと けむりが ぽっ） */
+.chimney {
+  position: relative;
+  width: 32px;
+  height: 56px;
+  margin-bottom: -4px;
+  padding: 0;
+  border: 0;
+  background: var(--btn);
+  box-shadow:
+    0 calc(var(--px) * -1) 0 0 var(--fg),
+    calc(var(--px) * -1) 0 0 0 var(--fg),
+    var(--px) 0 0 0 var(--fg);
+  cursor: pointer;
+}
+.chimney::before {
+  content: "";
+  position: absolute;
+  inset: 8px 8px auto;
+  height: 4px;
+  background: var(--accent);
+}
+.smoke {
+  position: absolute;
+  left: 4px;
+  bottom: 100%;
+  width: 24px;
+  height: 72px;
+  pointer-events: none;
+}
+.smoke i {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  width: 16px;
+  height: 12px;
+  background: var(--muted);
+  opacity: 0;
+}
+.chimney.big .smoke i {
+  background: var(--fg);
+}
+
+.sign {
+  margin: 0 0 8px;
+  padding: 10px 14px 8px;
+  background: var(--shadow);
+  color: var(--accent);
+  font-family: "Press Start 2P", monospace;
+  font-size: clamp(16px, 5vw, 26px);
+  font-weight: normal;
+  line-height: 1;
+  letter-spacing: 1px;
+  text-shadow: 3px 3px 0 var(--btn-hover);
+  box-shadow:
+    0 calc(var(--px) * -1) 0 0 var(--gold),
+    0 var(--px) 0 0 var(--gold),
+    calc(var(--px) * -1) 0 0 0 var(--gold),
+    var(--px) 0 0 0 var(--gold);
+}
+.sign span {
+  margin-left: 6px;
+  color: var(--fg);
+  font-family: "DotGothic16", monospace;
+  font-size: 0.8em;
+  text-shadow: none;
+}
+
+/* のこぎり屋根（JS で ドットに 描く） */
+.roof {
+  height: 40px;
+}
+.roof canvas {
+  display: block;
+  width: 100%;
+  height: 40px;
+}
+
+.building {
+  position: relative;
+  padding: 12px 12px 0;
+  background: var(--wall);
+  box-shadow:
+    calc(var(--px) * -1) 0 0 0 var(--fg),
+    var(--px) 0 0 0 var(--fg);
+}
+
+.floor {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: var(--px) solid var(--btn-hover);
+}
+.floor.ground {
+  border-bottom: 0;
+  margin-bottom: 0;
+}
+
+.room {
+  position: relative;
+  display: grid;
+  grid-template-rows: 56px auto auto;
+  justify-items: center;
+  align-items: center;
+  min-height: 132px;
+  padding: 10px 6px;
+  border: 0;
+  background: var(--btn);
+  color: var(--fg);
+  font: inherit;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow:
+    0 calc(var(--px) * -1) 0 0 var(--fg),
+    0 var(--px) 0 0 var(--fg),
+    calc(var(--px) * -1) 0 0 0 var(--fg),
+    var(--px) 0 0 0 var(--fg),
+    calc(var(--px) * 2) calc(var(--px) * 2) 0 0 var(--shadow);
+}
+.room:hover {
+  background: var(--btn-hover);
+}
+.room:active {
+  translate: var(--px) var(--px);
+  box-shadow:
+    0 calc(var(--px) * -1) 0 0 var(--fg),
+    0 var(--px) 0 0 var(--fg),
+    calc(var(--px) * -1) 0 0 0 var(--fg),
+    var(--px) 0 0 0 var(--fg);
+}
+.room-name {
+  font-family: "Press Start 2P", "DotGothic16", monospace;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.room-name small {
+  display: block;
+  font-family: "DotGothic16", monospace;
+  font-size: 14px;
+}
+.room-state {
+  color: var(--muted-hi);
+  font-size: 13px;
+}
+.room.live .room-state {
+  color: var(--accent-2);
+}
+.lamp {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  background: var(--accent-2);
+}
+.lamp.off {
+  opacity: 0.2;
+}
+
+.machine canvas {
+  display: block;
+  width: 48px;
+  height: 48px;
+}
+
+/* けんせつちゅうの シャッター */
+.soon .shutter {
+  width: 64px;
+  height: 48px;
+  background: repeating-linear-gradient(-45deg, var(--gold) 0 8px, var(--shadow) 8px 16px);
+  box-shadow: 0 var(--px) 0 0 var(--muted);
+}
+.soon .room-name {
+  color: var(--muted-hi);
+}
+
+/* けいじばん：さいしんの おしらせ */
+.board {
+  grid-template-rows: auto 1fr;
+  align-items: start;
+  background: var(--shadow);
+}
+.board .room-name {
+  color: var(--gold);
+  font-family: "DotGothic16", monospace;
+  font-size: 15px;
+}
+.board-latest {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: left;
+}
+.board-latest .new {
+  margin-right: 4px;
+  color: var(--accent);
+}
+
+/* ---------- 中庭：ベルトコンベアと ピクセ ---------- */
+.yard {
+  position: relative;
+  height: 112px;
+  margin: 12px -12px 0;
+  border-top: var(--px) solid var(--fg);
+  border-bottom: var(--px) solid var(--fg);
+  background: var(--bg);
+}
+.belt {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 12px;
+  height: 28px;
+  overflow: hidden;
+  border-top: var(--px) solid var(--muted);
+  border-bottom: var(--px) solid var(--muted);
+}
+.goods {
+  display: flex;
+  gap: 40px;
+  width: max-content;
+  padding: 2px 0 0;
+}
+.goods canvas {
+  width: 16px;
+  height: 16px;
+}
+
+.pikuse {
+  position: absolute;
+  left: 20%;
+  bottom: 40px;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.pikuse.step canvas {
+  translate: 0 -4px;
+}
+.pikuse canvas {
+  display: block;
+  width: 64px;
+  height: 64px;
+}
+.pikuse.left canvas {
+  scale: -1 1;
+}
+.pikuse.hop {
+  animation: hop 0.4s steps(4);
+}
+@keyframes hop {
+  50% { translate: 0 -16px; }
+}
+.pikuse.asleep::after {
+  content: "Zz";
+  position: absolute;
+  top: -10px;
+  right: -12px;
+  color: var(--accent-2);
+  font-family: "Press Start 2P", monospace;
+  font-size: 10px;
+}
+.pikuse.asleep.zz-off::after {
+  visibility: hidden;
+}
+
+.bubble {
+  min-height: 3.6em;
+  margin: 0;
+  padding: 10px 14px;
+  background: var(--fg);
+  color: var(--shadow);
+  white-space: pre-line;
+  box-shadow: 0 var(--px) 0 0 var(--shadow), var(--px) var(--px) 0 0 var(--shadow);
+}
+.bubble:empty {
+  visibility: hidden;
+}
+
+/* ---------- 下の パネル ---------- */
+.panel {
+  margin-top: 40px;
+  padding: 20px;
+  background: var(--btn);
+  box-shadow:
+    0 calc(var(--px) * -1) 0 0 var(--fg),
+    0 var(--px) 0 0 var(--fg),
+    calc(var(--px) * -1) 0 0 0 var(--fg),
+    var(--px) 0 0 0 var(--fg),
+    calc(var(--px) * 2) calc(var(--px) * 2) 0 0 var(--shadow);
+  scroll-margin-top: 16px;
+}
+.panel:focus {
+  outline: none;
+}
+.panel h2 {
+  margin: 0 0 12px;
+  color: var(--accent);
+  font-size: 20px;
+  font-weight: normal;
+}
+.panel h3 {
+  margin: 20px 0 4px;
+  color: var(--accent-2);
+  font-size: 16px;
+  font-weight: normal;
+}
+.panel p {
+  margin: 0 0 8px;
+}
+
+.products,
+.news {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.products li + li,
+.news li + li {
+  margin-top: 12px;
+}
+.products a,
+.p-soon {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 8px;
+  padding: 12px;
+  background: var(--bg);
+  color: var(--fg);
+  text-decoration: none;
+}
+.products a:hover {
+  background: var(--btn-hover);
+}
+.p-name {
+  font-family: "Press Start 2P", monospace;
+  font-size: 13px;
+}
+.p-state {
+  color: var(--accent-2);
+  font-size: 13px;
+}
+.p-soon .p-state,
+.p-soon .p-name {
+  color: var(--muted);
+}
+.p-desc {
+  grid-column: 1 / -1;
+  font-size: 14px;
+}
+
+.news li {
+  padding: 12px;
+  background: var(--bg);
+}
+.news time {
+  color: var(--muted);
+  font-size: 13px;
+}
+.news .n-title {
+  display: block;
+  color: var(--fg);
+  font-size: 16px;
+}
+.news .n-body {
+  margin: 4px 0 0;
+  font-size: 14px;
+}
+.news .n-new {
+  margin-left: 6px;
+  color: var(--accent);
+  font-size: 12px;
+}
+
+.profile {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+}
+.portrait {
+  width: 96px;
+  height: 96px;
+  background: var(--bg);
+}
+.profile dl {
+  flex: 1 1 220px;
+  margin: 0;
+}
+.profile dt {
+  color: var(--accent-2);
+  font-size: 13px;
+}
+.profile dd {
+  margin: 0 0 8px;
+}
+
+footer {
+  width: var(--w);
+  margin: 32px auto 0;
+  padding: 0 0 32px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+footer p {
+  margin: 4px 0;
+}
+footer a {
+  color: var(--muted);
+}
+
+/* よる（19〜6 時）：まどに あかりが ともる */
+.night .room.live,
+.night .room[data-room="pikuse"] {
+  box-shadow:
+    0 calc(var(--px) * -1) 0 0 var(--fg),
+    0 var(--px) 0 0 var(--fg),
+    calc(var(--px) * -1) 0 0 0 var(--fg),
+    var(--px) 0 0 0 var(--fg),
+    calc(var(--px) * 2) calc(var(--px) * 2) 0 0 var(--shadow),
+    0 0 0 calc(var(--px) * 2) var(--btn-hover);
+}
+
+/* 動きを へらす せってい */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .smoke i {
+    opacity: 0.5;
+  }
+  .smoke i:nth-child(n + 2) {
+    display: none;
+  }
+}
