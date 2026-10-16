@@ -32,6 +32,9 @@ export default {
     t.ok(await p.ev(`[...document.querySelectorAll(".hot")].length === 5 && [...document.querySelectorAll(".hot")].filter((b) => !b.hidden).every((b) => b.tabIndex === 0 && b.getAttribute("aria-label"))`), "おせる ところに Tab で いけない・名前が ない");
     t.eq(await p.ev(`[...document.querySelectorAll(".guide a")].map((a) => a.getAttribute("href"))`), ["#products", "#news", "#nakama", "#about"], "工場あんない");
     t.eq(await p.ev(`document.querySelector('#products a').href`), "https://koki-hq.github.io/warpix-link/", "warpix-link への リンク");
+    // せいひん 展示室：warpix-link の 絵（説明つき）、ひらく ボタン、コード
+    t.ok(await p.ev(`(() => { const ex = document.querySelector("#products .exhibit"); return ex.querySelector("img").alt.includes("warpix-link") && ex.querySelector(".ex-go").href === "https://koki-hq.github.io/warpix-link/" && ex.querySelector(".ex-src").href.startsWith("https://github.com/koki-hq/warpix-link"); })()`), "展示室の warpix-link が たりない");
+    t.ok((await p.ev(`document.getElementById("products").textContent`)).includes("いつもの 公式サイトへ、ピクセの いる 空間を とおって ワープする 踏み台リンクアプリ。"), "製品の ひとことが きえた");
     // じむしょの 芯の ことば（デザインが かわっても のこす）
     t.ok((await p.ev(`document.getElementById("about").textContent`)).includes("ドット絵と チップチューンの 世界"), "じむしょの 説明から 芯の ことばが きえた");
     // なかま図鑑：キャラクターの 絵が 描かれている

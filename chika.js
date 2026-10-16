@@ -180,6 +180,7 @@ const chika = (() => {
       if (!hits(1, y - 1, w + 2, 8, 1)) {
         rect(1, y - 1, w + 1, 8, "rgba(0,0,0,0.35)");
         text(label, 2, y + 1, i < 2 ? "#ffe9c8" : "#9fe3ff");
+        busy.push({ x: 1, y: y - 1, w: w + 1, h: 8 }); // めもりの うえには なにも おかない
       }
     });
 

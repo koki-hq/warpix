@@ -28,6 +28,8 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 - ラジカセ：おすと チップチューン（`radio.js`、v1.3）
 - 地下の なぞ：生き物が こたえる、石板の かけら 5 つで 石の ピクセ像の 伝説（v1.4）
 - 季節の 服：月で 春・夏・秋・冬に 着がえる（v1.5）。`?month=1〜12` で ためす。どの 季節も 晴れ
+- せいひん 展示室：warpix-link の 紹介（v1.6、第一版。中身は ユーザーと 育てる）。warpix-link の 機能が かわったら ここも 見なおす
+- 健康診断の 数字は、別の ウィンドウが 重い ときに 悪く でる（パソコン全体の CPU も 見て 書く）
 - テストで 地下の ボタンへ スクロールする ときは `behavior: "instant"`（ページは なめらかスクロール なので、まにあわない）
 - なかま図鑑：5 種族・14 人。キャラの 数・種類・分類は 自由に ふやして いい（ユーザー公認）
 - くわしくは **`docs/THEME.md`**（世界観）と **`docs/spec/v1.2.md`**（仕様）。かならず 読んでから 作業する
@@ -63,7 +65,7 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 - 健康診断：`node tools/health.mjs`（重さ・スマホでの 速さ・待機中 CPU・axe）。**公開の 前に テストと 健康診断を 両方**
 - 時刻を ためす：`?hour=0〜23`（あいさつと 時計塔）。お話の コマを とめる：`?t=0〜95`
 - favicon は `node tools/favicon.mjs`（`factory.js` の ピクセから 作る）
-- 公開：`main` に push すると GitHub Pages に 出る。タグ `vX.Y`（いまは `v1.5`）と 仕様メモを セットで。公開後は 本番の URL で 変わった ことを 確かめる
+- 公開：`main` に push すると GitHub Pages に 出る。タグ `vX.Y`（いまは `v1.6`）と 仕様メモを セットで。公開後は 本番の URL で 変わった ことを 確かめる
   - Pages の 公開が「waiting」で 止まる ことが ある → `gh api -X POST repos/koki-hq/warpix/pages/builds` で 頼みなおすと 通る
 - コミット：git の メールは noreply 設定ずみ。メッセージの 最後に `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`
 
