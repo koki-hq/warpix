@@ -189,6 +189,54 @@ footer {
   position: relative;
   z-index: 1;
 }
+/* パネルの あいだの すきまは、地下の ボタンまで クリックが とどく */
+main,
+.cols,
+.hollow {
+  pointer-events: none;
+}
+main > *,
+.cols > * {
+  pointer-events: auto;
+}
+main > .cols,
+main > .hollow {
+  pointer-events: none;
+}
+.ug-hot {
+  position: absolute;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.ug-hot[hidden] {
+  display: none;
+}
+/* 地下の ことばの まど */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  z-index: 40;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  margin: 0;
+  padding: 10px 16px;
+  translate: -50% 0;
+  background: #2a2033;
+  color: #efe6d6;
+  font-size: 15px;
+  line-height: 1.6;
+  white-space: pre-line;
+  box-shadow: 0 0 0 3px #5ff0ff, 0 0 0 5px #140f1a;
+}
+.toast:empty {
+  display: none;
+}
 /* パネルの あいだの 空洞（ここに 地下の 生き物や 遺跡が 見える） */
 .hollow {
   height: 150px;

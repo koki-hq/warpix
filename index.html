@@ -34,8 +34,6 @@
     <p class="sr-only" id="bubble" role="status" aria-live="polite"></p>
   </header>
 
-  <!-- 地面の 下の 世界（スクロールする ほど ふかく もぐる） -->
-  <div class="underground" aria-hidden="true"><canvas></canvas></div>
 
   <main>
     <div class="topbar">
@@ -202,6 +200,10 @@
     <p>© 2026 WARPIX製作所</p>
     <p>このページの すべての 権利は WARPIX製作所に あります。</p>
   </footer>
+
+  <!-- 地面の 下の 世界（スクロールする ほど ふかく もぐる）。生き物と 石板の かけらは おせる -->
+  <div class="underground"><canvas aria-hidden="true"></canvas></div>
+  <p class="toast" id="toast" role="status" aria-live="polite"></p>
 
   <script src="radio.js"></script>
   <script src="factory.js"></script>

@@ -3,7 +3,8 @@
 // 表土 → 粘土（化石・うまった 道具）→ 洞窟（水晶・地底湖）→ 古代文明 → 最深部（マグマ・ホタルミミズ）。
 // 景色は 1 回だけ 描いて おき、工場の とけいで、見えている 生き物 だけを 描きなおす。
 // パネルの まわりは 坑道の 木わくで ささえた「ほった 部屋」。生き物や 遺跡は パネルに かくれない すきまに おく。
-(() => {
+// 生き物を おすと こたえる。地層ごとに 石板の かけらが 1 つ。5 つ あつめると 石の ピクセ像の 伝説が わかる。
+const chika = (() => {
   const T = factory.tools;
   const { rect, dot, rows, disc, oval, line, seeded } = T;
   const wrap = document.querySelector(".underground");
@@ -78,6 +79,24 @@
   const TOMOSHIBI = ["..ooo..", ".ohhho.", "ohhhhho", "ohyhyho", "ohhhhho", ".ohhho.", ".ohhho.", "ohhhhho", ".o...o."];
   const TOMO = { o: "#1c1626", h: "#6a4fa0", y: "#ffd84a" };
   const STONE = { o: "#3a3540", w: "#9a96a0", p: "#7f7a86", c: "#5ff0ff", y: "#b3aeb8" }; // 石の ピクセ像
+
+  // ---------- 地下の なぞ（その場かぎり。ブラウザには 保存しない） ----------
+  const FRAG = [".oooo...", "oSSSSo..", "oScSSSo.", "oSSScSSo", ".oSSSSSo", "..oSScSo", "...oooo."];
+  const LEGEND = "『むかし、ちていの やみに、ドットの こびとが うまれた。\nこびとは トモシビ族に あかりの つくりかたを おしえ、\nやがて ひかりを もとめて、そらへ のぼっていった。\nいつか ちじょうで、ものを つくる ために。』";
+  const found = new Set(); // みつけた 石板の かけら（地層の 番号）
+  let legend = false;
+  let hotspots = []; // { x, y, w, h, label, click, gone }
+  let flashUntil = 0;
+  let now = 0;
+  const hot = (x, y, w, h, label, click, gone) => hotspots.push({ x, y, w, h, label, click, gone });
+  // ことばは 画面の 下の まど（.toast）に。読み上げも する
+  const toast = document.getElementById("toast");
+  let toastTimer = 0;
+  function say(text) {
+    toast.textContent = text;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => (toast.textContent = ""), 4000 + text.length * 60);
+  }
 
   // ---------- 置く 場所を さがす（パネルに かからない ところ） ----------
   let busy = [];
@@ -194,18 +213,22 @@
     // ===== 古代文明：岩の 町・神殿・石の ピクセ像 =====
     for (let i = 0; i < 2; i++) houses(rnd);
     temple(rnd);
-    const st = spot(18, 22, band(3), rnd);
+    const st = spot(18, 22, band(3), rnd) ?? spot(18, 22, [Y.deepTop, Y.deepBottom], rnd);
     if (st) {
       rect(st.x, st.y + 16, 18, 6, "#56505e");
       rect(st.x, st.y + 16, 18, 1, "#76707e");
       rows(T.PIKUSE, st.x + 1, st.y, STONE);
       dot(st.x + 4, st.y + 6, "#5f9a5a"); // こけ
       dot(st.x + 12, st.y + 12, "#5f9a5a");
-      movers.push({ x: st.x + 4, y: st.y + 7, w: 9, h: 2, draw: (n) => {
-        const on = n % 20 < 3; // ときどき 目が 光る
+      movers.push({ x: st.x, y: st.y - 4, w: 18, h: 12, draw: (n) => {
+        const on = legend || n % 20 < 3; // ときどき 目が 光る（伝説が わかったら ずっと）
         dot(st.x + 5, st.y + 7, on ? "#5ff0ff" : STONE.w);
         dot(st.x + 11, st.y + 7, on ? "#5ff0ff" : STONE.w);
+        if (legend && n % 4 < 2) for (const [dx, dy] of [[1, -2], [16, 0], [8, -4]]) dot(st.x + dx, st.y + dy, "#bff8ff");
       } });
+      hot(st.x, st.y, 18, 22, "石の ピクセ像", () =>
+        legend ? say(LEGEND) : say(`石の ピクセ像。足もとに「はじまりの……」と ほってある。\nのこりは けずれて よめない。（石板の かけら ${found.size}／5）`)
+      );
     }
     for (let i = 0; i < 2; i++) gear(rnd);
     // ===== 最深部：ホタルミミズの トンネル と マグマ =====
@@ -221,7 +244,9 @@
     // ミミズ
     for (let i = 0; i < 2; i++) {
       const s = spot(14, 6, band(0), rnd);
-      if (s) movers.push({ x: s.x, y: s.y, w: 14, h: 6, draw: (n) => earthworm(n + i * 3, s.x, s.y) });
+      if (!s) continue;
+      movers.push({ x: s.x, y: s.y, w: 14, h: 6, draw: (n) => earthworm(n + i * 3, s.x, s.y) });
+      hot(s.x, s.y, 14, 6, "ミミズ", () => say("にょろにょろ。\n（ミミズは 土を ふかふかに する はたらきもの）"));
     }
     // ホリマル（ドリルで ほる）
     const h1 = spot(22, 10, band(1), rnd);
@@ -232,6 +257,9 @@
         rows(HORIMARU, x, h1.y, n % 2 ? HORI : { ...HORI, m: HORI.M, M: HORI.m });
         if (n % 3 !== 0) for (const [dx, dy] of [[15, 2], [17, 5], [16, 7]]) dot(x + dx + (n % 2), h1.y + dy, "#c99a6a");
       } });
+      const HORI_LINES = ["ホリマル「ほりほり……カセット みつけた！\nこれ、ぼくの たからもの。」", "ホリマル「ドリルは まいにち みがいてるよ。」", "ホリマル「もっと したに、ひかる まちが あるんだって。」"];
+      let k = 0;
+      hot(h1.x, h1.y, 22, 10, "ホリマル", () => say(HORI_LINES[k++ % HORI_LINES.length]));
     }
     // 地底湖と 滝と スイショウクラゲ
     const lake = spot(46, 36, [Y.caveTop, Y.caveBottom], rnd);
@@ -247,12 +275,18 @@
         for (let y = lake.y + 3; y < py; y++) rect(lake.x + 35, y, 4, 1, (y + n) % 4 < 2 ? "#9fe3ff" : "#5fb8d8");
         for (const dx of [-2, 4, 6]) dot(lake.x + 35 + dx, py - 1 - ((n + dx) % 3), "#bff8ff");
         // クラゲ
+        const bright = n < flashUntil;
         for (const [k, dx] of [[0, 6], [5, 20]]) {
           const yy = lake.y + 10 + (Math.floor((n + k) / 4) % 3);
-          rows(JELLY, lake.x + dx, yy, JEL);
+          if (bright) disc(lake.x + dx + 4, yy + 3, 6, "rgba(127,240,255,0.35)");
+          rows(JELLY, lake.x + dx, yy, bright ? { ...JEL, c: "#ffffff", C: "#7ff0ff" } : JEL);
           rows(JELLY_LEGS[(n + k) % 2], lake.x + dx, yy + 5, JEL);
         }
       } });
+      hot(lake.x, lake.y + 8, 32, 20, "スイショウクラゲ", () => {
+        flashUntil = now + 8;
+        say("スイショウクラゲが ぱあっと ひかった。\nふわ〜ん（ほんのり つめたい）");
+      });
     }
     // 空洞の 大きな 水晶
     for (let i = 0; i < 3; i++) bigCrystal(rnd, [Y.caveTop, Y.caveBottom]);
@@ -278,7 +312,31 @@
         dot(lx, s.y + 1, "#1c1626");
         rect(lx - 1, s.y + 2, 3, 3, n % 3 ? "#ffb347" : "#ffd84a");
       } });
+      hot(s.x, s.y - 2, 30, 12, "トモシビ族", () =>
+        say(i === 0 ? "トモシビ族「……ようこそ、ちじょうの ひと。\nここは ひかりの まち。」" : "トモシビ族「石板の かけらを 5 つ あつめて、\nはじまりの 像に みせて ごらん。」")
+      );
     }
+    // ===== 石板の かけら（地層ごとに 1 つ。パネルに かくれない ところ、なければ 空洞へ） =====
+    LAYERS.forEach((L, i) => {
+      const s = spot(8, 7, band(i), rnd) ?? spot(8, 7, [Y.caveTop, Y.caveBottom], rnd) ?? spot(8, 7, [Y.deepTop, Y.deepBottom], rnd);
+      if (!s) return;
+      movers.push({ x: s.x - 1, y: s.y - 2, w: 10, h: 9, draw: (n) => {
+        if (found.has(i)) return;
+        rows(FRAG, s.x, s.y, { o: "#2a2033", S: "#8a8494", c: n % 6 < 3 ? "#5ff0ff" : "#2aa9c4" });
+        if ((n + i * 5) % 14 < 2) dot(s.x + 6, s.y - 1, "#ffffff");
+      } });
+      hot(s.x - 1, s.y - 1, 10, 9, `石板の かけら（${L.depth === "????" ? "最深部" : `ちか ${L.depth}m`}）`, (btn) => {
+        found.add(i);
+        btn.hidden = true;
+        step(now, true);
+        if (found.size < 5) say(`石板の かけらを みつけた！（${found.size}／5）`);
+        else {
+          legend = true;
+          say(`石板の かけらが 5 つ そろった！\n${LEGEND}`);
+          document.dispatchEvent(new CustomEvent("warpix:legend"));
+        }
+      }, () => found.has(i));
+    });
   }
 
   function put(art, map, range, rnd) {
@@ -393,6 +451,9 @@
       disc(s.x + 27, s.y + 4, 1, "#1c1626");
       rect(s.x + 26, s.y + 9, 2, 9, lit ? "#5ff0ff" : "#2aa9c4");
     } });
+    hot(s.x + 10, s.y, 34, 32, "ひかる 目の 神殿", () =>
+      say(legend ? "神殿の 目が、やさしく まばたきした。" : "神殿の 目が、じっと こっちを 見ている……\n古代文字は まだ よめない。")
+    );
   }
   function gear(rnd) {
     const s = spot(19, 19, band(3), rnd);
@@ -487,24 +548,41 @@
     LAYERS[3].y = Math.min(Y.deepTop - 10, Y.nakamaTop + (Y.nakamaBottom - Y.nakamaTop) * 0.6);
     LAYERS[4].y = Y.deepTop + (Y.deepBottom - Y.deepTop) * 0.62;
     movers = [];
+    hotspots = [];
     T.use(ctx);
     paint();
     base = T.paper(() => {}, W, H);
     base.getContext("2d").drawImage(canvas, 0, 0);
     for (const m of movers) {
       T.use(ctx);
-      m.draw(0);
+      m.draw(now);
+    }
+    // おせる ところ（すきとおった ボタンを 絵に かさねる）
+    wrap.querySelectorAll(".ug-hot").forEach((b) => b.remove());
+    for (const h of hotspots) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "ug-hot";
+      b.setAttribute("aria-label", h.label);
+      b.style.left = `${h.x * scale + left}px`;
+      b.style.top = `${h.y * scale}px`;
+      b.style.width = `${h.w * scale}px`;
+      b.style.height = `${h.h * scale}px`;
+      b.hidden = h.gone?.() ?? false;
+      b.addEventListener("click", () => h.click(b));
+      wrap.append(b);
     }
   }
 
-  // 見えている うごく もの だけ、景色を もどしてから 1 コマ 描く
-  function step(n) {
+  // 見えている うごく もの だけ、景色を もどしてから 1 コマ 描く（all なら ぜんぶ）
+  function step(n, all = false) {
     if (!base) return;
+    now = n;
     const y0 = (scrollY - top) / scale - 20;
     const y1 = y0 + innerHeight / scale + 40;
     T.use(ctx);
     for (const m of movers) {
-      if (m.y + m.h < y0 || m.y > y1) continue;
+      if (!all && (m.y + m.h < y0 || m.y > y1)) continue;
       ctx.drawImage(base, m.x, m.y, m.w, m.h, m.x, m.y, m.w, m.h);
       m.draw(n);
     }
@@ -550,4 +628,6 @@
   document.fonts?.ready.then(later);
   build();
   if (!T.reduced) T.onTick(step);
+
+  return { found: () => found.size, legend: () => legend };
 })();

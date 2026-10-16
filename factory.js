@@ -784,8 +784,16 @@ const factory = (() => {
   const signEl = scene.querySelector(".sign");
   let happyUntil = 0;
   let puffs = 0;
+  // 地下で 石板の 伝説が わかったら、ピクセは つぎに おされた とき ちょっと しんみり
+  let remember = false;
+  document.addEventListener("warpix:legend", () => (remember = true));
   pikuseBtn.addEventListener("click", () => {
     happyUntil = n + 6;
+    if (remember) {
+      remember = false;
+      say("……地下の 石板？\nなんだか、なつかしい かんじが する。");
+      return;
+    }
     say(LINES[lineIndex++ % LINES.length]);
   });
   ojiBtn.addEventListener("click", () => say(GEN_LINES[genIndex++ % GEN_LINES.length], "o"));

@@ -107,6 +107,41 @@ export default {
     await server.close();
   },
 
+  async "地下の なぞ：生き物が こたえ、石板の かけらを 5 つ あつめると 伝説。ピクセも おぼえている"(t) {
+    for (const size of [{ width: 1280, height: 900 }, { mobile: [390, 844] }]) {
+      const { server, p } = await open(t, "?hour=14", size.mobile ? { mobile: size.mobile } : { size });
+      await t.sleep(800);
+      const frags = await p.ev(`[...document.querySelectorAll(".ug-hot")].filter((b) => b.getAttribute("aria-label").startsWith("石板")).length`);
+      t.eq(frags, 5, `石板の かけらが 5 つ ない（${size.width ?? "スマホ"}）`);
+      const toast = () => p.ev(`document.getElementById("toast").textContent`);
+      for (let i = 0; i < 5; i++) {
+        // パネルの あいだの すきまを とおして、ほんとうに クリックが とどく
+        await p.ev(`document.querySelectorAll(".ug-hot:not([hidden])")[0] && [...document.querySelectorAll(".ug-hot")].find((b) => !b.hidden && b.getAttribute("aria-label").startsWith("石板")).scrollIntoView({ block: "center", behavior: "instant" })`);
+        await t.sleep(100);
+        await p.click(`.ug-hot[aria-label^="石板"]:not([hidden])`);
+        if (i < 4) t.ok((await toast()).includes(`（${i + 1}／5）`), `かけら ${i + 1}: ${await toast()}`);
+      }
+      t.ok((await toast()).includes("そらへ のぼっていった") && (await p.ev(`chika.legend()`)), `伝説が でない: ${await toast()}`);
+      t.eq(await p.ev(`document.querySelectorAll('.ug-hot[aria-label^="石板"]:not([hidden])').length`), 0, "あつめた かけらが のこっている");
+      t.ok(await p.ev(`!!document.querySelector('.ug-hot[aria-label="石の ピクセ像"]')`), "石の ピクセ像が ない");
+      await p.ev(`scrollTo({ top: 0, behavior: "instant" })`);
+      await t.sleep(100);
+      await p.click("#pikuse-btn");
+      t.ok((await said(p)).includes("なつかしい"), `ピクセが 伝説を おぼえていない: ${await said(p)}`);
+      t.noErrors(p);
+      await server.close();
+      await t.closeAll();
+    }
+    const { server, p } = await open(t, "?hour=14", { size: { width: 1280, height: 900 } });
+    await t.sleep(800);
+    await p.ev(`document.querySelector('.ug-hot[aria-label="スイショウクラゲ"]').scrollIntoView({ block: "center", behavior: "instant" })`);
+    await t.sleep(100);
+    await p.click(`.ug-hot[aria-label="スイショウクラゲ"]`);
+    t.ok((await p.ev(`document.getElementById("toast").textContent`)).includes("ひかった"), "クラゲが こたえない");
+    t.noErrors(p);
+    await server.close();
+  },
+
   async "えんとつを おすと ぽっぽー、10 かいで けほっ"(t) {
     const { server, p } = await open(t);
     await p.click(".hot.chimney");
