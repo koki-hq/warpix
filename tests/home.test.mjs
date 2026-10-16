@@ -117,6 +117,13 @@ export default {
       const frags = await p.ev(`[...document.querySelectorAll(".ug-hot")].filter((b) => b.getAttribute("aria-label").startsWith("石板")).length`);
       t.eq(frags, 5, `石板の かけらが 5 つ ない（${size.width ?? "スマホ"}）`);
       const toast = () => p.ev(`document.getElementById("toast").textContent`);
+      // はじまりの とびらは まだ とじている
+      const door = `.ug-hot[aria-label="はじまりの とびら"]`;
+      t.ok(await p.ev(`!!document.querySelector('${door}')`), "はじまりの とびらが ない");
+      await p.ev(`document.querySelector('${door}').scrollIntoView({ block: "center", behavior: "instant" })`);
+      await t.sleep(100);
+      await p.click(door);
+      t.ok((await toast()).includes("石の とびら") && !(await p.ev(`chika.open()`)), `とびらが こたえない・はじめから ひらいている: ${await toast()}`);
       for (let i = 0; i < 5; i++) {
         // パネルの あいだの すきまを とおして、ほんとうに クリックが とどく
         await p.ev(`document.querySelectorAll(".ug-hot:not([hidden])")[0] && [...document.querySelectorAll(".ug-hot")].find((b) => !b.hidden && b.getAttribute("aria-label").startsWith("石板")).scrollIntoView({ block: "center", behavior: "instant" })`);
@@ -127,6 +134,13 @@ export default {
       t.ok((await toast()).includes("そらへ のぼっていった") && (await p.ev(`chika.legend()`)), `伝説が でない: ${await toast()}`);
       t.eq(await p.ev(`document.querySelectorAll('.ug-hot[aria-label^="石板"]:not([hidden])').length`), 0, "あつめた かけらが のこっている");
       t.ok(await p.ev(`!!document.querySelector('.ug-hot[aria-label="石の ピクセ像"]')`), "石の ピクセ像が ない");
+      // 伝説の あとは とびらが ひらき、ドットの 核に なる
+      t.ok((await toast()).includes("とびらが ひらく 音") && (await p.ev(`chika.open()`)), "とびらが ひらかない");
+      const coreSel = `.ug-hot[aria-label^="ドットの 核"]`;
+      await p.ev(`document.querySelector('${coreSel}').scrollIntoView({ block: "center", behavior: "instant" })`);
+      await t.sleep(100);
+      await p.click(coreSel);
+      t.ok((await toast()).includes("うまれた"), `ドットの 核が こたえない: ${await toast()}`);
       await p.ev(`scrollTo({ top: 0, behavior: "instant" })`);
       await t.sleep(100);
       await p.click("#pikuse-btn");

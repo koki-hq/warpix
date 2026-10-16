@@ -244,6 +244,11 @@ main > .hollow {
 .hollow.deep {
   height: 260px;
 }
+.hollow.core {
+  position: relative;
+  height: 320px;
+  pointer-events: none;
+}
 
 /* 工場見学ツアー */
 .tour-btn {

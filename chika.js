@@ -24,6 +24,7 @@ const chika = (() => {
     { y: 0, color: "#5e4a48", dark: "#4f3e3d", light: "#72605d", depth: "800" }, // 岩・洞窟
     { y: 0, color: "#3b3047", dark: "#30273b", light: "#4c3f5a", depth: "3000" }, // 古代文明
     { y: 0, color: "#2a2033", dark: "#211a29", light: "#3a2c40", depth: "????" }, // 最深部
+    { y: 0, color: "#170f1f", dark: "#100a16", light: "#2a1d36", depth: "?????" }, // はじまりの 場所
   ];
   // 地層の さかいめは、パネルや 空洞の 場所に あわせて build() が きめる（LAYERS[i].y）
   const boundary = (i, x) => Math.round(LAYERS[i].y + (i ? 3 * Math.sin(x / 13 + i * 2) + 2 * Math.sin(x / 5 + i) : 0));
@@ -85,6 +86,8 @@ const chika = (() => {
   const LEGEND = "『むかし、ちていの やみに、ドットの こびとが うまれた。\nこびとは トモシビ族に あかりの つくりかたを おしえ、\nやがて ひかりを もとめて、そらへ のぼっていった。\nいつか ちじょうで、ものを つくる ために。』";
   const found = new Set(); // みつけた 石板の かけら（地層の 番号）
   let legend = false;
+  let openedAt = -1; // はじまりの とびらが ひらいた コマ
+  let coreBtn = null;
   let hotspots = []; // { x, y, w, h, label, click, gone }
   let flashUntil = 0;
   let now = 0;
@@ -238,8 +241,9 @@ const chika = (() => {
     rect(0, ty + 9, W, 1, "#3a2c40");
     for (let x = 0; x < W; x += 8) dot(x, ty + 8, "#4c3f5a");
     movers.push({ x: 0, y: ty, w: W, h: 9, draw: (n) => worm(n, ty) });
-    const my = Math.round(Y.deepBottom + (H - Y.deepBottom) * 0.5);
-    movers.push({ x: 0, y: my, w: W, h: H - my, draw: (n) => magma(n, my) });
+    const my = Math.round(Y.deepBottom + (Y.coreTop - Y.deepBottom) * 0.5);
+    movers.push({ x: 0, y: my - 4, w: W, h: 10, draw: (n) => magma(n, my) });
+    core(rnd);
 
     // ===== うごく 生き物 =====
     // ミミズ
@@ -318,7 +322,7 @@ const chika = (() => {
       );
     }
     // ===== 石板の かけら（地層ごとに 1 つ。パネルに かくれない ところ、なければ 空洞へ） =====
-    LAYERS.forEach((L, i) => {
+    LAYERS.slice(0, 5).forEach((L, i) => {
       const s = spot(8, 7, band(i), rnd) ?? spot(8, 7, [Y.caveTop, Y.caveBottom], rnd) ?? spot(8, 7, [Y.deepTop, Y.deepBottom], rnd);
       if (!s) return;
       movers.push({ x: s.x - 1, y: s.y - 2, w: 10, h: 9, draw: (n) => {
@@ -333,11 +337,91 @@ const chika = (() => {
         if (found.size < 5) say(`石板の かけらを みつけた！（${found.size}／5）`);
         else {
           legend = true;
-          say(`石板の かけらが 5 つ そろった！\n${LEGEND}`);
+          openedAt = now;
+          say(`石板の かけらが 5 つ そろった！\n${LEGEND}\n……どこか ふかい ところで、おもい とびらが ひらく 音が した。`);
+          coreBtn?.setAttribute("aria-label", "ドットの 核（はじまりの 場所）");
           document.dispatchEvent(new CustomEvent("warpix:legend"));
         }
       }, () => found.has(i));
     });
+  }
+
+  // ===== はじまりの 場所（いちばん 下の さらに 下） =====
+  // ふだんは 石の とびらで とじている。伝説が わかると とびらが ひらき、
+  // ドットの 海と、脈うつ「ドットの 核」と、うまれたての ちびピクセたちが 見える
+  const BABY = ["...pp...", "...ww...", "..oooo..", ".owwwwo.", "owcwwcwo", "owpwwpwo", ".owwwwo.", "..o..o.."];
+  function core(rnd) {
+    const cx = Math.round(W / 2);
+    const cy = Math.round((Y.coreTop + Y.coreBottom) / 2);
+    const a = Math.min(Math.round(W / 2) - 6, 96);
+    const b = Math.max(20, Math.round((Y.coreBottom - Y.coreTop) / 2) - 8);
+    // 部屋の ふち（ごつごつした 岩）
+    oval(cx, cy, a + 4, b + 4, "#2a1d36");
+    for (let i = 0; i < 40; i++) {
+      const t = (i / 40) * Math.PI * 2;
+      disc(cx + Math.round(Math.cos(t) * (a + 3)), cy + Math.round(Math.sin(t) * (b + 3)), 1 + Math.floor(rnd() * 2), "#3a2a48");
+    }
+    oval(cx, cy, a, b, "#0b0712");
+    const dots = Array.from({ length: Math.round(a * 1.4) }, (_, i) => ({ x: Math.round((rnd() - 0.5) * a * 1.6), y: Math.round(rnd() * b * 2), v: 0.3 + rnd() * 0.5, c: i % 4 }));
+    const babies = [[-a * 0.6, 0.2], [a * 0.55, 0.5], [-a * 0.3, 0.75], [a * 0.3, 0.05], [-a * 0.8, 0.6], [a * 0.75, 0.9]];
+    const box = { x: cx - a - 1, y: cy - b - 1, w: a * 2 + 3, h: b * 2 + 3 };
+    movers.push({ ...box, draw: (n) => {
+      const open = openedAt < 0 ? 0 : Math.min(1, (n - openedAt) / 10); // 10 コマで ひらく
+      // ドットの 海（下から 上へ のぼっていく）
+      const COLORS = ["#ff8fb8", "#3ee8ff", "#ffd84a", "#ffffff"];
+      for (const d of dots) {
+        const y = cy + b - ((d.y + n * d.v) % (b * 2));
+        const half = a * Math.sqrt(Math.max(0, 1 - ((y - cy) / b) ** 2)) - 2;
+        if (Math.abs(d.x) > half) continue;
+        dot(cx + d.x + Math.round(Math.sin((n + d.y) / 6)), Math.round(y), COLORS[d.c]);
+      }
+      // ドットの 核（ひし形が 脈うつ。まわりに 光の わ）
+      const r = Math.min(16, b - 6) + (n % 4 < 2 ? 1 : 0);
+      disc(cx, cy, r + 10, "rgba(62,232,255,0.07)");
+      disc(cx, cy, r + 5, "rgba(255,143,184,0.10)");
+      for (let k = r; k > 0; k -= 3) {
+        const c = ["#3ee8ff", "#ff8fb8", "#ffd84a", "#ffffff"][(Math.floor(k / 3) + n) % 4];
+        for (let y = -k; y <= k; y++) rect(cx - (k - Math.abs(y)), cy + y, (k - Math.abs(y)) * 2 + 1, 1, c);
+      }
+      // うまれたての ちびピクセ（ぷかぷか のぼる）
+      babies.forEach(([dx, ph], i) => {
+        const y = cy + b - 10 - (((ph * b * 2 + n * 0.6) | 0) % (b * 2 - 12));
+        rows(BABY, Math.round(cx + dx - 4), Math.round(y + Math.sin((n + i * 7) / 4)), T.PIKU);
+      });
+      // 石の とびら（ひらく ときは 左右に すべる）
+      if (open < 1) {
+        const slide = Math.round(open * a);
+        for (const side of [-1, 1]) {
+          const x0 = side < 0 ? cx - a - slide : cx + slide;
+          g2(() => {
+            rect(x0, cy - b, a, b * 2 + 1, "#4a3d58");
+            for (let y = cy - b + 4; y < cy + b; y += 8) rect(x0, y, a, 1, "#3a2f47");
+            rect(side < 0 ? x0 + a - 2 : x0, cy - b, 2, b * 2 + 1, "#2a2033");
+            // 石板と おなじ もよう（光る 古代文字）
+            const gx = side < 0 ? x0 + a - 14 : x0 + 6;
+            rows(FRAG, gx, cy - 4, { o: "#2a2033", S: "#6a5d78", c: n % 6 < 3 ? "#5ff0ff" : "#2aa9c4" });
+          }, box);
+        }
+      }
+    } });
+    coreHot = { x: cx - a, y: cy - b, w: a * 2, h: b * 2 };
+    hot(coreHot.x, coreHot.y, coreHot.w, coreHot.h, legend ? "ドットの 核（はじまりの 場所）" : "はじまりの とびら", (btn) => {
+      coreBtn = btn;
+      if (!legend) return say(`おもい 石の とびら。石板と おなじ もようが ほってある。\n（石板の かけら ${found.size}／5）`);
+      const LINES = ["ドットの 核。ぽかぽか あたたかい。\nピクセ族は、ここで うまれたのかも しれない。", "ちびピクセ「ぴ！」\n（うまれたての ちびピクセが、うえへ のぼっていった）", "ドットの 海が、ピンク・水色・黄色に ひかっている。\nどこかで 見た 色……"];
+      say(LINES[coreIndex++ % LINES.length]);
+    });
+  }
+  let coreHot = null;
+  let coreIndex = 0;
+  // 部屋の 楕円の なかだけに 描く（とびらが 部屋から はみださない）
+  function g2(draw, box) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(box.x + box.w / 2, box.y + box.h / 2, box.w / 2 - 1, box.h / 2 - 1, 0, 0, Math.PI * 2);
+    ctx.clip();
+    draw();
+    ctx.restore();
   }
 
   function put(art, map, range, rnd) {
@@ -543,11 +627,14 @@ const chika = (() => {
     Y.nakamaBottom = yOf("#nakama", "bottom");
     Y.deepTop = yOf("#hollow-deep", "top");
     Y.deepBottom = yOf("#hollow-deep", "bottom");
+    Y.coreTop = yOf("#hollow-core", "top");
+    Y.coreBottom = yOf("#hollow-core", "bottom");
     LAYERS[0].y = 0;
     LAYERS[1].y = Y.colsTop + (Y.colsBottom - Y.colsTop) * 0.35;
     LAYERS[2].y = Y.caveTop - 10;
     LAYERS[3].y = Math.min(Y.deepTop - 10, Y.nakamaTop + (Y.nakamaBottom - Y.nakamaTop) * 0.6);
     LAYERS[4].y = Y.deepTop + (Y.deepBottom - Y.deepTop) * 0.62;
+    LAYERS[5].y = Y.coreTop - 8;
     movers = [];
     hotspots = [];
     T.use(ctx);
@@ -573,6 +660,7 @@ const chika = (() => {
       b.addEventListener("click", () => h.click(b));
       wrap.append(b);
     }
+    coreBtn = [...wrap.querySelectorAll(".ug-hot")].find((b) => /^(はじまりの とびら|ドットの 核)/.test(b.getAttribute("aria-label"))) ?? null;
   }
 
   // 見えている うごく もの だけ、景色を もどしてから 1 コマ 描く（all なら ぜんぶ）
@@ -630,5 +718,5 @@ const chika = (() => {
   build();
   if (!T.reduced) T.onTick(step);
 
-  return { found: () => found.size, legend: () => legend };
+  return { found: () => found.size, legend: () => legend, open: () => openedAt >= 0 };
 })();
