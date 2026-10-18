@@ -297,13 +297,16 @@ export default {
     t.eq(missing.join(""), "", "たりない 文字が ある（node tools/fonts.mjs を ながして）");
   },
 
-  async "共有カード：og.png（1200×630）と、それを さす メタ情報"(t) {
+  async "共有カード：og.png（1200×630）と、それを さす メタ情報。住所は warpix.app"(t) {
     const { readFileSync } = await import("node:fs");
     const { join } = await import("node:path");
     const png = readFileSync(join(t.ROOT, "og.png"));
     t.eq([png.readUInt32BE(16), png.readUInt32BE(20)], [1200, 630], "og.png の 大きさ");
     const html = readFileSync(join(t.ROOT, "index.html"), "utf8");
-    t.ok(html.includes('<meta property="og:image" content="https://koki-hq.github.io/warpix/og.png">'), "og:image が ない");
+    t.ok(html.includes('<meta property="og:image" content="https://warpix.app/og.png">'), "og:image が ない");
+    t.ok(html.includes('<meta property="og:url" content="https://warpix.app/">'), "og:url が ない");
+    t.ok(html.includes('<link rel="canonical" href="https://warpix.app/">'), "canonical が ない");
+    t.eq(readFileSync(join(t.ROOT, "CNAME"), "utf8").trim(), "warpix.app", "CNAME");
     t.ok(html.includes('<meta name="twitter:card" content="summary_large_image">'), "twitter:card が ない");
   },
 

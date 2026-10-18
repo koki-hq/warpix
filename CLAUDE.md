@@ -1,6 +1,6 @@
 # WARPIX製作所 ホームページ：作業の てびき
 
-このリポジトリは **WARPIX製作所の ホームページ**。公開先は https://koki-hq.github.io/warpix/ （GitHub Pages、`main` から）。
+このリポジトリは **WARPIX製作所の ホームページ**。公開先は https://warpix.app/ （GitHub Pages、`main` から。リポジトリの `CNAME`。むかしの https://koki-hq.github.io/warpix/ は GitHub が 自動で 転送）。
 ユーザーは 日本語で話す。遊び心と 自由な 発想が 大好き。説明は やさしい 日本語で。
 
 2026-10-16 に、ユーザーの 希望で **ホームページは この ウィンドウ（セッション）、warpix-link は 別の ウィンドウ** で 並行して 進める ことに なった。
@@ -17,7 +17,7 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 ## WARPIX製作所 とは（決まっている こと）
 
 - ブランド名は **WARPIX製作所**。町工場の ニュアンス。「作品を、製品として 世に出す 工場」
-- 本拠地の ドメインは将来 **warpix.app**（まだ 買っていない）。製品は サブドメイン（link.warpix.app など）
+- 本拠地の ドメインは **warpix.app**（2026-10-18 に 買った。Cloudflare、DNS only。v1.14 で ホームページが 引っ越し）。製品は サブドメイン（link.warpix.app など）
 - 日本の 商標データベースでは「WARPIX」は 0 件（2026-10-16）。海外には 同じ名前の 会社が ある（warpix.com＝アメリカの ロボット等の ネットショップ、warpix.io、warpix.studio）
 - 詳しくは 事務所リポジトリの `01-ほうしん.md`・`02-なまえと権利.md`
 
@@ -45,14 +45,14 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 
 ## バージョンと 仕様メモ
 
-- **v1.x は 作っている あいだ**（宣伝前）。区切りごとに 小さく 刻む。**v2.0 は ほんとうの 開店の 日**（warpix.app に 引っ越す日など）に とっておく
+- **v1.x は 作っている あいだ**（宣伝前）。区切りごとに 小さく 刻む。**v2.0 は ほんとうの 開店の 日**（宣伝を はじめる 日。warpix.app への 引っ越しは v1.14 で すんだ）に とっておく
 - 公開する たびに **タグ `vX.Y` と 仕様メモ `docs/spec/vX.Y.md` を セット**で。`docs/spec/README.md` の 一覧にも 足す。変わった ところだけ 書き、大きく 作りなおした ときは 全体を 書く
 - 世界観が 変わったら `docs/THEME.md` も 直す
 - ユーザーは「もう 許可 いらん、全部 やっちゃって」（2026-10-16）。ホームページは **作る→テスト→仕様メモ→公開→報告 まで 自分で 進めて いい**。ただし **お金・権利・ほかの アプリとの 連携（製作所だよりに のせる など、warpix-link にも 出る もの）は 先に 聞く**
 
 ## かならず 守る こと
 
-1. **お知らせ（`news.json`）の 形と 場所を 変えない。** warpix-link の `news.js` が `https://koki-hq.github.io/warpix/news.json` を 読んでいる
+1. **お知らせ（`news.json`）の 形と 場所を 変えない。** warpix-link の `news.js` が `https://koki-hq.github.io/warpix/news.json` を 読んでいる（v1.14 から warpix.app へ 転送されて とどく。転送の あとも 読めるか 公開の たびに 確かめる）
    - `{ "news": [{ "id", "date": "YYYY-MM-DD", "title", "body"?, "url"? }] }`。`id` は かぶらない、`url` は https、`title` は 40 文字まで（テストで 確かめている）
    - warpix-link の フッター「製作所だより」は `https://koki-hq.github.io/warpix/#news` に 飛ぶ。**`id="news"` の 場所を 残す**
    - **おしらせの 下書き**（2026-10-18 から）：warpix-link の ウィンドウが 事務所リポジトリの `おしらせ下書き.md` に「まだ：<id>」で 書く。
@@ -80,7 +80,7 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 - **文字を ふやしたら `node tools/fonts.mjs`**（news.json・セリフ・文章。つかう 文字だけの フォントを たのんでいる。テストが たりない 文字を おしえる）
 - 共有カードは `node tools/og.mjs`（絵や 看板を かえたら）
 - favicon は `node tools/favicon.mjs`（`factory.js` の ピクセから 作る）
-- 公開：`main` に push すると GitHub Pages に 出る。タグ `vX.Y`（いまは `v1.13.1`）と 仕様メモを セットで。公開後は 本番の URL で 変わった ことを 確かめる
+- 公開：`main` に push すると GitHub Pages に 出る。タグ `vX.Y`（いまは `v1.14`）と 仕様メモを セットで。公開後は 本番の URL で 変わった ことを 確かめる
   - Pages の 公開が「waiting」で 止まる ことが ある → `gh api -X POST repos/koki-hq/warpix/pages/builds` で 頼みなおすと 通る
 - コミット：git の メールは noreply 設定ずみ。メッセージの 最後に `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`
 
