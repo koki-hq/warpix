@@ -5,7 +5,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("fonts/dotgothic16.woff2?v=f74f52db") format("woff2");
+  src: url("fonts/dotgothic16.woff2?v=30f4b12d") format("woff2");
 }
 
 :root {
@@ -599,6 +599,65 @@ main {
 }
 .ex-src {
   font-size: 14px;
+}
+/* ピクセの てがき カタログ（ひらくと ノートの 紙） */
+.ex-catalog {
+  margin: 16px 0 0;
+}
+.ex-catalog summary {
+  display: inline-block;
+  padding: 6px 12px 4px;
+  background: #fff7d6;
+  color: var(--navy);
+  font-size: 15px;
+  cursor: pointer;
+  list-style: none;
+  box-shadow: 0 0 0 2px var(--ink);
+}
+.ex-catalog summary::-webkit-details-marker {
+  display: none;
+}
+.ex-catalog summary::before {
+  content: "▶ ";
+  color: var(--red);
+}
+.ex-catalog[open] summary::before {
+  content: "▼ ";
+}
+.ex-catalog summary:hover {
+  background: #ffe680;
+}
+.ex-memo {
+  margin: 10px 0 0;
+  padding: 6px 14px 10px 26px;
+  background:
+    linear-gradient(90deg, transparent 15px, #f2a0a0 15px 17px, transparent 17px),
+    repeating-linear-gradient(#fffdf5 0 27px, #cfe3f3 27px 28px);
+  box-shadow: 0 0 0 2px #c9bfa8, 4px 4px 0 2px rgba(43, 47, 58, 0.15);
+  rotate: -0.6deg;
+}
+.ex-memo h4 {
+  margin: 8px 0 2px;
+  color: var(--red);
+  font-size: 15px;
+  font-weight: normal;
+}
+.ex-memo .ex-list,
+.ex-steps {
+  margin: 0;
+  padding-left: 1.3em;
+  font-size: 15px;
+  line-height: 28px;
+}
+.ex-memo .ex-list li,
+.ex-steps li {
+  margin: 0;
+}
+.panel .ex-sign {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: right;
 }
 .panel .ex-note {
   margin: 10px 0 0;
