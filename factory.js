@@ -586,7 +586,19 @@ const factory = (() => {
     }
   }
   // 飛行船 ソラマメ号（ゆっくり）
-  const airshipX = (n) => Math.floor(((n * 0.12) % (W + 80)) - 60);
+  // 見えている はば（cropX〜）の 中を わたる ので、スマホでも かならず 見える。さいしょは まんなか
+  let airshipShift = 0;
+  const airshipX = (n) => {
+    const span = visW + 40;
+    return cropX - 40 + Math.floor((((n * 0.12 + visW / 2 + 20 + airshipShift) % span) + span) % span);
+  };
+  // ツアーで よる とき、ソラマメ号が 絵の はしに かくれていたら、見ていない うちに まんなかへ よんでくる
+  function airshipCenter() {
+    const x = airshipX(n);
+    const seen = x + 40 > cam.x && x < cam.x + visW / cam.z;
+    if (!seen && (x + 40 < 20 || x > W - 20)) airshipShift += cropX + visW / 2 - 20 - x;
+    return airshipX(n) + 20;
+  }
   function airship(n) {
     const x = airshipX(n);
     const y = 46 + (Math.floor(n / 8) % 2);
@@ -1214,17 +1226,18 @@ const factory = (() => {
     place(friendBtns.s, airshipX(n) - 2, 39, 44, 18);
 
     if (tour) {
-      // ツアー中は 看板が カメラに ついていき、ピクセの あんないは 下の まんなかに
+      // ツアー中は 看板が カメラに ついていき、ピクセの あんないは 下か 上の まんなかに
       placeSign();
       if (lastSay !== tour.text) {
         lastSay = tour.text;
         sayEl.textContent = tour.text;
         sayEl.classList.add("narrate");
-        sayEl.classList.remove("edge-left", "edge-right");
+        sayEl.classList.remove("edge-left", "edge-right", "top");
+        narratePlace();
       }
       return;
     }
-    sayEl.classList.remove("narrate");
+    sayEl.classList.remove("narrate", "top");
     // ふきだし：おされた ときの ことばが さき、なければ お話の セリフ
     const text = override ? override.text : s.say;
     const who = override ? override.who : s.who;
@@ -1250,24 +1263,68 @@ const factory = (() => {
     const d = new Date();
     return `${params.has("hour") ? hour : d.getHours()}じ ${d.getMinutes()}ふん`;
   };
+  // see：その コマで 紹介する もの（絵の 目もりの [x, y, w, h]）。あんないの ふきだしで かくさない
+  const GEN = [OX - 2, OY - 1, 26, 25];
+  const SEE = {
+    // ピクセは あるきまわるので、この さき 6 秒ぶんの いどう を ぜんぶ
+    pikuse: () => {
+      const s = [...Array(24)].map((_, k) => story((n + k) % 96));
+      const x = Math.min(...s.map((v) => v.px));
+      const y = Math.min(...s.map((v) => v.py));
+      return [x, y, Math.max(...s.map((v) => v.px)) + 16 - x, Math.max(...s.map((v) => v.py)) + 15 - y];
+    },
+    clock: [142, 69, 20, 20],
+    bachi: [96, 104, 22, 22],
+    sign: [193, 61, 106, 17],
+    chimney: [298, 22, 16, 22],
+    arm: [340, 84, 30, 24],
+    cat: [396, 108, 18, 12],
+    lifton: [410, 150, 36, 18],
+    hakobi: [98, 146, 72, 21],
+    airship: () => [airshipX(n) - 2, 39, 44, 18],
+    drone: [104, 80, 32, 14],
+    sparrow: [42, 46, 62, 14],
+    radio: [OX - 24, GROUND - 10, 15, 11],
+    gen: GEN,
+  };
+  const seeOf = (keys) => keys.map((k) => (typeof SEE[k] === "function" ? SEE[k]() : SEE[k]));
   const STOPS = [
-    { x: 232, y: 150, text: () => "ぼく、ピクセ！ WARPIX製作所の あんないがかり だよ。\nいっしょに 工場を 見て まわろう！" },
-    { x: 152, y: 92, text: () => `これが 時計塔。はりは ほんとうの 時刻で うごくんだ。\nいまは ${nowText()}！` },
-    { x: 84, y: 100, text: () => "タワークレーンと ブルーシート。\n中では つぎの 製品を 建造中。バチが ようせつ してる！" },
-    { x: 252, y: 58, text: () => "屋上の 看板と、紅白の えんとつ。\nえんとつは おすと もくもく するよ。" },
-    { x: 364, y: 116, text: () => "かまぼこ倉庫。屋根の アームさんが、\nいつも どこかを なおしてる。" },
-    { x: 412, y: 138, text: () => "自販機の 上は、ねこの トタンの いつもの 場所。\nリフトンは 木の 箱を はこんでる。" },
-    { x: 300, y: 64, text: () => "空には 飛行船の ソラマメ号。\nうしろの 高架には、レトロな 電車も はしるよ。" },
-    { x: 186, y: 154, text: () => "ゲンさんの ラジカセ。おすと チップチューンが ながれるよ。\nゲンさんの おきにいり！" },
-    { x: 0, y: 0, end: true, text: () => "さいごは……地面の 下へ！\nだれも 知らない 世界が まってるよ。" },
+    { x: 232, y: 150, see: ["pikuse"], text: () => "ぼく、ピクセ！ WARPIX製作所の あんないがかり だよ。\nいっしょに 工場を 見て まわろう！" },
+    { x: 152, y: 92, see: ["clock"], text: () => `これが 時計塔。はりは ほんとうの 時刻で うごくんだ。\nいまは ${nowText()}！` },
+    { x: 84, y: 100, see: ["bachi"], text: () => "タワークレーンと ブルーシート。\n中では つぎの 製品を 建造中。バチが ようせつ してる！" },
+    { x: 252, y: 58, see: ["sign", "chimney"], text: () => "屋上の 看板と、紅白の えんとつ。\nえんとつは おすと もくもく するよ。" },
+    { x: 364, y: 116, see: ["arm"], text: () => "かまぼこ倉庫。屋根の アームさんが、\nいつも どこかを なおしてる。" },
+    { x: 412, y: 138, see: ["cat", "lifton"], text: () => "自販機の 上は、ねこの トタンの いつもの 場所。\nリフトンは 木の 箱を はこんでる。" },
+    { x: airshipCenter, y: 64, see: ["airship"], text: () => "空には 飛行船の ソラマメ号。\nうしろの 高架には、レトロな 電車も はしるよ。" },
+    { x: 186, y: 154, see: ["radio", "gen"], text: () => "ゲンさんの ラジカセ。おすと チップチューンが ながれるよ。\nゲンさんの おきにいり！" },
+    { x: 0, y: 0, end: true, see: [], text: () => "さいごは……地面の 下へ！\nだれも 知らない 世界が まってるよ。" },
   ];
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  // あんないの ふきだしを、紹介する ものに かさならない ほう（下 → 上）へ。行く さきの カメラで はかる
+  const cssRect = ([x, y, w, h], c) => ({ left: (x - c.x) * c.z * scale + offset(), top: (y - c.y) * c.z * scale, width: w * c.z * scale, height: h * c.z * scale });
+  const overlap = (a, b) => Math.max(0, Math.min(a.left + a.width, b.left + b.width) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.top + a.height, b.top + b.height) - Math.max(a.top, b.top));
+  function narratePlace() {
+    const rects = (tour.see ?? []).map((r) => cssRect(r, tour.to));
+    const w = sayEl.offsetWidth;
+    const h = sayEl.offsetHeight;
+    const left = (scene.clientWidth - w) / 2;
+    const cost = (top) => rects.reduce((sum, r) => sum + overlap(r, { left: left - 4, top: top - 4, width: w + 12, height: h + 12 }), 0); // ふちの かげも
+    // 上に だす ときは、右上の ツアーの ボタンに かからない ところまで さげる
+    const btn = tourBtn.getBoundingClientRect();
+    const box = scene.getBoundingClientRect();
+    const hit = btn.left - box.left < left + w && btn.right - box.left > left;
+    const top = hit ? Math.ceil(btn.bottom - box.top) + 10 : 14;
+    const bottom = cost(scene.clientHeight - 14 - h);
+    sayEl.style.setProperty("--top", `${top}px`);
+    sayEl.classList.toggle("top", bottom > 0 && cost(top) < bottom);
+  }
   function camFor(stop) {
     if (stop.end) return { x: cropX, y: 0, z: 1 };
     const z = visW < 300 ? 1 : 2; // スマホは もう 大きいので、よらずに 横へ うごく だけ
     const vw = visW / z;
     const vh = H / z;
-    return { x: clamp(stop.x - vw / 2, 0, W - vw), y: clamp(stop.y - vh * 0.55, 0, H - vh), z };
+    const x = typeof stop.x === "function" ? stop.x() : stop.x;
+    return { x: clamp(x - vw / 2, 0, W - vw), y: clamp(stop.y - vh * 0.55, 0, H - vh), z };
   }
   let tourTimer = 0;
   let raf = 0;
@@ -1276,6 +1333,7 @@ const factory = (() => {
     const text = STOPS[i].text();
     const dur = reduced ? 0 : 1100;
     tour = { i, text, from: { ...cam }, to: camFor(STOPS[i]), start: performance.now(), dur };
+    tour.see = seeOf(STOPS[i].see);
     bubble.textContent = `ピクセ「${text.replaceAll("\n", " ")}」`;
     clearTimeout(tourTimer);
     tourTimer = setTimeout(() => tourGo(i + 1), dur + 2600 + text.length * 55);
@@ -1313,16 +1371,16 @@ const factory = (() => {
 
   // ---------- 図鑑から 会いに いく（絵まで もどって、カメラが その なかまに よる） ----------
   const MEET = {
-    gen: { x: () => OX + 8, y: 150, text: () => "ゲンさん「おう、ここだ ここだ！ ゆっくり 見てってくれ。」" },
-    pikuse: { x: () => HOME + 8, y: 150, text: () => "ピクセ「ぼくは ここ！ ゲンさんの となりで はたらいてるよ。」" },
-    hakobi: { x: () => hakobiX(n) + 8, y: 150, text: () => "ハコビ「よいしょ、よいしょ。時計塔の まえを 行ったり 来たり してるよ。」" },
-    bachi: { x: () => 104, y: 112, text: () => "バチ「足場の 上だよ！ バチバチッ！」" },
-    arm: { x: () => 360, y: 100, text: () => "アームさん「ウィーン。倉庫の 屋根から こんにちは。」" },
-    lifton: { x: () => liftonX(n) + 8, y: 150, text: () => "リフトン「ピピッ。自販機の まえで 木箱を はこんでいます。」" },
-    drone: { x: () => 120, y: 86, text: () => "ブンブンは ときどき この 空を とおるよ。すこし まってみてね。" },
-    airship: { x: () => airshipX(n) + 20, y: 50, text: () => "ソラマメ号は、いまも 空の どこかを ゆっくり とんでいる。" },
-    cat: { x: () => 405, y: 116, text: () => "トタン「……にゃ。（自販機の 上で ひるね ちゅう）」" },
-    sparrow: { x: () => 70, y: 54, text: () => "スズメ「チュン！ 電線の 上から 見はってるよ。」" },
+    gen: { x: () => OX + 8, y: 150, see: ["gen"], text: () => "ゲンさん「おう、ここだ ここだ！ ゆっくり 見てってくれ。」" },
+    pikuse: { x: () => HOME + 8, y: 150, see: ["pikuse"], text: () => "ピクセ「ぼくは ここ！ ゲンさんの となりで はたらいてるよ。」" },
+    hakobi: { x: () => hakobiX(n) + 8, y: 150, see: ["hakobi"], text: () => "ハコビ「よいしょ、よいしょ。時計塔の まえを 行ったり 来たり してるよ。」" },
+    bachi: { x: () => 104, y: 112, see: ["bachi"], text: () => "バチ「足場の 上だよ！ バチバチッ！」" },
+    arm: { x: () => 360, y: 100, see: ["arm"], text: () => "アームさん「ウィーン。倉庫の 屋根から こんにちは。」" },
+    lifton: { x: () => liftonX(n) + 8, y: 150, see: ["lifton"], text: () => "リフトン「ピピッ。自販機の まえで 木箱を はこんでいます。」" },
+    drone: { x: () => 120, y: 86, see: ["drone"], text: () => "ブンブンは ときどき この 空を とおるよ。すこし まってみてね。" },
+    airship: { x: airshipCenter, y: 50, see: ["airship"], text: () => "ソラマメ号は、いまも 空の どこかを ゆっくり とんでいる。" },
+    cat: { x: () => 405, y: 116, see: ["cat"], text: () => "トタン「……にゃ。（自販機の 上で ひるね ちゅう）」" },
+    sparrow: { x: () => 70, y: 54, see: ["sparrow"], text: () => "スズメ「チュン！ 電線の 上から 見はってるよ。」" },
   };
   function meet(key) {
     const m = MEET[key];
@@ -1331,7 +1389,8 @@ const factory = (() => {
     const text = m.text();
     const dur = reduced ? 0 : 1100;
     scene.classList.add("touring");
-    tour = { i: -1, text, from: { ...cam }, to: camFor({ x: m.x(), y: m.y }), start: performance.now() + (reduced ? 0 : 400), dur };
+    tour = { i: -1, text, from: { ...cam }, to: camFor(m), start: performance.now() + (reduced ? 0 : 400), dur };
+    tour.see = seeOf(m.see);
     bubble.textContent = text;
     clearTimeout(tourTimer);
     tourTimer = setTimeout(() => tourEnd(false), dur + 3600 + text.length * 50);
@@ -1487,5 +1546,15 @@ const factory = (() => {
     reduced: frozen != null,
   };
 
-  return { say, hour, season, meet, tour: () => (tour ? { i: tour.i, z: cam.z } : null), stops: STOPS.length, newsReady, lines: LINES, genLines: GEN_LINES, pikuse: PIKUSE, story, frame: () => n, tools };
+  // テスト用：いまの あんないの ふきだしと、紹介している もの（どちらも 絵の 中の 画面の 位置）
+  const tourView = () => {
+    if (!tour) return null;
+    const a = sayEl.getBoundingClientRect();
+    const b = scene.getBoundingClientRect();
+    const c = tourBtn.getBoundingClientRect();
+    const rel = (r) => ({ left: r.left - b.left, top: r.top - b.top, width: r.width, height: r.height });
+    return { say: rel(a), btn: rel(c), see: tour.see.map((r) => cssRect(r, cam)), w: b.width, h: b.height };
+  };
+
+  return { say, hour, season, meet, tour: () => (tour ? { i: tour.i, z: cam.z } : null), tourGo: (i) => tourGo(i), tourView, stops: STOPS.length, newsReady, lines: LINES, genLines: GEN_LINES, pikuse: PIKUSE, story, frame: () => n, tools };
 })();

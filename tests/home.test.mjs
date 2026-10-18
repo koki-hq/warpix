@@ -210,6 +210,49 @@ export default {
     }
   },
 
+  async "ツアーと 会いに いく：紹介している なかまが あんないの ふきだしに かくれない（360・390・パソコン）"(t) {
+    const area = (a, b) => Math.max(0, Math.min(a.left + a.width, b.left + b.width) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.top + a.height, b.top + b.height) - Math.max(a.top, b.top));
+    const check = (v, label) => {
+      t.ok(area(v.say, v.btn) === 0, `${label}：ふきだしが ツアーの ボタンに かかる`);
+      for (const r of v.see) {
+        const shown = area(r, { left: 0, top: 0, width: v.w, height: v.h }) / (r.width * r.height);
+        t.ok(shown > 0.5, `${label}：紹介している ものが 画面の 外（${Math.round(shown * 100)}%）`);
+        t.ok(area(r, v.say) === 0, `${label}：ふきだしに かくれる ${JSON.stringify(r)} / ${JSON.stringify(v.say)}`);
+      }
+    };
+    for (const opts of [{ mobile: [360, 740] }, { mobile: [390, 844] }, { size: { width: 1440, height: 900 } }, { size: { width: 1024, height: 768 } }]) {
+      const size = opts.mobile?.[0] ?? opts.size.width;
+      const { server, p } = await open(t, "?hour=14", opts);
+      const stops = await p.ev(`factory.stops`);
+      for (let i = 0; i < stops - 1; i++) {
+        await p.ev(`factory.tourGo(${i})`);
+        await t.sleep(1300); // カメラが つくまで
+        check(await p.ev(`factory.tourView()`), `${size}px ツアー ${i}`);
+      }
+      await p.key("Escape");
+      for (const k of ["gen", "pikuse", "hakobi", "bachi", "arm", "lifton", "airship", "cat", "sparrow"]) {
+        await p.ev(`(window.scrollTo({ top: 0, behavior: "instant" }), factory.meet("${k}"))`);
+        await t.sleep(1700);
+        check(await p.ev(`factory.tourView()`), `${size}px 会いに いく ${k}`);
+        await p.key("Escape");
+      }
+      t.noErrors(p);
+      await server.close();
+      await t.closeAll();
+    }
+  },
+
+  async "ソラマメ号：スマホでも ふだんの 絵に 見えている（うごく ときも、うごかない ときも）"(t) {
+    for (const opts of [{ mobile: [360, 740] }, { mobile: [390, 844] }, { mobile: [390, 844], reduced: true }, { size: { width: 1440, height: 900 } }]) {
+      const { server, p } = await open(t, "?hour=14", opts);
+      const seen = () => p.ev(`(() => { const b = document.getElementById("friend-s").getBoundingClientRect(); const s = document.querySelector(".scene").getBoundingClientRect(); return !document.getElementById("friend-s").hidden && b.right > s.left + 20 && b.left < s.right - 20; })()`);
+      t.ok(await seen(), `${JSON.stringify(opts)}：ソラマメ号が 見えない`);
+      t.noErrors(p);
+      await server.close();
+      await t.closeAll();
+    }
+  },
+
   async "ゲンさんの 一日：朝は 体操、昼は おべんとう（スズメ）、3じは おやつ、夕方は かたづけ、夜は うたたね"(t) {
     const cases = [
       [7, (s) => ["lUp", "lSide", "lDown"].includes(s(10).left) && s(10).say.includes("いち") && s(2).music, "ラジオ体操"],

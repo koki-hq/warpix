@@ -5,7 +5,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("fonts/dotgothic16.woff2?v=ea01a910") format("woff2");
+  src: url("fonts/dotgothic16.woff2?v=ced701a7") format("woff2");
 }
 
 :root {
@@ -287,6 +287,10 @@ main > .hollow {
   max-width: min(86%, 680px);
   translate: -50% 0;
   font-size: 16px;
+}
+.say.narrate.top {
+  top: var(--top, 14px) !important;
+  bottom: auto;
 }
 .say.narrate::after {
   display: none;
