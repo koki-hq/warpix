@@ -13,7 +13,7 @@ import { createHash } from "node:crypto";
 import { join } from "node:path";
 
 const ROOT = join(import.meta.dirname, "..");
-export const SOURCES = ["index.html", "factory.js", "chika.js", "radio.js", "news.json"];
+export const SOURCES = ["index.html", "factory.js", "chika.js", "radio.js", "news.json", "tools/open-news.json"]; // open-news.json は 開店の あさに news.json へ（tools/open.mjs）
 const GOOGLE = "https://fonts.googleapis.com/css2";
 // Google Fonts は ブラウザを 見て 形式を かえる。woff2 を もらう ために Chrome の ふりを する
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";

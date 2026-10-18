@@ -5,7 +5,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("fonts/dotgothic16.woff2?v=ced701a7") format("woff2");
+  src: url("fonts/dotgothic16.woff2?v=1010caef") format("woff2");
 }
 
 :root {
@@ -120,6 +120,22 @@ a {
   color: var(--navy);
   font-family: "DotGothic16", monospace;
   font-size: 1.15em;
+}
+
+/* くすだまの たれまく（開店いわい） */
+.kaiten-tag {
+  position: absolute;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--red);
+  font-family: "DotGothic16", monospace;
+  line-height: 1;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 /* おせる ところ（えんとつ・ゲンさん・ピクセ・ねこ）。すきとおった ボタンを 絵に かさねる */
@@ -761,6 +777,9 @@ body::after {
 }
 footer p {
   margin: 4px 0;
+}
+footer a {
+  color: #ffe680;
 }
 
 /* 動きを へらす せってい */

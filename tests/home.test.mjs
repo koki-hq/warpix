@@ -254,6 +254,62 @@ export default {
     }
   },
 
+  async "開店いわい：11/1 7じ〜11/14 だけ くすだま・紅白幕・花輪。2 年めからは ◯周年。SNS の 入口は 7じ から"(t) {
+    const { server, p } = await open(t, "?date=2026-11-01&hour=14", { mobile: [390, 844] });
+    const tag = () => p.ev(`(() => { const e = document.querySelector(".kaiten-tag"); return e.hidden ? null : e.textContent; })()`);
+    t.eq(await tag(), "祝開店", "開店の 日の たれまく");
+    t.ok((await said(p)).includes("開店！"), `開店の 日の あいさつ: ${await said(p)}`);
+    t.ok((await p.ev(`document.querySelector(".scene canvas").getAttribute("aria-label")`)).includes("くすだま"), "読み上げに くすだまが ない");
+    await p.click("#pikuse-btn");
+    t.ok((await said(p)).includes("くすだま"), `ピクセの 開店の ことば: ${await said(p)}`);
+    // ツアーの 看板の コマで、くすだまが ふきだしに かくれない
+    await p.ev(`factory.tourGo(3)`);
+    await t.sleep(1300);
+    const v = await p.ev(`factory.tourView()`);
+    const area = (a, b) => Math.max(0, Math.min(a.left + a.width, b.left + b.width) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.top + a.height, b.top + b.height) - Math.max(a.top, b.top));
+    t.ok((await said(p)).includes("くすだま") && v.see.every((r) => area(r, v.say) === 0), `ツアーで くすだまが かくれる: ${await said(p)}`);
+    await p.key("Escape");
+    const links = await p.ev(`[...document.querySelectorAll("#about a, footer a")].filter((a) => a.checkVisibility()).map((a) => a.href).join(" ")`);
+    for (const u of ["https://x.com/warpix_app", "https://www.instagram.com/warpix_app/", "mailto:pixe@warpix.app"]) t.ok(links.includes(u), `SNS の リンクが ない: ${u}`);
+    const sns = () => p.ev(`[...document.querySelectorAll('a[href^="https://x.com/"]')].filter((a) => a.checkVisibility()).length`);
+    // 7じ まえは まだ。SNS は「じゅんびちゅう」
+    await p.goto(`${server.url}?date=2026-11-01T06:59&hour=6`, 800);
+    t.eq(await tag(), null, "7じ まえに たれまく");
+    t.eq(await sns(), 0, "7じ まえに SNS の リンクが 見える");
+    t.ok(await p.ev(`document.querySelector(".before-open").checkVisibility()`), "7じ まえに「じゅんびちゅう」が ない");
+    await p.goto(`${server.url}?date=2026-11-01T07:00&hour=7`, 800);
+    t.eq(await tag(), "祝開店", "7じ ちょうどに たれまくが ない");
+    t.eq(await sns(), 2, "7じ に SNS の リンク（じむしょ・フッター）");
+    t.ok(!(await p.ev(`document.querySelector(".before-open").checkVisibility()`)), "開店 したのに「じゅんびちゅう」");
+    for (const [q, want] of [["2026-10-31", null], ["2026-11-14", "祝開店"], ["2026-11-15", null], ["2027-11-03", "祝1周年"]]) {
+      await p.goto(`${server.url}?date=${q}&hour=14`, 800);
+      t.eq(await tag(), want, `${q} の たれまく`);
+    }
+    t.ok(!(await said(p)).includes("開店"), "2 年めの ふつうの 日に 開店の あいさつ");
+    t.eq(await sns(), 2, "開店の あとも SNS の リンクは のこる");
+    t.noErrors(p);
+    await server.close();
+  },
+
+  async "開店の あさの おしらせ：7じ から 1 回だけ、news.json の いちばん 上へ（GitHub Actions が ながす）"(t) {
+    const { readFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const { pathToFileURL } = await import("node:url");
+    const { addOpenNews, OPEN } = await import(pathToFileURL(join(t.ROOT, "tools", "open.mjs")).href);
+    const item = JSON.parse(readFileSync(join(t.ROOT, "tools", "open-news.json"), "utf8"));
+    const data = JSON.parse(readFileSync(join(t.ROOT, "news.json"), "utf8"));
+    t.eq(OPEN.toISOString(), "2026-10-31T22:00:00.000Z", "開店の 時刻（日本時間 11/1 7:00）");
+    t.eq(addOpenNews(data, item, new Date("2026-11-01T06:59:59+09:00")), null, "7じ まえに のる");
+    const next = addOpenNews(data, item, new Date("2026-11-01T07:00:00+09:00"));
+    t.ok(next && next.news[0].id === "2026-11-01-open" && next.news.length === data.news.length + 1, "7じ に のらない");
+    t.eq(addOpenNews(next, item, new Date("2026-11-02T07:00:00+09:00")), null, "2 回め も のる");
+    // news.json と おなじ きまり（id は かぶらない・url は https・title は 40 文字まで）
+    t.ok(new Set(next.news.map((x) => x.id)).size === next.news.length, "id が かぶる");
+    t.ok(/^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.url.startsWith("https://") && [...item.title].length <= 40, `形が ちがう: ${JSON.stringify(item)}`);
+    const yml = readFileSync(join(t.ROOT, ".github", "workflows", "open.yml"), "utf8");
+    t.ok(yml.includes(`cron: "0 22 31 10 *"`) && yml.includes("node tools/open.mjs") && yml.includes("git tag v2.0"), "予約（open.yml）が ちがう");
+  },
+
   async "ゲンさんの 一日：朝は 体操、昼は おべんとう（スズメ）、3じは おやつ、夕方は かたづけ、夜は うたたね"(t) {
     const cases = [
       [7, (s) => ["lUp", "lSide", "lDown"].includes(s(10).left) && s(10).say.includes("いち") && s(2).music, "ラジオ体操"],

@@ -64,7 +64,7 @@ warpix-link も この ファイルを 読みにきて、ピクセが「ニュ�
 | `og.png` | 共有カード（`node tools/og.mjs` で つくる） |
 | `favicon.svg` | ヘルメットの ピクセ（`node tools/favicon.mjs` で つくる） |
 | `docs/` | 世界観（`THEME.md`）と 仕様メモ（`spec/`） |
-| `tests/` | テスト（`node tests/run.mjs`、18 件） |
+| `tests/` | テスト（`node tests/run.mjs`、20 件） |
 | `tools/health.mjs` | 健康診断（重さ・スマホでの速さ・待機中の CPU・アクセシビリティ） |
 
 うごく ものは ぜんぶ 1 つの「工場の とけい」（0.3 秒ごと）で いっしょに 1 コマ すすめます。

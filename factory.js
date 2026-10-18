@@ -10,8 +10,17 @@ const factory = (() => {
   const hour = params.has("hour") ? Number(params.get("hour")) % 24 : new Date().getHours();
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const frozen = params.has("t") ? Number(params.get("t")) : reduced ? 64 : null;
+  // きょうの 日づけ。?date=2026-11-01（時刻つき 2026-11-01T06:59 も）で ためせる
+  const date = params.get("date");
+  const day = date ? new Date(date.includes("T") ? date : `${date}T12:00:00`) : new Date();
+  // 開店は 2026-11-01 の あさ 7じ（日本時間）。SNS の 入口も ここから
+  const OPEN = new Date("2026-11-01T07:00:00+09:00");
+  const opened = day >= OPEN;
+  // 開店いわい：まいとし 11/1〜11/14 は くすだま・紅白幕・花輪（2 年め からは ◯しゅうねん）
+  const years = day.getFullYear() - 2026;
+  const kaiten = opened && day.getMonth() === 10 && day.getDate() <= 14 ? { years, today: day.getDate() === 1 } : null;
   // 季節の 服（どの 季節も 晴れ）。?month=1〜12 で ためせる
-  const month = params.has("month") ? ((Number(params.get("month")) + 11) % 12) + 1 : new Date().getMonth() + 1;
+  const month = params.has("month") ? ((Number(params.get("month")) + 11) % 12) + 1 : day.getMonth() + 1;
   const season = month >= 3 && month <= 5 ? "spring" : month >= 6 && month <= 8 ? "summer" : month >= 9 && month <= 11 ? "autumn" : "winter";
   const SEASON = {
     spring: { sky: ["#4c9cec", "#58a5ef", "#65aef2", "#74b8f5", "#85c2f7", "#97ccf9", "#aad6fb", "#bddffc", "#d0e9fd", "#e2f2fe"], hill: ["#b8e0a0", "#9fd28a"], ground: ["#ddd3bb", "#c7bc9f"] },
@@ -561,6 +570,59 @@ const factory = (() => {
     }
   });
 
+  // ---------- 開店いわい（11/1〜11/14 だけ。うごかない ので 1 回だけ 描く） ----------
+  const PETALS = ["#ff7aa8", "#ffd84a", "#ff9a3c", "#ffffff", "#e0503c", "#7fd0ff"];
+  const deco = kaiten && paper(() => {
+    // 紅白幕：工場の かべの 上に、すこし たるませて
+    for (let x = 172; x < 334; x++) {
+      const t = ((x - 172) % 27) / 27;
+      const h = 6 + Math.round(8 * t * (1 - t));
+      rect(x, 108, 1, h, Math.floor((x - 172) / 4) % 2 ? "#f7f7f2" : "#e0503c");
+      dot(x, 108 + h, "rgba(0,0,0,0.15)");
+    }
+    rect(172, 107, 162, 1, "#2c3a4a");
+    for (let x = 172; x <= 334; x += 27) disc(x, 108, 2, "#e0503c");
+    // くすだま：看板の 下で ぱかっと ひらいて、たれまく（文字は HTML）
+    rect(262, 81, 1, 4, C.o);
+    for (let dy = -5; dy <= 5; dy++)
+      for (let dx = 0; dx <= 5; dx++) {
+        if (dx * dx + dy * dy > 25) continue;
+        const c = dx * dx + dy * dy > 16 ? C.o : (dy + 9) % 3 === 0 ? "#e0503c" : "#f2b632";
+        dot(254 - dx, 89 + dy, c);
+        dot(270 + dx, 89 + dy, c);
+      }
+    rect(255, 85, 14, 34, C.o);
+    rect(256, 86, 12, 32, "#fffdf5");
+    rect(256, 87, 12, 1, "#e0503c");
+    rect(256, 116, 12, 1, "#e0503c");
+    // 花輪：時計塔の よこと、工場の みぎに 1 つずつ
+    for (const cx of [167, 326]) {
+      const cy = 132;
+      line(cx - 6, 160, cx - 1, cy + 6, "#7a4f2b");
+      line(cx + 6, 160, cx + 1, cy + 6, "#7a4f2b");
+      rect(cx, cy + 6, 1, 154 - cy, "#7a4f2b");
+      for (let dy = -9; dy <= 9; dy++)
+        for (let dx = -9; dx <= 9; dx++) {
+          const d = dx * dx + dy * dy;
+          if (d > 81) continue;
+          const k = Math.floor(((Math.atan2(dy, dx) + Math.PI) / (2 * Math.PI)) * 18);
+          dot(cx + dx, cy + dy, d > 72 ? C.o : d > 25 ? PETALS[(k + (d > 49 ? 1 : 0)) % PETALS.length] : "#fffdf5");
+        }
+      rect(cx, cy - 3, 1, 6, "#b8361f"); // まんなかの 札（おいわいの ことば）
+      rect(cx - 2, cy + 8, 5, 2, "#e0503c"); // 下の リボン
+      dot(cx - 2, cy + 10, "#e0503c");
+      dot(cx + 2, cy + 10, "#e0503c");
+    }
+  });
+  // くすだまの 紙ふぶき
+  function confetti(n) {
+    for (let i = 0; i < 16; i++) {
+      const y = 92 + ((i * 23 + n * 1.2) % 72);
+      const x = 246 + ((i * 13) % 34) + Math.round(3 * Math.sin((n + i * 4) / 5));
+      rect(x, y, (n + i) % 3 ? 2 : 1, 1, PETALS[i % PETALS.length]);
+    }
+  }
+
   // ================= うごく もの（毎コマ） =================
   const CLOUDS = [
     { x: 20, y: 24, s: 1.1, v: 0.18 },
@@ -1033,7 +1095,9 @@ const factory = (() => {
     frame();
   }
   const greeting =
-    hour < 5 ? "こんばんは！ よふかしだね。\nこっちは いつでも 晴れてるよ。"
+    kaiten?.today ? (kaiten.years ? `きょうで 開店 ${kaiten.years}しゅうねん！\nいつも きてくれて ありがとう。` : "きょう、WARPIX製作所が 開店！\nきてくれて ありがとう！")
+    : kaiten && !kaiten.years ? "WARPIX製作所、開店 したよ！\nくすだま、きれいでしょ？"
+    : hour < 5 ? "こんばんは！ よふかしだね。\nこっちは いつでも 晴れてるよ。"
     : hour < 11 ? "おはよう！ WARPIX製作所へ ようこそ。\nきょうも ドットを くみたてるよ。"
     : hour < 19 ? "こんにちは！ WARPIX製作所へ ようこそ。\nぼくや ゲンさんを おすと おはなし できるよ。"
     : "こんばんは！ WARPIX製作所へ ようこそ。\nこっちは まだ 晴れてるよ。";
@@ -1044,6 +1108,7 @@ const factory = (() => {
     winter: "ゆきだるま、ぼくが つくったんだ。\nヘルメットも かぶせて あげた。",
   };
   const LINES = [
+    ...(kaiten ? ["くすだまは、ぼくが ひもを ひっぱったんだ！\nぱかーんって ひらいたよ。", "花輪は ご近所さんからの おいわい。\nスズメたちも 見に きてる。"] : []),
     SEASON_LINE[season],
     "ここでは ドットを ひとつずつ くみたてて、\nせいひんに してるんだ。",
     "ブルーシートの 中は けんせつちゅう。\nなにが できるかは、まだ ひみつ。",
@@ -1055,13 +1120,14 @@ const factory = (() => {
     "えんとつ、おしてみた？",
   ];
   const GEN_LINES = [
+    ...(kaiten ? ["開店 おめでとう……って、おれたちの 店か。\nこれからも よろしくな！"] : []),
     "おう、いらっしゃい！ ゆっくり 見てってくれ。",
     "ピクセは よく はたらく。\nたまに つまみぐい するけどな。",
     "むかしの 道具も、未来の 機械も、\nつかいよう ってもんよ。",
     "ピコピコ した 音楽が すきでな。\nしごとが はかどるんだ。",
   ];
   const CAT_LINES = ["にゃあ", "……zzz", "ふにゃ（ひなたぼっこ ちゅう）"];
-  let lineIndex = Math.floor(Math.random() * LINES.length);
+  let lineIndex = kaiten ? 0 : Math.floor(Math.random() * LINES.length);
   let genIndex = 0;
   let catIndex = 0;
 
@@ -1078,6 +1144,12 @@ const factory = (() => {
   const radioBtn = document.getElementById("radio-btn");
   const chimneyBtn = scene.querySelector(".hot.chimney");
   const signEl = scene.querySelector(".sign");
+  // くすだまの たれまく（開店いわいの ときだけ）
+  const tagEl = scene.querySelector(".kaiten-tag");
+  if (kaiten) {
+    tagEl.textContent = kaiten.years ? `祝${kaiten.years}周年` : "祝開店";
+    canvas.setAttribute("aria-label", `${canvas.getAttribute("aria-label")} きょうは 開店いわい。看板の 下で くすだまが ひらいて「${tagEl.textContent}」の たれまく、工場の かべには 紅白幕、まえには 花輪が ふたつ。`);
+  }
   let happyUntil = 0;
   let puffs = 0;
   // 地下で 石板の 伝説が わかったら、ピクセは つぎに おされた とき ちょっと しんみり
@@ -1158,6 +1230,9 @@ const factory = (() => {
     place(signEl, 193, 61, 106, 17);
     signEl.hidden = false;
     signEl.style.fontSize = `${Math.floor((106 * scale * cam.z) / 10.5)}px`;
+    if (!kaiten) return;
+    place(tagEl, 256, 89, 12, 27);
+    tagEl.style.fontSize = `${Math.floor((27 * scale * cam.z) / (tagEl.textContent.length + 0.6))}px`;
   }
 
   // ---------- 1 コマ 描く ----------
@@ -1178,6 +1253,10 @@ const factory = (() => {
     drone(n);
     smoke(n);
     g.drawImage(front, 0, 0);
+    if (deco) {
+      g.drawImage(deco, 0, 0);
+      confetti(n);
+    }
     crane(n);
     clockHands();
     antenna(n);
@@ -1277,6 +1356,7 @@ const factory = (() => {
     bachi: [96, 104, 22, 22],
     sign: [193, 61, 106, 17],
     chimney: [298, 22, 16, 22],
+    kusudama: [248, 81, 28, 38],
     arm: [340, 84, 30, 24],
     cat: [396, 108, 18, 12],
     lifton: [410, 150, 36, 18],
@@ -1292,7 +1372,7 @@ const factory = (() => {
     { x: 232, y: 150, see: ["pikuse"], text: () => "ぼく、ピクセ！ WARPIX製作所の あんないがかり だよ。\nいっしょに 工場を 見て まわろう！" },
     { x: 152, y: 92, see: ["clock"], text: () => `これが 時計塔。はりは ほんとうの 時刻で うごくんだ。\nいまは ${nowText()}！` },
     { x: 84, y: 100, see: ["bachi"], text: () => "タワークレーンと ブルーシート。\n中では つぎの 製品を 建造中。バチが ようせつ してる！" },
-    { x: 252, y: 58, see: ["sign", "chimney"], text: () => "屋上の 看板と、紅白の えんとつ。\nえんとつは おすと もくもく するよ。" },
+    { x: 252, y: 58, see: kaiten ? ["sign", "kusudama"] : ["sign", "chimney"], text: () => (kaiten ? "屋上の 看板と、紅白の えんとつ。\n看板の 下には、開店いわいの くすだま！" : "屋上の 看板と、紅白の えんとつ。\nえんとつは おすと もくもく するよ。") },
     { x: 364, y: 116, see: ["arm"], text: () => "かまぼこ倉庫。屋根の アームさんが、\nいつも どこかを なおしてる。" },
     { x: 412, y: 138, see: ["cat", "lifton"], text: () => "自販機の 上は、ねこの トタンの いつもの 場所。\nリフトンは 木の 箱を はこんでる。" },
     { x: airshipCenter, y: 64, see: ["airship"], text: () => "空には 飛行船の ソラマメ号。\nうしろの 高架には、レトロな 電車も はしるよ。" },
@@ -1401,6 +1481,10 @@ const factory = (() => {
   addEventListener("keydown", (e) => {
     if (e.key === "Escape" && tour) tourEnd(false);
   });
+
+  // ---------- SNS の 入口（開店の あさ 7じから） ----------
+  for (const e of document.querySelectorAll(".after-open")) e.hidden = !opened;
+  for (const e of document.querySelectorAll(".before-open")) e.hidden = opened;
 
   // ---------- 製作所だより（news.json） ----------
   const list = document.getElementById("news-list");
