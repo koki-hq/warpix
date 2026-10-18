@@ -5,7 +5,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("fonts/dotgothic16.woff2?v=30f4b12d") format("woff2");
+  src: url("fonts/dotgothic16.woff2?v=547fb888") format("woff2");
 }
 
 :root {
@@ -652,6 +652,12 @@ main {
 .ex-memo .ex-list li,
 .ex-steps li {
   margin: 0;
+}
+.panel .ex-psst {
+  margin: 10px 0 0;
+  color: var(--red);
+  font-size: 14px;
+  line-height: 28px;
 }
 .panel .ex-sign {
   margin: 4px 0 0;

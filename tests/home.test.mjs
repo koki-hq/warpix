@@ -39,7 +39,7 @@ export default {
     // 展示室は みじかく（説明書は warpix-link の 中）。権利の ことわりは のこす
     // ふだんは みじかく。くわしい 説明は「ピクセの てがき カタログ」に しまって あり、ひらくと 読める
     t.ok((await p.ev(`(() => { const ex = document.querySelector("#products .exhibit").cloneNode(true); ex.querySelector(".ex-catalog .ex-memo").remove(); return ex.textContent.replace(/\\s/g, "").length; })()`)) < 400, "展示室の 紹介（カタログの そと）が ながい");
-    t.ok(await p.ev(`(() => { const d = document.querySelector("#products .ex-catalog"); return !d.open && d.querySelector("summary").textContent.includes("カタログ") && d.textContent.includes("こんな ひとに") && d.querySelectorAll(".ex-features li").length === 6; })()`), "ピクセの てがき カタログが ない・さいしょから ひらいている");
+    t.ok(await p.ev(`(() => { const d = document.querySelector("#products .ex-catalog"); return !d.open && d.querySelector("summary").textContent.includes("カタログ") && d.textContent.includes("こんな ひとに") && d.querySelectorAll(".ex-features li").length === 7 && d.textContent.includes("しゅうらいの よる"); })()`), "ピクセの てがき カタログが ない・さいしょから ひらいている");
     t.ok((await p.ev(`document.querySelector("#products .ex-note").textContent`)).includes("WARPIX製作所の もの"), "名前・絵の 権利の ことわりが ない");
     // じむしょの 芯の ことば（デザインが かわっても のこす）
     t.ok((await p.ev(`document.getElementById("about").textContent`)).includes("ドット絵と チップチューンの 世界"), "じむしょの 説明から 芯の ことばが きえた");
