@@ -55,6 +55,9 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 1. **お知らせ（`news.json`）の 形と 場所を 変えない。** warpix-link の `news.js` が `https://koki-hq.github.io/warpix/news.json` を 読んでいる
    - `{ "news": [{ "id", "date": "YYYY-MM-DD", "title", "body"?, "url"? }] }`。`id` は かぶらない、`url` は https、`title` は 40 文字まで（テストで 確かめている）
    - warpix-link の フッター「製作所だより」は `https://koki-hq.github.io/warpix/#news` に 飛ぶ。**`id="news"` の 場所を 残す**
+   - **おしらせの 下書き**（2026-10-18 から）：warpix-link の ウィンドウが 事務所リポジトリの `おしらせ下書き.md` に「まだ：<id>」で 書く。
+     ホームページは pull して「まだ」を `news.json` の いちばん 上に そのまま のせ → `node tools/fonts.mjs` → テスト → 公開 → 見出しを「済（ホームページ vX.Y）」に して push。
+     この 下書きは ユーザーが 一任ずみ なので、のせる まえに きかなくて いい。きまりは そのファイルの あたま。`/resume` の ときにも 見る
 2. **ライセンスは All rights reserved**（`LICENSE`）。フッターに「このページの すべての 権利は WARPIX製作所に あります。」
 3. **ブラウザに なにも 保存しない**（いまは そう 書いている）。保存する なら ページの「じむしょ」の 説明も 直す
 4. **アクセシビリティ**：axe-core で 問題 0（`node tools/health.mjs`）。部屋や ボタンは キーボードで たどれる、読み上げ用の 名前、`prefers-reduced-motion` の ときは うごかさない
@@ -77,7 +80,7 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 - **文字を ふやしたら `node tools/fonts.mjs`**（news.json・セリフ・文章。つかう 文字だけの フォントを たのんでいる。テストが たりない 文字を おしえる）
 - 共有カードは `node tools/og.mjs`（絵や 看板を かえたら）
 - favicon は `node tools/favicon.mjs`（`factory.js` の ピクセから 作る）
-- 公開：`main` に push すると GitHub Pages に 出る。タグ `vX.Y`（いまは `v1.13`）と 仕様メモを セットで。公開後は 本番の URL で 変わった ことを 確かめる
+- 公開：`main` に push すると GitHub Pages に 出る。タグ `vX.Y`（いまは `v1.13.1`）と 仕様メモを セットで。公開後は 本番の URL で 変わった ことを 確かめる
   - Pages の 公開が「waiting」で 止まる ことが ある → `gh api -X POST repos/koki-hq/warpix/pages/builds` で 頼みなおすと 通る
 - コミット：git の メールは noreply 設定ずみ。メッセージの 最後に `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`
 
