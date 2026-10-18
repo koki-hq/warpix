@@ -24,6 +24,7 @@ export default {
   async "青空の 町工場：看板、絵、あいさつ、おせる ところは キーボードで たどれる"(t) {
     const { server, p } = await open(t);
     t.eq(await p.ev(`document.title`), "WARPIX製作所", "タイトル");
+    t.ok(await p.ev(`!!document.querySelector('#about a[href="mailto:pixe@warpix.app"]')`), "じむしょに ピクセに おてがみ（pixe@warpix.app）が ない");
     t.eq(await p.ev(`document.querySelector("h1").textContent`), "WARPIX製作所", "看板の 見出し");
     t.ok((await said(p)).includes("こんにちは"), "ひるの あいさつ");
     t.ok((await p.ev(`document.querySelector(".scene .say").textContent`)).includes("こんにちは"), "絵の ふきだしに あいさつが ない");
