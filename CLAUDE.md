@@ -11,7 +11,7 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 | もの | 場所 | メモ |
 |---|---|---|
 | ホームページ（ここ） | `C:\dev\warpix` / github.com/koki-hq/warpix（**公開**） | All rights reserved。公開なのは GitHub Pages を 無料で つかう ため |
-| warpix-link | `C:\dev\warpix-link` / github.com/koki-hq/warpix-link（公開、MIT） | 第一弾の 製品。**別の ウィンドウが 担当** |
+| warpix-link | `C:\dev\warpix-link` / github.com/koki-hq/warpix-link（公開、MIT）/ https://link.warpix.app/ | 第一弾の 製品。**別の ウィンドウが 担当** |
 | 事務所 | `C:\dev\warpix-seisakusho` / github.com/koki-hq/warpix-seisakusho（**非公開**） | 事業の 方針・決めたこと・やること。決まったことは ここの `きめたこと.md`（新しい ものが 上）と `04-やること.md` に 書いて push |
 
 ## WARPIX製作所 とは（決まっている こと）
@@ -52,9 +52,9 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 
 ## かならず 守る こと
 
-1. **お知らせ（`news.json`）の 形と 場所を 変えない。** warpix-link の `news.js` が `https://koki-hq.github.io/warpix/news.json` を 読んでいる（v1.14 から warpix.app へ 転送されて とどく。転送の あとも 読めるか 公開の たびに 確かめる）
+1. **お知らせ（`news.json`）の 形と 場所を 変えない。** warpix-link（https://link.warpix.app/）の `news.js` が `https://warpix.app/news.json` を 読んでいる（`config.js` の `WARPIX_NEWS`。ふるい 版の warpix-link は `https://koki-hq.github.io/warpix/news.json` を 読むので、その 転送も こわさない）
    - `{ "news": [{ "id", "date": "YYYY-MM-DD", "title", "body"?, "url"? }] }`。`id` は かぶらない、`url` は https、`title` は 40 文字まで（テストで 確かめている）
-   - warpix-link の フッター「製作所だより」は `https://koki-hq.github.io/warpix/#news` に 飛ぶ。**`id="news"` の 場所を 残す**
+   - warpix-link の フッター「製作所だより」は `https://warpix.app/#news` に 飛ぶ。**`id="news"` の 場所を 残す**
    - **おしらせの 下書き**（2026-10-18 から）：warpix-link の ウィンドウが 事務所リポジトリの `おしらせ下書き.md` に「まだ：<id>」で 書く。
      ホームページは pull して「まだ」を `news.json` の いちばん 上に そのまま のせ → `node tools/fonts.mjs` → テスト → 公開 → 見出しを「済（ホームページ vX.Y）」に して push。
      この 下書きは ユーザーが 一任ずみ なので、のせる まえに きかなくて いい。きまりは そのファイルの あたま。`/resume` の ときにも 見る
@@ -77,10 +77,10 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 - **公開の 前は テストの おわりの コード（`$?`、失敗なら 1）を かならず 見る**。`| tail` で ながめる だけだと 失敗を 見おとす（v1.11 で やった）
 - 健康診断：`node tools/health.mjs`（重さ・スマホでの 速さ・待機中 CPU・axe）。**公開の 前に テストと 健康診断を 両方**
 - 時刻を ためす：`?hour=0〜23`（あいさつ・時計塔・ゲンさんの 一日）。お話の コマを とめる：`?t=0〜95`
-- **文字を ふやしたら `node tools/fonts.mjs`**（news.json・セリフ・文章。つかう 文字だけの フォントを たのんでいる。テストが たりない 文字を おしえる）
+- **文字を ふやしたら `node tools/fonts.mjs`**（news.json・セリフ・文章。DotGothic16 は つかう 文字だけの woff2 を `fonts/` に 置いている（OFL）。Press Start 2P は 予約された 名前つき なので しぼって 置けず、Google Fonts から 表示を とめずに。テストが たりない 文字を おしえる）
 - 共有カードは `node tools/og.mjs`（絵や 看板を かえたら）
 - favicon は `node tools/favicon.mjs`（`factory.js` の ピクセから 作る）
-- 公開：`main` に push すると GitHub Pages に 出る。タグ `vX.Y`（いまは `v1.14`）と 仕様メモを セットで。公開後は 本番の URL で 変わった ことを 確かめる
+- 公開：`main` に push すると GitHub Pages に 出る。タグ `vX.Y`（いまは `v1.15`）と 仕様メモを セットで。公開後は 本番の URL で 変わった ことを 確かめる
   - Pages の 公開が「waiting」で 止まる ことが ある → `gh api -X POST repos/koki-hq/warpix/pages/builds` で 頼みなおすと 通る
 - コミット：git の メールは noreply 設定ずみ。メッセージの 最後に `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`
 

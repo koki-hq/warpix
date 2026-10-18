@@ -59,7 +59,8 @@ warpix-link も この ファイルを 読みにきて、ピクセが「ニュ�
 | `chika.js` | 地面の 下の 世界 |
 | `radio.js` | ラジカセの チップチューン（音を ブラウザで つくる） |
 | `news.json` | 製作所だより |
-| `tools/fonts.mjs` | つかう 文字だけの フォントを たのむ（文字を ふやしたら `node tools/fonts.mjs`） |
+| `fonts/` | ふだんの 文字 DotGothic16（つかう 文字だけ）と その ライセンス（OFL） |
+| `tools/fonts.mjs` | つかう 文字だけの フォントを つくる（文字を ふやしたら `node tools/fonts.mjs`） |
 | `og.png` | 共有カード（`node tools/og.mjs` で つくる） |
 | `favicon.svg` | ヘルメットの ピクセ（`node tools/favicon.mjs` で つくる） |
 | `docs/` | 世界観（`THEME.md`）と 仕様メモ（`spec/`） |
@@ -78,3 +79,4 @@ warpix-link も この ファイルを 読みにきて、ピクセが「ニュ�
 ホームページは WARPIX製作所の 顔なので、オープンソースには していません。
 このリポジトリが 公開なのは、GitHub Pages で 無料で 公開する ためです（中は 見えますが、つかって いい という 許可では ありません）。
 ※ 製品の warpix-link は、コードが MIT の オープンソースです。
+※ `fonts/` の フォント（DotGothic16）は WARPIX製作所の ものでは なく、作者の SIL Open Font License です（`fonts/OFL-DotGothic16.txt`）。

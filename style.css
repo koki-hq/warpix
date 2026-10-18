@@ -1,4 +1,13 @@
 /* WARPIX製作所：青空・白い雲・町工場。なつかしい トタンと、未来の 光 */
+/* ふだんの 文字は この サイトに おいた DotGothic16（つかう 文字だけ。node tools/fonts.mjs）。OFL：fonts/OFL-DotGothic16.txt */
+@font-face {
+  font-family: "DotGothic16";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/dotgothic16.woff2?v=ea01a910") format("woff2");
+}
+
 :root {
   --sky-hi: #3d9bf0;
   --sky: #5fb2f7;

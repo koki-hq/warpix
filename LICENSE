@@ -5,6 +5,10 @@ served by GitHub Pages. No license is granted to copy, modify, or
 redistribute its code, text, pixel art, the character "Pikuse" (ピクセ),
 or the names "WARPIX" and "WARPIX製作所".
 
+Exception: the font files in fonts/ (DotGothic16, a subset made with
+Google Fonts) are licensed under the SIL Open Font License, Version 1.1,
+by their own authors. See fonts/OFL-DotGothic16.txt.
+
 The announcements in news.json are meant to be read by WARPIX製作所's own
 products (such as warpix-link).
 
@@ -12,3 +16,7 @@ products (such as warpix-link).
 ために 公開しています。コード・文章・ドット絵・キャラクター「ピクセ」・
 「WARPIX」「WARPIX製作所」の 名前の すべての 権利は WARPIX製作所に あり、
 複製・改変・再配布の 許可は していません。
+
+ただし fonts/ の フォント（DotGothic16、つかう 文字だけに しぼった もの）は
+WARPIX製作所の ものでは なく、作者の SIL Open Font License 1.1 です
+（fonts/OFL-DotGothic16.txt）。

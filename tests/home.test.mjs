@@ -31,9 +31,9 @@ export default {
     t.ok(await p.ev(`(() => { const d = document.querySelector(".scene canvas").getContext("2d").getImageData(0, 0, document.querySelector(".scene canvas").width, 176).data; let blue = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 2] > 200 && d[i] < 120) blue++; return blue > 4000; })()`), "青空が 描かれていない");
     t.ok(await p.ev(`[...document.querySelectorAll(".hot")].length === 11 && [...document.querySelectorAll(".hot")].filter((b) => !b.hidden).every((b) => b.tabIndex === 0 && b.getAttribute("aria-label"))`), "おせる ところに Tab で いけない・名前が ない");
     t.eq(await p.ev(`[...document.querySelectorAll(".guide a")].map((a) => a.getAttribute("href"))`), ["#products", "#news", "#nakama", "#about"], "工場あんない");
-    t.eq(await p.ev(`document.querySelector('#products a').href`), "https://koki-hq.github.io/warpix-link/", "warpix-link への リンク");
+    t.eq(await p.ev(`document.querySelector('#products a').href`), "https://link.warpix.app/", "warpix-link への リンク");
     // せいひん 展示室：warpix-link の 絵（説明つき）、ひらく ボタン、コード
-    t.ok(await p.ev(`(() => { const ex = document.querySelector("#products .exhibit"); return ex.querySelector("img").alt.includes("warpix-link") && ex.querySelector(".ex-go").href === "https://koki-hq.github.io/warpix-link/" && ex.querySelector(".ex-src").href.startsWith("https://github.com/koki-hq/warpix-link"); })()`), "展示室の warpix-link が たりない");
+    t.ok(await p.ev(`(() => { const ex = document.querySelector("#products .exhibit"); return ex.querySelector("img").alt.includes("warpix-link") && ex.querySelector(".ex-go").href === "https://link.warpix.app/" && ex.querySelector(".ex-src").href.startsWith("https://github.com/koki-hq/warpix-link"); })()`), "展示室の warpix-link が たりない");
     t.ok((await p.ev(`document.getElementById("products").textContent`)).includes("いつもの 公式サイトへ、ピクセの いる 空間を とおって ワープする 踏み台リンクアプリ。"), "製品の ひとことが きえた");
     // じむしょの 芯の ことば（デザインが かわっても のこす）
     t.ok((await p.ev(`document.getElementById("about").textContent`)).includes("ドット絵と チップチューンの 世界"), "じむしょの 説明から 芯の ことばが きえた");
@@ -287,14 +287,28 @@ export default {
     }
   },
 
-  async "フォント：このページで つかう 文字が ぜんぶ フォントの リンクに はいっている"(t) {
+  async "フォント：つかう 文字が ぜんぶ はいっている。DotGothic16 は この サイトに、Press Start 2P は 表示を とめずに"(t) {
+    const { readFileSync, existsSync } = await import("node:fs");
+    const { createHash } = await import("node:crypto");
     const { join } = await import("node:path");
     const { pathToFileURL } = await import("node:url");
     const fonts = await import(pathToFileURL(join(t.ROOT, "tools", "fonts.mjs")).href);
     const have = fonts.linkedChars();
-    t.ok(have, "index.html に フォントの リンク（id=font）が ない");
+    t.ok(have, "fonts/chars.txt が ない");
     const missing = fonts.usedChars().filter((c) => !have?.has(c));
     t.eq(missing.join(""), "", "たりない 文字が ある（node tools/fonts.mjs を ながして）");
+
+    const html = readFileSync(join(t.ROOT, "index.html"), "utf8");
+    const css = readFileSync(join(t.ROOT, "style.css"), "utf8");
+    const font = readFileSync(join(t.ROOT, "fonts", "dotgothic16.woff2"));
+    t.eq(font.subarray(0, 4).toString(), "wOF2", "dotgothic16.woff2");
+    // 住所の v は 中身の ハッシュ（ふるい フォントが のこらない ように）
+    const v = createHash("sha256").update(font).digest("hex").slice(0, 8);
+    t.ok(css.includes(`url("fonts/dotgothic16.woff2?v=${v}")`), "style.css の @font-face の 住所が いまの フォントと ちがう（node tools/fonts.mjs を ながして）");
+    t.ok(!/rel="preload"[^>]*woff2/.test(html), "フォントの preload は つけない（表示が おそく なる）");
+    t.ok(existsSync(join(t.ROOT, "fonts", "OFL-DotGothic16.txt")), "DotGothic16 の ライセンス（OFL）が ない");
+    t.ok(!/family=DotGothic16/.test(html), "DotGothic16 を まだ Google から 読んでいる");
+    t.ok(/<link id="font" href="https:\/\/fonts\.googleapis\.com\/css2\?family=Press\+Start\+2P&amp;text=[^"]+" rel="stylesheet" media="print" onload="this\.media='all'">/.test(html), "Press Start 2P が 表示を とめている");
   },
 
   async "共有カード：og.png（1200×630）と、それを さす メタ情報。住所は warpix.app"(t) {
