@@ -5,7 +5,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("fonts/dotgothic16.woff2?v=1010caef") format("woff2");
+  src: url("fonts/dotgothic16.woff2?v=f74f52db") format("woff2");
 }
 
 :root {
@@ -568,21 +568,13 @@ main {
   margin: 0 0 12px;
   font-size: 17px;
 }
-.exhibit h4 {
-  margin: 14px 0 4px;
-  color: var(--red);
-  font-size: 15px;
-  font-weight: normal;
-}
-.ex-list,
-.ex-steps {
+.ex-list {
   margin: 0;
   padding-left: 1.3em;
   font-size: 15px;
 }
-.ex-list li,
-.ex-steps li {
-  margin: 2px 0;
+.ex-list li {
+  margin: 4px 0;
 }
 .ex-features b {
   color: var(--navy);
@@ -607,6 +599,74 @@ main {
 }
 .ex-src {
   font-size: 14px;
+}
+.panel .ex-note {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+/* ショーウィンドウの ピクセ（おすと ワープあなへ） */
+.ex-window {
+  position: relative;
+  align-self: start;
+}
+.ex-warp {
+  position: absolute;
+  right: -10px;
+  bottom: -18px;
+  display: block;
+  line-height: 0;
+}
+.ex-warp canvas {
+  position: relative;
+  display: block;
+}
+.ex-warp::after {
+  content: "いってみる？";
+  position: absolute;
+  right: 100%;
+  bottom: 70%;
+  padding: 3px 8px 2px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: nowrap;
+  box-shadow: 0 0 0 2px var(--ink);
+  pointer-events: none;
+}
+.ex-warp:hover::after,
+.ex-warp:focus-visible::after {
+  background: #ffe680;
+}
+.ex-warp.warping::after {
+  content: "いってきまーす！";
+}
+/* ワープあな（おした ときだけ、1 回 うごく） */
+.ex-warp::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  translate: -50% 40%;
+  border-radius: 50%;
+  background: radial-gradient(#1a1030 40%, #6b3fd6 60%, #3ee8ff 75%, transparent 76%);
+}
+.ex-warp.warping::before {
+  animation: warp-hole 0.7s steps(7) forwards;
+}
+.ex-warp.warping canvas {
+  animation: warp-dive 0.7s steps(7) forwards;
+}
+@keyframes warp-hole {
+  40% { width: 60px; height: 22px; }
+  100% { width: 60px; height: 22px; }
+}
+@keyframes warp-dive {
+  30% { translate: 0 -14px; }
+  100% { translate: 0 30px; scale: 0.2; opacity: 0; }
 }
 .ex-soon {
   background: repeating-linear-gradient(-45deg, #fff 0 12px, #fff7d6 12px 24px);

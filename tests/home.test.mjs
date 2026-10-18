@@ -35,7 +35,10 @@ export default {
     t.eq(await p.ev(`document.querySelector('#products a').href`), "https://link.warpix.app/", "warpix-link への リンク");
     // せいひん 展示室：warpix-link の 絵（説明つき）、ひらく ボタン、コード
     t.ok(await p.ev(`(() => { const ex = document.querySelector("#products .exhibit"); return ex.querySelector("img").alt.includes("warpix-link") && ex.querySelector(".ex-go").href === "https://link.warpix.app/" && ex.querySelector(".ex-src").href.startsWith("https://github.com/koki-hq/warpix-link"); })()`), "展示室の warpix-link が たりない");
-    t.ok((await p.ev(`document.getElementById("products").textContent`)).includes("いつもの 公式サイトへ、ピクセの いる 空間を とおって ワープする 踏み台リンクアプリ。"), "製品の ひとことが きえた");
+    t.ok((await p.ev(`document.getElementById("products").textContent`)).includes("いつもの 公式サイトへ、ドット絵の ピクセと いっしょに ワープする 踏み台リンクアプリ。"), "製品の ひとことが きえた");
+    // 展示室は みじかく（説明書は warpix-link の 中）。権利の ことわりは のこす
+    t.ok((await p.ev(`document.querySelector("#products .exhibit").textContent.replace(/\\s/g, "").length`)) < 400, "展示室の 紹介が ながい");
+    t.ok((await p.ev(`document.querySelector("#products .ex-note").textContent`)).includes("WARPIX製作所の もの"), "名前・絵の 権利の ことわりが ない");
     // じむしょの 芯の ことば（デザインが かわっても のこす）
     t.ok((await p.ev(`document.getElementById("about").textContent`)).includes("ドット絵と チップチューンの 世界"), "じむしょの 説明から 芯の ことばが きえた");
     // なかま図鑑：キャラクターの 絵が 描かれている
@@ -44,6 +47,9 @@ export default {
     // 地面の 下の 世界：パネルの うしろ いっぱいに 描かれ、ふかい ほど くらい
     await t.sleep(400);
     t.ok(await p.ev(`(() => { const w = document.querySelector(".underground"), c = w.querySelector("canvas"); if (!c.width || w.offsetHeight < document.querySelector("main").offsetHeight) return false; const x = c.getContext("2d"); const lum = (y) => { const d = x.getImageData(0, y, 1, 1).data; return d[0] + d[1] + d[2]; }; return lum(2) > lum(c.height - 4); })()`), "地下の 世界が 描かれていない・ふかい ほうが あかるい");
+    // 展示室の ピクセ：おすと ワープあなに とびこんでから warpix-link へ（すぐには とばない）
+    const warp = await p.ev(`(() => { const w = document.querySelector(".ex-warp"); w.click(); return { label: w.getAttribute("aria-label"), href: w.href, warping: w.classList.contains("warping"), here: location.host }; })()`);
+    t.ok(warp.label.includes("warpix-link") && warp.href === "https://link.warpix.app/" && warp.warping && warp.here.startsWith("127.0.0.1"), `展示室の ピクセが ワープ しない: ${JSON.stringify(warp)}`);
     t.noErrors(p);
     await server.close();
   },

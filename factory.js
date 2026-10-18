@@ -1486,6 +1486,16 @@ const factory = (() => {
   for (const e of document.querySelectorAll(".after-open")) e.hidden = !opened;
   for (const e of document.querySelectorAll(".before-open")) e.hidden = opened;
 
+  // ---------- 展示室の ピクセ：おすと ワープあなに とびこんでから warpix-link へ ----------
+  const warp = document.querySelector(".ex-warp");
+  warp.addEventListener("click", (e) => {
+    if (reduced || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return; // 新しい タブ などは ふつうの リンクの まま
+    e.preventDefault();
+    warp.classList.add("warping");
+    setTimeout(() => (location.href = warp.href), 750);
+  });
+  addEventListener("pageshow", () => warp.classList.remove("warping")); // もどる ボタンで もどった とき
+
   // ---------- 製作所だより（news.json） ----------
   const list = document.getElementById("news-list");
   const latest = document.getElementById("board-latest");
