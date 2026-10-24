@@ -565,8 +565,31 @@ main {
   line-height: 1.5;
 }
 .panel .ex-catch {
-  margin: 0 0 12px;
+  margin: 0 0 4px;
   font-size: 17px;
+}
+.panel .ex-what {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 15px;
+}
+.exhibit[hidden] {
+  display: none;
+}
+/* ARCADE の 看板：夜の ゲームセンターの 紺に、アイコンと INSERT COIN */
+.ex-marquee {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  padding: 18px 12px 14px;
+  background: #0f0b1e;
+  color: #ffd84a;
+  font-family: "Press Start 2P", monospace;
+  font-size: 12px;
+  text-decoration: none;
+}
+.ex-shot.ex-marquee img {
+  width: 128px;
 }
 .ex-list {
   margin: 0;

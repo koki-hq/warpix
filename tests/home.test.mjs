@@ -34,8 +34,9 @@ export default {
     t.eq(await p.ev(`[...document.querySelectorAll(".guide a")].map((a) => a.getAttribute("href"))`), ["#products", "#news", "#nakama", "#about"], "工場あんない");
     t.eq(await p.ev(`document.querySelector('#products a').href`), "https://link.warpix.app/", "warpix-link への リンク");
     // せいひん 展示室：warpix-link の 絵（説明つき）、ひらく ボタン、コード
-    t.ok(await p.ev(`(() => { const ex = document.querySelector("#products .exhibit"); return ex.querySelector("img").alt.includes("warpix-link") && ex.querySelector(".ex-go").href === "https://link.warpix.app/" && ex.querySelector(".ex-src").href.startsWith("https://github.com/koki-hq/warpix-link"); })()`), "展示室の warpix-link が たりない");
+    t.ok(await p.ev(`(() => { const ex = document.querySelector("#products .exhibit"); return ex.querySelector("img").alt.includes("WARPIX LINK") && ex.querySelector(".ex-go").href === "https://link.warpix.app/" && ex.querySelector(".ex-src").href.startsWith("https://github.com/koki-hq/warpix-link"); })()`), "展示室の warpix-link が たりない");
     t.ok((await p.ev(`document.getElementById("products").textContent`)).includes("いつもの 公式サイトへ、ドット絵の ピクセと いっしょに ワープする 踏み台リンクアプリ。"), "製品の ひとことが きえた");
+    t.eq(await p.ev(`document.querySelector("#products .ex-catch").textContent`), "いつもの アプリを、ちょっと 楽しく ひらく 入口。", "WARPIX LINK の ひとこと（事務所で きめた もの）");
     // 展示室は みじかく（説明書は warpix-link の 中）。権利の ことわりは のこす
     // ふだんは みじかく。くわしい 説明は「ピクセの てがき カタログ」に しまって あり、ひらくと 読める
     t.ok((await p.ev(`(() => { const ex = document.querySelector("#products .exhibit").cloneNode(true); ex.querySelector(".ex-catalog .ex-memo").remove(); return ex.textContent.replace(/\\s/g, "").length; })()`)) < 400, "展示室の 紹介（カタログの そと）が ながい");
@@ -51,7 +52,7 @@ export default {
     t.ok(await p.ev(`(() => { const w = document.querySelector(".underground"), c = w.querySelector("canvas"); if (!c.width || w.offsetHeight < document.querySelector("main").offsetHeight) return false; const x = c.getContext("2d"); const lum = (y) => { const d = x.getImageData(0, y, 1, 1).data; return d[0] + d[1] + d[2]; }; return lum(2) > lum(c.height - 4); })()`), "地下の 世界が 描かれていない・ふかい ほうが あかるい");
     // 展示室の ピクセ：おすと ワープあなに とびこんでから warpix-link へ（すぐには とばない）
     const warp = await p.ev(`(() => { const w = document.querySelector(".ex-warp"); w.click(); return { label: w.getAttribute("aria-label"), href: w.href, warping: w.classList.contains("warping"), here: location.host }; })()`);
-    t.ok(warp.label.includes("warpix-link") && warp.href === "https://link.warpix.app/" && warp.warping && warp.here.startsWith("127.0.0.1"), `展示室の ピクセが ワープ しない: ${JSON.stringify(warp)}`);
+    t.ok(warp.label.includes("WARPIX LINK") && warp.href === "https://link.warpix.app/" && warp.warping && warp.here.startsWith("127.0.0.1"), `展示室の ピクセが ワープ しない: ${JSON.stringify(warp)}`);
     t.noErrors(p);
     await server.close();
   },
@@ -285,10 +286,14 @@ export default {
     t.eq(await tag(), null, "7じ まえに たれまく");
     t.eq(await sns(), 0, "7じ まえに SNS の リンクが 見える");
     t.ok(await p.ev(`document.querySelector(".before-open").checkVisibility()`), "7じ まえに「じゅんびちゅう」が ない");
+    // だいにだん WARPIX ARCADE の 部屋は 開店から
+    const arcade = () => p.ev(`(() => { const a = document.getElementById("ex-arcade"); return a.checkVisibility() && a.querySelector(".ex-go").href === "https://arcade.warpix.app/" && [...document.querySelectorAll("#about a")].some((l) => l.checkVisibility() && l.href === "https://arcade.warpix.app/"); })()`);
+    t.ok(!(await arcade()), "7じ まえに ARCADE の 部屋が 見える");
     await p.goto(`${server.url}?date=2026-11-01T07:00&hour=7`, 800);
     t.eq(await tag(), "祝開店", "7じ ちょうどに たれまくが ない");
     t.eq(await sns(), 2, "7じ に SNS の リンク（じむしょ・フッター）");
     t.ok(!(await p.ev(`document.querySelector(".before-open").checkVisibility()`)), "開店 したのに「じゅんびちゅう」");
+    t.ok(await arcade(), "開店 したのに ARCADE の 部屋が ない");
     for (const [q, want] of [["2026-10-31", null], ["2026-11-14", "祝開店"], ["2026-11-15", null], ["2027-11-03", "祝1周年"]]) {
       await p.goto(`${server.url}?date=${q}&hour=14`, 800);
       t.eq(await tag(), want, `${q} の たれまく`);

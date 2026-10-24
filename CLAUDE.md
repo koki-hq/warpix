@@ -32,7 +32,7 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 - 季節の 服：月で 春・夏・秋・冬に 着がえる（v1.5）。`?month=1〜12` で ためす。どの 季節も 晴れ
 - 工場見学ツアー：カメラ（`cam`）で よって まわる（v1.7）。絵の 位置あわせは `cssX`・`cssY`・`place()`（カメラ経由）
 - ゲンさんの 一日：時刻で `story()` が `DAY`（体操・おべんとう・おやつ・かたづけ・うたたね）か `work()`（しごと）を えらぶ（v1.8）
-- せいひん 展示室：warpix-link の 紹介（v1.6。v1.19 で みじかい ショーウィンドウに、v1.20 で くわしい 説明は「ピクセの てがき カタログ」に しまう。ふだん 見える ところは ながく しない）。warpix-link の 機能が かわったら ここも 見なおす
+- せいひん 展示室：warpix-link の 紹介（v1.6。v1.19 で みじかい ショーウィンドウに、v1.20 で くわしい 説明は「ピクセの てがき カタログ」に しまう。ふだん 見える ところは ながく しない）。warpix-link の 機能が かわったら ここも 見なおす。v1.22 で だいにだん WARPIX ARCADE の 部屋（`#ex-arcade`、開店の 7:00 から）。文字で 書く ときは WARPIX LINK・WARPIX ARCADE
 - 健康診断の 数字は、別の ウィンドウが 重い ときに 悪く でる（パソコン全体の CPU も 見て 書く）
 - テストで 地下の ボタンへ スクロールする ときは `behavior: "instant"`（ページは なめらかスクロール なので、まにあわない）
 - なかま図鑑：5 種族・14 人。キャラの 数・種類・分類は 自由に ふやして いい（ユーザー公認）
@@ -82,7 +82,7 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 - **文字を ふやしたら `node tools/fonts.mjs`**（news.json・セリフ・文章。DotGothic16 は つかう 文字だけの woff2 を `fonts/` に 置いている（OFL）。Press Start 2P は 予約された 名前つき なので しぼって 置けず、Google Fonts から 表示を とめずに。テストが たりない 文字を おしえる）
 - 共有カードは `node tools/og.mjs`（絵や 看板を かえたら）
 - favicon は `node tools/favicon.mjs`（`factory.js` の ピクセから 作る）
-- 公開：`main` に push すると GitHub Pages に 出る。タグ `vX.Y`（いまは `v1.21.1`。2026-11-01 7:00 に GitHub Actions が `v2.0` を つける）と 仕様メモを セットで。公開後は 本番の URL で 変わった ことを 確かめる
+- 公開：`main` に push すると GitHub Pages に 出る。タグ `vX.Y`（いまは `v1.22`。2026-11-01 7:00 に GitHub Actions が `v2.0` を つける）と 仕様メモを セットで。公開後は 本番の URL で 変わった ことを 確かめる
   - Pages の 公開が「waiting」で 止まる ことが ある → `gh api -X POST repos/koki-hq/warpix/pages/builds` で 頼みなおすと 通る
 - コミット：git の メールは noreply 設定ずみ。メッセージの 最後に `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`
 
