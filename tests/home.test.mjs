@@ -40,7 +40,7 @@ export default {
     // 展示室は みじかく（説明書は warpix-link の 中）。権利の ことわりは のこす
     // ふだんは みじかく。くわしい 説明は「ピクセの てがき カタログ」に しまって あり、ひらくと 読める
     t.ok((await p.ev(`(() => { const ex = document.querySelector("#products .exhibit").cloneNode(true); ex.querySelector(".ex-catalog .ex-memo").remove(); return ex.textContent.replace(/\\s/g, "").length; })()`)) < 400, "展示室の 紹介（カタログの そと）が ながい");
-    t.ok(await p.ev(`(() => { const d = document.querySelector("#products .ex-catalog"); return !d.open && d.querySelector("summary").textContent.includes("カタログ") && d.textContent.includes("こんな ひとに") && d.querySelectorAll(".ex-features li").length === 7 && d.textContent.includes("しゅうらいの よる"); })()`), "ピクセの てがき カタログが ない・さいしょから ひらいている");
+    t.ok(await p.ev(`(() => { const d = document.querySelector("#products .ex-catalog"); return !d.open && d.querySelector("summary").textContent.includes("カタログ") && d.textContent.includes("こんな ひとに") && d.querySelectorAll(".ex-features li").length === 9 && d.textContent.includes("しゅうらいの よる") && d.textContent.includes("クローゼット"); })()`), "ピクセの てがき カタログが ない・さいしょから ひらいている");
     t.ok((await p.ev(`document.querySelector("#products .ex-note").textContent`)).includes("WARPIX製作所の もの"), "名前・絵の 権利の ことわりが ない");
     // じむしょの 芯の ことば（デザインが かわっても のこす）
     t.ok((await p.ev(`document.getElementById("about").textContent`)).includes("ドット絵と チップチューンの 世界"), "じむしょの 説明から 芯の ことばが きえた");
@@ -286,14 +286,14 @@ export default {
     t.eq(await tag(), null, "7じ まえに たれまく");
     t.eq(await sns(), 0, "7じ まえに SNS の リンクが 見える");
     t.ok(await p.ev(`document.querySelector(".before-open").checkVisibility()`), "7じ まえに「じゅんびちゅう」が ない");
-    // だいにだん WARPIX ARCADE の 部屋は 開店から
-    const arcade = () => p.ev(`(() => { const a = document.getElementById("ex-arcade"); return a.checkVisibility() && a.querySelector(".ex-go").href === "https://arcade.warpix.app/" && [...document.querySelectorAll("#about a")].some((l) => l.checkVisibility() && l.href === "https://arcade.warpix.app/"); })()`);
-    t.ok(!(await arcade()), "7じ まえに ARCADE の 部屋が 見える");
+    // WARPIX ARCADE は いったん 寝かせた（2026-10-25）。開店に ふくめない
+    const arcade = () => p.ev(`!!document.getElementById("ex-arcade") || !!document.querySelector('a[href^="https://arcade.warpix.app"]')`);
+    t.ok(!(await arcade()), "7じ まえに ARCADE が ある");
     await p.goto(`${server.url}?date=2026-11-01T07:00&hour=7`, 800);
     t.eq(await tag(), "祝開店", "7じ ちょうどに たれまくが ない");
     t.eq(await sns(), 8, "7じ に SNS の リンク 4 つ（じむしょ・フッター）");
     t.ok(!(await p.ev(`document.querySelector(".before-open").checkVisibility()`)), "開店 したのに「じゅんびちゅう」");
-    t.ok(await arcade(), "開店 したのに ARCADE の 部屋が ない");
+    t.ok(!(await arcade()), "開店に ARCADE が まざっている");
     for (const [q, want] of [["2026-10-31", null], ["2026-11-14", "祝開店"], ["2026-11-15", null], ["2027-11-03", "祝1周年"]]) {
       await p.goto(`${server.url}?date=${q}&hour=14`, 800);
       t.eq(await tag(), want, `${q} の たれまく`);

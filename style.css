@@ -5,7 +5,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("fonts/dotgothic16.woff2?v=2e622641") format("woff2");
+  src: url("fonts/dotgothic16.woff2?v=b86c9f32") format("woff2");
 }
 
 :root {
@@ -572,24 +572,6 @@ main {
   margin: 0 0 12px;
   color: var(--muted);
   font-size: 15px;
-}
-.exhibit[hidden] {
-  display: none;
-}
-/* ARCADE の 看板：夜の ゲームセンターの 紺に、アイコンと INSERT COIN */
-.ex-marquee {
-  display: grid;
-  place-items: center;
-  gap: 8px;
-  padding: 18px 12px 14px;
-  background: #0f0b1e;
-  color: #ffd84a;
-  font-family: "Press Start 2P", monospace;
-  font-size: 12px;
-  text-decoration: none;
-}
-.ex-shot.ex-marquee img {
-  width: 128px;
 }
 .ex-list {
   margin: 0;

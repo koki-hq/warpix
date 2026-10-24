@@ -18,7 +18,7 @@
   - すきなもの：ワープ、チップチューン、ほめられること
   - にがてなもの：ほうって おかれること（すねます）
   - ひみつ：製品ごとに、すこしずつ ちがう ピクセが いるらしい
-- **warpix-link とは 別の 世界観**。生みの親は WARPIX製作所 だけど、warpix-link は warpix-link。第二弾 WARPIX ARCADE（夜の ゲームセンター）も 同じ。文字で 書く ときは WARPIX LINK・WARPIX ARCADE（空白、ロゴは ハイフンつき）
+- **warpix-link とは 別の 世界観**。生みの親は WARPIX製作所 だけど、warpix-link は warpix-link。WARPIX ARCADE（夜の ゲームセンター）も 同じ（2026-10-25 から いったん 寝かせて いて、ホームページには 出さない）。文字で 書く ときは WARPIX LINK・WARPIX ARCADE（空白、ロゴは ハイフンつき）
 - **約束**：ブラウザに なにも 保存しない ／ すべての 権利は WARPIX製作所 ／ 製作所だより（`news.json`）の 形と 場所は 変えない
 
 ## 服（v1.2：青空の 工場まち）
