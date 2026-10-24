@@ -23,7 +23,7 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 
 ## いまの ホームページ（v1.2「青空の 工場まち」）
 
-- 開店いわい：まいとし 11/1〜11/14 は くすだま・紅白幕・花輪（v1.18）。SNS の 入口も 2026-11-01 7:00 から。`?date=2026-11-01`・`?date=2026-11-01T06:59` で ためす
+- 開店いわい：まいとし 11/1〜11/14 は くすだま・紅白幕・花輪（v1.18）。SNS の 入口（X・Instagram・TikTok・YouTube、v1.23 で 4 つ）も 2026-11-01 7:00 から。`?date=2026-11-01`・`?date=2026-11-01T06:59` で ためす
 
 - 地上：入道雲の 青空の パノラマ（480×176 ドット、整数倍）。ゲンさん（職人）と 黄色い ヘルメットの ピクセの お話、なかまたち
 - 地下：スクロールする ほど 地中へ（表土 → 粘土 → 洞窟 → 古代文明 → 最深部）。`chika.js`
@@ -82,7 +82,7 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 - **文字を ふやしたら `node tools/fonts.mjs`**（news.json・セリフ・文章。DotGothic16 は つかう 文字だけの woff2 を `fonts/` に 置いている（OFL）。Press Start 2P は 予約された 名前つき なので しぼって 置けず、Google Fonts から 表示を とめずに。テストが たりない 文字を おしえる）
 - 共有カードは `node tools/og.mjs`（絵や 看板を かえたら）
 - favicon は `node tools/favicon.mjs`（`factory.js` の ピクセから 作る）
-- 公開：`main` に push すると GitHub Pages に 出る。タグ `vX.Y`（いまは `v1.22`。2026-11-01 7:00 に GitHub Actions が `v2.0` を つける）と 仕様メモを セットで。公開後は 本番の URL で 変わった ことを 確かめる
+- 公開：`main` に push すると GitHub Pages に 出る。タグ `vX.Y`（いまは `v1.23`。2026-11-01 7:00 に GitHub Actions が `v2.0` を つける）と 仕様メモを セットで。公開後は 本番の URL で 変わった ことを 確かめる
   - Pages の 公開が「waiting」で 止まる ことが ある → `gh api -X POST repos/koki-hq/warpix/pages/builds` で 頼みなおすと 通る
 - コミット：git の メールは noreply 設定ずみ。メッセージの 最後に `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`
 

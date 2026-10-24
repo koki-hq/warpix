@@ -279,8 +279,8 @@ export default {
     t.ok((await said(p)).includes("くすだま") && v.see.every((r) => area(r, v.say) === 0), `ツアーで くすだまが かくれる: ${await said(p)}`);
     await p.key("Escape");
     const links = await p.ev(`[...document.querySelectorAll("#about a, footer a")].filter((a) => a.checkVisibility()).map((a) => a.href).join(" ")`);
-    for (const u of ["https://x.com/warpix_app", "https://www.instagram.com/warpix_app/", "mailto:pixe@warpix.app"]) t.ok(links.includes(u), `SNS の リンクが ない: ${u}`);
-    const sns = () => p.ev(`[...document.querySelectorAll('a[href^="https://x.com/"]')].filter((a) => a.checkVisibility()).length`);
+    for (const u of ["https://x.com/warpix_app", "https://www.instagram.com/warpix_app/", "https://www.tiktok.com/@warpix_app", "https://www.youtube.com/@warpix_app", "mailto:pixe@warpix.app"]) t.ok(links.includes(u), `SNS の リンクが ない: ${u}`);
+    const sns = () => p.ev(`[...document.querySelectorAll('a[href^="https://x.com/"], a[href^="https://www.instagram.com/"], a[href^="https://www.tiktok.com/"], a[href^="https://www.youtube.com/"]')].filter((a) => a.checkVisibility()).length`);
     // 7じ まえは まだ。SNS は「じゅんびちゅう」
     await p.goto(`${server.url}?date=2026-11-01T06:59&hour=6`, 800);
     t.eq(await tag(), null, "7じ まえに たれまく");
@@ -291,7 +291,7 @@ export default {
     t.ok(!(await arcade()), "7じ まえに ARCADE の 部屋が 見える");
     await p.goto(`${server.url}?date=2026-11-01T07:00&hour=7`, 800);
     t.eq(await tag(), "祝開店", "7じ ちょうどに たれまくが ない");
-    t.eq(await sns(), 2, "7じ に SNS の リンク（じむしょ・フッター）");
+    t.eq(await sns(), 8, "7じ に SNS の リンク 4 つ（じむしょ・フッター）");
     t.ok(!(await p.ev(`document.querySelector(".before-open").checkVisibility()`)), "開店 したのに「じゅんびちゅう」");
     t.ok(await arcade(), "開店 したのに ARCADE の 部屋が ない");
     for (const [q, want] of [["2026-10-31", null], ["2026-11-14", "祝開店"], ["2026-11-15", null], ["2027-11-03", "祝1周年"]]) {
@@ -299,7 +299,7 @@ export default {
       t.eq(await tag(), want, `${q} の たれまく`);
     }
     t.ok(!(await said(p)).includes("開店"), "2 年めの ふつうの 日に 開店の あいさつ");
-    t.eq(await sns(), 2, "開店の あとも SNS の リンクは のこる");
+    t.eq(await sns(), 8, "開店の あとも SNS の リンクは のこる");
     t.noErrors(p);
     await server.close();
   },
@@ -311,6 +311,7 @@ export default {
     const { addOpenNews, OPEN } = await import(pathToFileURL(join(t.ROOT, "tools", "open.mjs")).href);
     const item = JSON.parse(readFileSync(join(t.ROOT, "tools", "open-news.json"), "utf8"));
     const data = JSON.parse(readFileSync(join(t.ROOT, "news.json"), "utf8"));
+    t.ok(["X", "Instagram", "TikTok", "YouTube", "@warpix_app"].every((w) => item.body.includes(w)), `開店の おしらせに SNS 4 つが ない: ${item.body}`);
     t.eq(OPEN.toISOString(), "2026-10-31T22:00:00.000Z", "開店の 時刻（日本時間 11/1 7:00）");
     t.eq(addOpenNews(data, item, new Date("2026-11-01T06:59:59+09:00")), null, "7じ まえに のる");
     const next = addOpenNews(data, item, new Date("2026-11-01T07:00:00+09:00"));
