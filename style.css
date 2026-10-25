@@ -5,7 +5,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("fonts/dotgothic16.woff2?v=b86c9f32") format("woff2");
+  src: url("fonts/dotgothic16.woff2?v=143b78ed") format("woff2");
 }
 
 :root {
@@ -601,9 +601,6 @@ main {
 }
 .ex-go:hover {
   background: #a02e1a;
-}
-.ex-src {
-  font-size: 14px;
 }
 /* ピクセの てがき カタログ（ひらくと ノートの 紙） */
 .ex-catalog {

@@ -34,13 +34,13 @@ export default {
     t.eq(await p.ev(`[...document.querySelectorAll(".guide a")].map((a) => a.getAttribute("href"))`), ["#products", "#news", "#nakama", "#about"], "工場あんない");
     t.eq(await p.ev(`document.querySelector('#products a').href`), "https://link.warpix.app/", "warpix-link への リンク");
     // せいひん 展示室：warpix-link の 絵（説明つき）、ひらく ボタン、コード
-    t.ok(await p.ev(`(() => { const ex = document.querySelector("#products .exhibit"); return ex.querySelector("img").alt.includes("WARPIX LINK") && ex.querySelector(".ex-go").href === "https://link.warpix.app/" && ex.querySelector(".ex-src").href.startsWith("https://github.com/koki-hq/warpix-link"); })()`), "展示室の warpix-link が たりない");
+    t.ok(await p.ev(`(() => { const ex = document.querySelector("#products .exhibit"); return ex.querySelector("img").alt.includes("WARPIX LINK") && ex.querySelector(".ex-go").href === "https://link.warpix.app/" && !ex.querySelector(".ex-src") && !/MIT|github\.com/.test(ex.innerHTML); })()`), "展示室の warpix-link が たりない");
     t.ok((await p.ev(`document.getElementById("products").textContent`)).includes("いつもの 公式サイトへ、ドット絵の ピクセと いっしょに ワープする 踏み台リンクアプリ。"), "製品の ひとことが きえた");
     t.eq(await p.ev(`document.querySelector("#products .ex-catch").textContent`), "いつもの アプリを、ちょっと 楽しく ひらく 入口。", "WARPIX LINK の ひとこと（事務所で きめた もの）");
     // 展示室は みじかく（説明書は warpix-link の 中）。権利の ことわりは のこす
     // ふだんは みじかく。くわしい 説明は「ピクセの てがき カタログ」に しまって あり、ひらくと 読める
     t.ok((await p.ev(`(() => { const ex = document.querySelector("#products .exhibit").cloneNode(true); ex.querySelector(".ex-catalog .ex-memo").remove(); return ex.textContent.replace(/\\s/g, "").length; })()`)) < 400, "展示室の 紹介（カタログの そと）が ながい");
-    t.ok(await p.ev(`(() => { const d = document.querySelector("#products .ex-catalog"); return !d.open && d.querySelector("summary").textContent.includes("カタログ") && d.textContent.includes("こんな ひとに") && d.querySelectorAll(".ex-features li").length === 9 && d.textContent.includes("しゅうらいの よる") && d.textContent.includes("クローゼット"); })()`), "ピクセの てがき カタログが ない・さいしょから ひらいている");
+    t.ok(await p.ev(`(() => { const d = document.querySelector("#products .ex-catalog"); return !d.open && d.querySelector("summary").textContent.includes("カタログ") && d.textContent.includes("こんな ひとに") && d.querySelectorAll(".ex-features li").length === 8 && d.textContent.includes("しゅうらいの よる") && d.textContent.includes("クローゼット") && d.textContent.includes("プレゼント") && !d.textContent.includes("リンクだけ") && !d.textContent.includes("成長"); })()`), "ピクセの てがき カタログが ない・さいしょから ひらいている");
     t.ok((await p.ev(`document.querySelector("#products .ex-note").textContent`)).includes("WARPIX製作所の もの"), "名前・絵の 権利の ことわりが ない");
     // じむしょの 芯の ことば（デザインが かわっても のこす）
     t.ok((await p.ev(`document.getElementById("about").textContent`)).includes("ドット絵と チップチューンの 世界"), "じむしょの 説明から 芯の ことばが きえた");

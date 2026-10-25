@@ -78,5 +78,5 @@ warpix-link も この ファイルを 読みにきて、ピクセが「ニュ�
 **すべての 権利は WARPIX製作所に あります**（[LICENSE](LICENSE)）。
 ホームページは WARPIX製作所の 顔なので、オープンソースには していません。
 このリポジトリが 公開なのは、GitHub Pages で 無料で 公開する ためです（中は 見えますが、つかって いい という 許可では ありません）。
-※ 製品の warpix-link は、コードが MIT の オープンソースです。
+※ 製品の warpix-link も、すべての 権利は WARPIX製作所に あります（v1.58 から。オープンソースでは ありません）。
 ※ `fonts/` の フォント（DotGothic16）は WARPIX製作所の ものでは なく、作者の SIL Open Font License です（`fonts/OFL-DotGothic16.txt`）。

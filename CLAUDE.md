@@ -11,7 +11,7 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 | もの | 場所 | メモ |
 |---|---|---|
 | ホームページ（ここ） | `C:\dev\warpix` / github.com/koki-hq/warpix（**公開**） | All rights reserved。公開なのは GitHub Pages を 無料で つかう ため |
-| warpix-link | `C:\dev\warpix-link` / github.com/koki-hq/warpix-link（公開、MIT）/ https://link.warpix.app/ | 第一弾の 製品。**別の ウィンドウが 担当** |
+| warpix-link | `C:\dev\warpix-link` / github.com/koki-hq/warpix-link（公開、All rights reserved。公開なのは Pages の ため）/ https://link.warpix.app/ | 第一弾の 製品。**別の ウィンドウが 担当** |
 | 事務所 | `C:\dev\warpix-seisakusho` / github.com/koki-hq/warpix-seisakusho（**非公開**） | 事業の 方針・決めたこと・やること。決まったことは ここの `きめたこと.md`（新しい ものが 上）と `04-やること.md` に 書いて push |
 
 ## WARPIX製作所 とは（決まっている こと）
@@ -83,7 +83,7 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 - **文字を ふやしたら `node tools/fonts.mjs`**（news.json・セリフ・文章。DotGothic16 は つかう 文字だけの woff2 を `fonts/` に 置いている（OFL）。Press Start 2P は 予約された 名前つき なので しぼって 置けず、Google Fonts から 表示を とめずに。テストが たりない 文字を おしえる）
 - 共有カードは `node tools/og.mjs`（絵や 看板を かえたら）
 - favicon は `node tools/favicon.mjs`（`factory.js` の ピクセから 作る）
-- 公開：`main` に push すると GitHub Pages に 出る。タグ `vX.Y`（いまは `v1.24`。2026-11-01 7:00 に GitHub Actions が `v2.0` を つける）と 仕様メモを セットで。公開後は 本番の URL で 変わった ことを 確かめる
+- 公開：`main` に push すると GitHub Pages に 出る。タグ `vX.Y`（いまは `v1.25`。2026-11-01 7:00 に GitHub Actions が `v2.0` を つける）と 仕様メモを セットで。公開後は 本番の URL で 変わった ことを 確かめる
   - Pages の 公開が「waiting」で 止まる ことが ある → `gh api -X POST repos/koki-hq/warpix/pages/builds` で 頼みなおすと 通る
 - コミット：git の メールは noreply 設定ずみ。メッセージの 最後に `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`
 
