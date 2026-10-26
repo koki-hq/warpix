@@ -438,6 +438,20 @@ export default {
     t.ok(html.includes('<meta name="twitter:card" content="summary_large_image">'), "twitter:card が ない");
   },
 
+  async "ホーム画面の アイコン：iPhone（180）と Android（192・512、manifest）。ピクセの 絵から 作る"(t) {
+    const { readFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const html = readFileSync(join(t.ROOT, "index.html"), "utf8");
+    t.ok(html.includes('<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">'), "apple-touch-icon が ない");
+    t.ok(html.includes('<link rel="manifest" href="manifest.webmanifest">'), "manifest が ない");
+    const size = (f) => { const png = readFileSync(join(t.ROOT, f)); return [png.readUInt32BE(16), png.readUInt32BE(20)]; };
+    t.eq(size("icons/apple-touch-icon.png"), [180, 180], "apple-touch-icon の 大きさ");
+    const m = JSON.parse(readFileSync(join(t.ROOT, "manifest.webmanifest"), "utf8"));
+    t.eq(m.name, "WARPIX製作所", "manifest の なまえ");
+    for (const i of m.icons.filter((i) => i.type === "image/png")) t.eq(size(i.src), i.sizes.split("x").map(Number), `${i.src} の 大きさ`);
+    t.ok(m.icons.some((i) => i.sizes === "512x512"), "512 の アイコンが ない");
+  },
+
   async "本物の news.json は 形が ただしい"(t) {
     const { readFileSync } = await import("node:fs");
     const { join } = await import("node:path");
