@@ -1,4 +1,5 @@
-# 開店の あさ（2026-11-01 7:00 日本時間 = 10/31 22:00 UTC）に、製作所だよりへ「開店しました」を のせて v2.0 に する。
+# 開店の あさ（2026-11-01 7:00 日本時間 = 10/31 22:00 UTC）に、製作所だよりへ「開店しました」を のせる。
+# タグは つけない（v2.0 には しない。この おしらせは v1.27 の 一部 として docs/spec/v1.27.md に 書いた）
 # GitHub の 予約は 混むと おくれる ことが ある。tools/open.mjs が 7じ まえ・2 回め は なにも しない ので、手で ながしても あんぜん
 name: open
 on:
@@ -19,14 +20,13 @@ jobs:
       - name: 製作所だよりに「開店しました」
         id: news
         run: echo "result=$(node tools/open.mjs)" >> "$GITHUB_OUTPUT"
-      - name: v2.0 として 公開
+      - name: 公開
         if: steps.news.outputs.result == 'opened'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -am "v2.0: open WARPIX製作所 (news: 2026-11-01-open)"
-          git tag v2.0
-          git push origin HEAD:main v2.0
+          git commit -am "news: open WARPIX製作所 (2026-11-01-open)"
+          git push origin HEAD:main
           gh api -X POST "repos/${{ github.repository }}/pages/builds" || true

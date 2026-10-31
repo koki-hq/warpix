@@ -13,7 +13,7 @@ const factory = (() => {
   // きょうの 日づけ。?date=2026-11-01（時刻つき 2026-11-01T06:59 も）で ためせる
   const date = params.get("date");
   const day = date ? new Date(date.includes("T") ? date : `${date}T12:00:00`) : new Date();
-  // 開店は 2026-11-01 の あさ 7じ（日本時間）。SNS の 入口も ここから
+  // 開店は 2026-11-01 の あさ 7じ（日本時間）
   const OPEN = new Date("2026-11-01T07:00:00+09:00");
   const opened = day >= OPEN;
   // 開店いわい：まいとし 11/1〜11/14 は くすだま・紅白幕・花輪（2 年め からは ◯しゅうねん）
@@ -1481,10 +1481,6 @@ const factory = (() => {
   addEventListener("keydown", (e) => {
     if (e.key === "Escape" && tour) tourEnd(false);
   });
-
-  // ---------- SNS の 入口（開店の あさ 7じから） ----------
-  for (const e of document.querySelectorAll(".after-open")) e.hidden = !opened;
-  for (const e of document.querySelectorAll(".before-open")) e.hidden = opened;
 
   // ---------- 展示室の ピクセ：おすと ワープあなに とびこんでから warpix-link へ ----------
   const warp = document.querySelector(".ex-warp");

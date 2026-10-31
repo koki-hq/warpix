@@ -281,18 +281,16 @@ export default {
     const links = await p.ev(`[...document.querySelectorAll("#about a, footer a")].filter((a) => a.checkVisibility()).map((a) => a.href).join(" ")`);
     for (const u of ["https://x.com/warpix_app", "https://www.instagram.com/warpix_app/", "https://www.tiktok.com/@warpix_app", "https://www.youtube.com/@warpix_app", "mailto:pixe@warpix.app"]) t.ok(links.includes(u), `SNS の リンクが ない: ${u}`);
     const sns = () => p.ev(`[...document.querySelectorAll('a[href^="https://x.com/"], a[href^="https://www.instagram.com/"], a[href^="https://www.tiktok.com/"], a[href^="https://www.youtube.com/"]')].filter((a) => a.checkVisibility()).length`);
-    // 7じ まえは まだ。SNS は「じゅんびちゅう」
+    // SNS の 入口は 開店まえから 見える（v1.27）。たれまくは 7じ から
     await p.goto(`${server.url}?date=2026-11-01T06:59&hour=6`, 800);
     t.eq(await tag(), null, "7じ まえに たれまく");
-    t.eq(await sns(), 0, "7じ まえに SNS の リンクが 見える");
-    t.ok(await p.ev(`document.querySelector(".before-open").checkVisibility()`), "7じ まえに「じゅんびちゅう」が ない");
+    t.eq(await sns(), 8, "7じ まえにも SNS の リンク 4 つ（じむしょ・フッター）");
     // WARPIX ARCADE は いったん 寝かせた（2026-10-25）。開店に ふくめない
     const arcade = () => p.ev(`!!document.getElementById("ex-arcade") || !!document.querySelector('a[href^="https://arcade.warpix.app"]')`);
     t.ok(!(await arcade()), "7じ まえに ARCADE が ある");
     await p.goto(`${server.url}?date=2026-11-01T07:00&hour=7`, 800);
     t.eq(await tag(), "祝開店", "7じ ちょうどに たれまくが ない");
     t.eq(await sns(), 8, "7じ に SNS の リンク 4 つ（じむしょ・フッター）");
-    t.ok(!(await p.ev(`document.querySelector(".before-open").checkVisibility()`)), "開店 したのに「じゅんびちゅう」");
     t.ok(!(await arcade()), "開店に ARCADE が まざっている");
     for (const [q, want] of [["2026-10-31", null], ["2026-11-14", "祝開店"], ["2026-11-15", null], ["2027-11-03", "祝1周年"]]) {
       await p.goto(`${server.url}?date=${q}&hour=14`, 800);
@@ -312,6 +310,7 @@ export default {
     const item = JSON.parse(readFileSync(join(t.ROOT, "tools", "open-news.json"), "utf8"));
     const data = JSON.parse(readFileSync(join(t.ROOT, "news.json"), "utf8"));
     t.ok(["X", "Instagram", "TikTok", "YouTube", "@warpix_app"].every((w) => item.body.includes(w)), `開店の おしらせに SNS 4 つが ない: ${item.body}`);
+    t.ok(item.body.includes("正式リリース"), `開店の おしらせに「正式リリース」が ない: ${item.body}`);
     t.eq(OPEN.toISOString(), "2026-10-31T22:00:00.000Z", "開店の 時刻（日本時間 11/1 7:00）");
     t.eq(addOpenNews(data, item, new Date("2026-11-01T06:59:59+09:00")), null, "7じ まえに のる");
     const next = addOpenNews(data, item, new Date("2026-11-01T07:00:00+09:00"));
@@ -321,7 +320,7 @@ export default {
     t.ok(new Set(next.news.map((x) => x.id)).size === next.news.length, "id が かぶる");
     t.ok(/^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.url.startsWith("https://") && [...item.title].length <= 40, `形が ちがう: ${JSON.stringify(item)}`);
     const yml = readFileSync(join(t.ROOT, ".github", "workflows", "open.yml"), "utf8");
-    t.ok(yml.includes(`cron: "0 22 31 10 *"`) && yml.includes("node tools/open.mjs") && yml.includes("git tag v2.0"), "予約（open.yml）が ちがう");
+    t.ok(yml.includes(`cron: "0 22 31 10 *"`) && yml.includes("node tools/open.mjs") && !yml.includes("git tag"), "予約（open.yml）が ちがう。タグは つけない（v1.27）");
   },
 
   async "ゲンさんの 一日：朝は 体操、昼は おべんとう（スズメ）、3じは おやつ、夕方は かたづけ、夜は うたたね"(t) {
