@@ -572,6 +572,20 @@ const factory = (() => {
 
   // ---------- 開店いわい（11/1〜11/14 だけ。うごかない ので 1 回だけ 描く） ----------
   const PETALS = ["#ff7aa8", "#ffd84a", "#ff9a3c", "#ffffff", "#e0503c", "#7fd0ff"];
+  // 花輪：店先に ずらっと（x と 色）。下の 輪の まんなかは HANAWA_Y
+  const HANAWA = [
+    [147, ["#ffd0de", "#ff7aa8", "#fffdf5", "#ffd84a"]],
+    [167, ["#fff3c4", "#ffd84a", "#ff9a3c", "#fffdf5"]],
+    [341, ["#ffd0de", "#e0503c", "#fffdf5", "#ffd84a"]],
+    [321, ["#d8f0ff", "#7fd0ff", "#fffdf5", "#ff7aa8"]], // あとに 描く ほうが 前（左右とも まんなかがわを 前に）
+  ];
+  const HANAWA_Y = 132;
+  // 万国旗の ひも（[x0, y0, x1, y1, たるみ]）：クレーン → 時計塔 → 看板、えんとつ → かまぼこ屋根。看板の ふちにも 小旗
+  const FLAGS = [
+    [80, 22, 151, 47, 7],
+    [153, 47, 190, 58, 5],
+    [311, 30, 364, 104, 9],
+  ];
   const deco = kaiten && paper(() => {
     // 紅白幕：工場の かべの 上に、すこし たるませて
     for (let x = 172; x < 334; x++) {
@@ -595,25 +609,103 @@ const factory = (() => {
     rect(256, 86, 12, 32, "#fffdf5");
     rect(256, 87, 12, 1, "#e0503c");
     rect(256, 116, 12, 1, "#e0503c");
-    // 花輪：時計塔の よこと、工場の みぎに 1 つずつ
-    for (const cx of [167, 326]) {
-      const cy = 132;
-      line(cx - 6, 160, cx - 1, cy + 6, "#7a4f2b");
-      line(cx + 6, 160, cx + 1, cy + 6, "#7a4f2b");
-      rect(cx, cy + 6, 1, 154 - cy, "#7a4f2b");
-      for (let dy = -9; dy <= 9; dy++)
-        for (let dx = -9; dx <= 9; dx++) {
-          const d = dx * dx + dy * dy;
-          if (d > 81) continue;
-          const k = Math.floor(((Math.atan2(dy, dx) + Math.PI) / (2 * Math.PI)) * 18);
-          dot(cx + dx, cy + dy, d > 72 ? C.o : d > 25 ? PETALS[(k + (d > 49 ? 1 : 0)) % PETALS.length] : "#fffdf5");
-        }
-      rect(cx, cy - 3, 1, 6, "#b8361f"); // まんなかの 札（おいわいの ことば）
-      rect(cx - 2, cy + 8, 5, 2, "#e0503c"); // 下の リボン
-      dot(cx - 2, cy + 10, "#e0503c");
-      dot(cx + 2, cy + 10, "#e0503c");
+    // 万国旗：ひもに 三角の 旗を ならべる
+    for (const [x0, y0, x1, y1, depth] of FLAGS) {
+      const len = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
+      const at = (t) => [Math.round(x0 + (x1 - x0) * t), Math.round(y0 + (y1 - y0) * t + depth * 4 * t * (1 - t))];
+      for (let i = 0; i <= len; i++) dot(...at(i / len), "#3d4656");
+      for (let i = 3, k = 0; i < len - 2; i += 6, k++) {
+        const [x, y] = at(i / len);
+        const c = PETALS[(k + x0) % PETALS.length];
+        rect(x - 1, y + 1, 3, 1, c);
+        rect(x - 1, y + 2, 3, 1, c);
+        dot(x, y + 3, c);
+      }
+    }
+    // 看板の 上の ふちにも 小旗
+    for (let x = 194, k = 0; x < 300; x += 6, k++) {
+      const c = PETALS[k % PETALS.length];
+      rect(x - 1, 56, 3, 2, c);
+      dot(x, 55, "#3d4656");
+    }
+    // 花輪：店先に ずらっと。2 段がさね（リボンは うごく ので hanawaRibbons）
+    for (const [cx, colors] of HANAWA) {
+      line(cx - 8, 160, cx - 3, HANAWA_Y + 11, "#7a4f2b");
+      line(cx + 8, 160, cx + 3, HANAWA_Y + 11, "#7a4f2b");
+      rect(cx, HANAWA_Y, 1, 158 - HANAWA_Y, "#7a4f2b");
+      wreath(cx, HANAWA_Y - 17, 7, colors);
+      wreath(cx, HANAWA_Y, 12, colors);
+      rect(cx - 3, HANAWA_Y + 11, 7, 2, "#e0503c"); // リボンの むすびめ
+      dot(cx, HANAWA_Y + 11, "#b8361f");
     }
   });
+  // 花輪の 輪：うすい 色紙の 台に まるい 花を ぐるっと、ふちは 金の ぎざぎざ、まんなかは 紅白の 扇
+  function flower(x, y, c) {
+    for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]]) dot(x + dx, y + dy, c);
+    for (const [dx, dy] of [[0, -2], [-2, 0], [2, 0], [0, 2]]) dot(x + dx, y + dy, c);
+    dot(x, y, c === "#ffd84a" ? "#e0503c" : "#ffd84a");
+  }
+  function wreath(cx, cy, r, [paperC, ...flowers]) {
+    disc(cx, cy, r + 1, "#c8901a");
+    for (let i = 0; i < 24; i++) {
+      const a = (i / 24) * 2 * Math.PI;
+      dot(cx + Math.round(Math.cos(a) * (r + 1.5)), cy + Math.round(Math.sin(a) * (r + 1.5)), i % 2 ? "#f2c230" : "#fff6c8");
+    }
+    disc(cx, cy, r, paperC);
+    const inner = r > 8 ? r - 5 : r - 4;
+    for (let dy = -inner; dy <= inner; dy++)
+      for (let dx = -inner; dx <= inner; dx++) {
+        if (dx * dx + dy * dy > inner * inner) continue;
+        const k = Math.floor(((Math.atan2(dy, dx) + Math.PI) / (2 * Math.PI)) * (r > 8 ? 12 : 8));
+        dot(cx + dx, cy + dy, k % 2 ? "#e0503c" : "#fffdf5");
+      }
+    disc(cx, cy, 1, "#ffd84a");
+    const count = r > 8 ? 13 : 8;
+    for (let i = 0; i < count; i++) {
+      const a = (i / count) * 2 * Math.PI;
+      flower(cx + Math.round(Math.cos(a) * (r - 2)), cy + Math.round(Math.sin(a) * (r - 2)), flowers[i % flowers.length]);
+    }
+  }
+  // 花輪の 紅白リボン（2 本ずつ、風で すこし ゆれる）
+  function hanawaRibbons(n) {
+    for (const [cx] of HANAWA)
+      for (const [x0, ph] of [[cx - 3, cx % 7], [cx + 2, cx % 7 + 5]])
+        for (let i = 0; i < 15; i++) {
+          const x = x0 + Math.round(Math.sin((n + ph - i * 0.5) / 3) * (i / 10));
+          rect(x, HANAWA_Y + 13 + i, 2, 1, Math.floor(i / 2) % 2 ? "#fffdf5" : "#e0503c");
+        }
+  }
+  // 風船：看板の 両はしに 3 こずつ ゆらゆら、空には ときどき 1 こ のぼって いく
+  const BALLOONS = ["#e0503c", "#ffd84a", "#7fd0ff", "#ff7aa8", "#9be06a"];
+  function balloon(x, y, c, tail) {
+    oval(x, y, 3, 4, C.o);
+    oval(x, y, 2, 3, c);
+    dot(x - 1, y - 2, "#ffffff");
+    dot(x, y + 5, C.o);
+    for (let i = 0; i < tail; i++) dot(x + (Math.floor(i / 3) % 2), y + 6 + i, "#3d4656");
+  }
+  function balloons(n) {
+    for (const [bx, side] of [[190, -1], [302, 1]])
+      [[0, -14], [side * 6, -18], [side * 3, -24]].forEach(([dx, dy], i) => {
+        const sway = Math.round(Math.sin((n + i * 4 + bx) / 6));
+        line(bx, 58, bx + dx + sway, 58 + dy + 5, "#3d4656");
+        balloon(bx + dx + sway, 58 + dy, BALLOONS[(i + (side > 0 ? 2 : 0)) % BALLOONS.length], 0);
+      });
+    // のぼって いく 風船（見えて いる はばの なかで）
+    for (let k = 0; k < 2; k++) {
+      const t = ((n * 0.6 + k * 70) % 140) / 140;
+      const x = cropX + Math.round(visW * (k ? 0.82 : 0.12)) + Math.round(4 * Math.sin(n / 5 + k));
+      balloon(x, Math.round(96 - t * 116), BALLOONS[(k * 3 + Math.floor((n * 0.6 + k * 70) / 140)) % BALLOONS.length], 6);
+    }
+  }
+  // 空いっぱいの 紙ふぶき（上の ほう だけ）
+  function skyConfetti(n) {
+    for (let i = 0; i < 28; i++) {
+      const y = ((i * 37 + n * (0.8 + (i % 3) * 0.3)) % 100) - 4;
+      const x = cropX + ((i * 53) % visW) + Math.round(3 * Math.sin((n + i * 5) / 6));
+      rect(x, y, (n + i) % 3 ? 2 : 1, 1, PETALS[i % PETALS.length]);
+    }
+  }
   // くすだまの 紙ふぶき
   function confetti(n) {
     for (let i = 0; i < 16; i++) {
@@ -661,9 +753,35 @@ const factory = (() => {
     if (!seen && (x + 40 < 20 || x > W - 20)) airshipShift += cropX + visW / 2 - 20 - x;
     return airshipX(n) + 20;
   }
+  // 開店いわいの 横断幕（ソラマメ号が ひっぱる）。3×5 の 小さな 英字
+  const BANNER_GLYPH = {
+    O: ["###", "#.#", "#.#", "#.#", "###"], P: ["###", "#.#", "###", "#..", "#.."], E: ["###", "#..", "##.", "#..", "###"],
+    N: ["#..#", "##.#", "#.##", "#..#", "#..#"], "!": ["#", "#", "#", ".", "#"], T: ["###", ".#.", ".#.", ".#.", ".#."],
+    H: ["#.#", "#.#", "###", "#.#", "#.#"], A: [".#.", "#.#", "###", "#.#", "#.#"], K: ["#.#", "##.", "#..", "##.", "#.#"], S: ["###", "#..", "###", "..#", "###"],
+  };
+  const BANNER = kaiten ? (kaiten.years ? "THANKS!" : "OPEN!") : "";
+  const bannerW = [...BANNER].reduce((w, ch) => w + BANNER_GLYPH[ch][0].length + 1, 0) + 5;
+  function banner(x, y, n) {
+    const left = x - 8 - bannerW;
+    line(x - 2, y, x - 8, y - 1, "#3d4656");
+    line(x - 2, y, x - 8, y + 4, "#3d4656");
+    const wave = (i) => Math.round(Math.sin((i + n) / 4));
+    for (let i = 0; i < bannerW; i++) {
+      const top = y - 4 + wave(i);
+      rect(left + i, top, 1, 11, "#e0503c");
+      rect(left + i, top + 1, 1, 9, i === 0 || i === bannerW - 1 ? "#e0503c" : "#fffdf5");
+    }
+    let cx = left + 3;
+    for (const ch of BANNER) {
+      const g = BANNER_GLYPH[ch];
+      for (let gy = 0; gy < 5; gy++) for (let gx = 0; gx < g[gy].length; gx++) if (g[gy][gx] === "#") dot(cx + gx, y - 1 + gy + wave(cx + gx - left), "#e0503c");
+      cx += g[0].length + 1;
+    }
+  }
   function airship(n) {
     const x = airshipX(n);
     const y = 46 + (Math.floor(n / 8) % 2);
+    if (kaiten) banner(x, y, n);
     oval(x + 20, y, 20, 6, C.o);
     oval(x + 20, y, 19, 5, "#eef1f4");
     rect(x + 3, y - 1, 34, 2, "#e0503c");
@@ -1148,7 +1266,7 @@ const factory = (() => {
   const tagEl = scene.querySelector(".kaiten-tag");
   if (kaiten) {
     tagEl.textContent = kaiten.years ? `祝${kaiten.years}周年` : "祝開店";
-    canvas.setAttribute("aria-label", `${canvas.getAttribute("aria-label")} きょうは 開店いわい。看板の 下で くすだまが ひらいて「${tagEl.textContent}」の たれまく、工場の かべには 紅白幕、まえには 花輪が ふたつ。`);
+    canvas.setAttribute("aria-label", `${canvas.getAttribute("aria-label")} きょうは 開店いわい。看板の 下で くすだまが ひらいて「${tagEl.textContent}」の たれまく、工場の かべには 紅白幕、まえには 花輪が よっつ。空には 万国旗と 風船と 紙ふぶき、ソラマメ号は「${BANNER}」の 横断幕を ひっぱって いる。`);
   }
   let happyUntil = 0;
   let puffs = 0;
@@ -1255,7 +1373,10 @@ const factory = (() => {
     g.drawImage(front, 0, 0);
     if (deco) {
       g.drawImage(deco, 0, 0);
+      hanawaRibbons(n);
+      balloons(n);
       confetti(n);
+      skyConfetti(n);
     }
     crane(n);
     clockHands();
