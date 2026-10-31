@@ -27,6 +27,7 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 
 - 地上：入道雲の 青空の パノラマ（480×176 ドット、整数倍）。ゲンさん（職人）と 黄色い ヘルメットの ピクセの お話、なかまたち
 - 地下：スクロールする ほど 地中へ（表土 → 粘土 → 洞窟 → 古代文明 → 最深部）。`chika.js`
+- スマホ：地上の 絵は ゆびで よこに ひっぱるか ◀ ▶ で 左右も 見られる（`lookAt()`、v1.28）。図鑑の「会いに いく」で 地下に いない 子は のぞき窓（`#nozoki`）で 会える
 - ラジカセ：おすと チップチューン（`radio.js`、v1.3）
 - 地下の なぞ：生き物が こたえる、石板の かけら 5 つで 石の ピクセ像の 伝説（v1.4）→ はじまりの とびらが ひらき ドットの 核（v1.9、フッターの 下の `#hollow-core`）
 - 季節の 服：月で 春・夏・秋・冬に 着がえる（v1.5）。`?month=1〜12` で ためす。どの 季節も 晴れ
@@ -76,7 +77,7 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 
 ## 進め方
 
-- テスト：`node tests/run.mjs`（いまは 23 件・約 250 秒）。新しい 動きには テストを 足す
+- テスト：`node tests/run.mjs`（いまは 25 件・約 260 秒）。新しい 動きには テストを 足す
 - **公開の 前は テストの おわりの コード（`$?`、失敗なら 1）を かならず 見る**。`| tail` で ながめる だけだと 失敗を 見おとす（v1.11 で やった）
 - 健康診断：`node tools/health.mjs`（重さ・スマホでの 速さ・待機中 CPU・axe）。**公開の 前に テストと 健康診断を 両方**
 - 時刻を ためす：`?hour=0〜23`（あいさつ・時計塔・ゲンさんの 一日）。お話の コマを とめる：`?t=0〜95`
@@ -84,7 +85,7 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 - 共有カードは `node tools/og.mjs`（絵や 看板を かえたら）
 - favicon と ホーム画面の アイコン（`icons/`・`manifest.webmanifest`）は `node tools/favicon.mjs`（`factory.js` の ピクセから 作る）
 - きた ひとの かず：`count.js`（Cloudflare Web Analytics、v1.26）。本番の warpix.app だけ、クッキー なし。じむしょに 書いて ある
-- 公開：`main` に push すると GitHub Pages に 出る。タグ `vX.Y`（いまは `v1.27.1`）と 仕様メモを セットで。公開後は 本番の URL で 変わった ことを 確かめる
+- 公開：`main` に push すると GitHub Pages に 出る。タグ `vX.Y`（いまは `v1.28`）と 仕様メモを セットで。公開後は 本番の URL で 変わった ことを 確かめる
   - Pages の 公開が「waiting」で 止まる ことが ある → `gh api -X POST repos/koki-hq/warpix/pages/builds` で 頼みなおすと 通る
 - コミット：git の メールは noreply 設定ずみ。メッセージの 最後に `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`
 

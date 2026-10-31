@@ -362,6 +362,70 @@ export default {
     t.ok((await p.ev(`document.getElementById("toast").textContent`)).includes("ホリマル"), "ホリマルが こたえない");
     await meet("worm");
     t.ok((await p.ev(`document.getElementById("toast").textContent`)).includes("ホタルミミズ"), "ホタルミミズの 場所へ いかない");
+    t.ok(!(await p.ev(`document.getElementById("nozoki").open`)), "ひろい 画面で のぞき窓が ひらく");
+    t.noErrors(p);
+    await server.close();
+  },
+
+  async "のぞき窓：スマホで 地下に いない 子にも 図鑑から 会える（おすと しゃべる、とじる と もとに もどる）"(t) {
+    const { server, p } = await open(t, "?hour=14", { mobile: [360, 740] });
+    await t.sleep(600);
+    const meet = (k) => p.ev(`document.querySelector('.meet[data-meet="${k}"]').click()`);
+    const open_ = () => p.ev(`document.getElementById("nozoki").open`);
+    for (const [k, name, depth] of [["horimaru", "ホリマル", "120"], ["jelly", "スイショウクラゲ", "800"], ["tomoshibi", "トモシビ族", "3000"]]) {
+      const there = await p.ev(`[...document.querySelectorAll(".ug-hot")].some((b) => b.getAttribute("aria-label") === "${name}")`);
+      await meet(k);
+      if (there) {
+        t.ok(!(await open_()), `${name}は 地下に いるのに のぞき窓`);
+        continue;
+      }
+      t.ok(await open_(), `${name}の のぞき窓が ひらかない`);
+      t.ok((await p.ev(`document.getElementById("nozoki-h").textContent`)).includes(`ちか ${depth}m の ${name}`), `${name}の 見出し`);
+      t.eq(await p.ev(`document.activeElement?.closest("#nozoki") != null`), true, `${name}：のぞき窓に フォーカスが ない`);
+      await p.ev(`document.querySelector(".nozoki-view").click()`);
+      t.ok((await p.ev(`document.querySelector(".nozoki-say").textContent`)).includes(name === "スイショウクラゲ" ? "ひかった" : `${name}「`), `${name}が しゃべらない`);
+      t.ok(await p.ev(`(() => { const c = document.querySelector("#nozoki canvas"); const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; return new Set(Array.from({ length: d.length / 4 }, (_, i) => d[i * 4] * 65536 + d[i * 4 + 1] * 256 + d[i * 4 + 2])).size > 8; })()`), `${name}の 絵が ない`);
+      await p.ev(`document.querySelector(".nozoki-close").click()`);
+      t.ok(!(await open_()), `${name}：とじない`);
+    }
+    t.ok(!(await p.ev(`document.getElementById("toast").textContent`)).includes("ひろげる"), "まだ「画面を ひろげると」と いう");
+    t.noErrors(p);
+    await server.close();
+  },
+
+  async "スマホ：絵を よこに うごかして 左右も 見られる（◀ ▶・ゆびで ひっぱる）。パソコンでは ボタンが ない"(t) {
+    let { server, p } = await open(t, "?hour=14", { mobile: [360, 740] });
+    const st = () => p.ev(`({ l: !document.getElementById("look-l").hidden, r: !document.getElementById("look-r").hidden, cat: !document.getElementById("cat-btn").hidden, crop: factory.tools.cropX() })`);
+    const s0 = await st();
+    t.ok(s0.l && s0.r && !s0.cat, `さいしょ：◀ ▶ が ない／ねこが 見える ${JSON.stringify(s0)}`);
+    await p.ev(`document.getElementById("look-r").click()`);
+    await p.ev(`document.getElementById("look-r").click()`);
+    const s1 = await st();
+    t.ok(s1.crop > s0.crop && !s1.r && s1.l && s1.cat, `▶ で みぎはし まで いけない・ねこに 会えない ${JSON.stringify(s1)}`);
+    // みぎはしでは、ゲンさんたちの ふきだしは 見えない ので かくれる
+    t.eq(await p.ev(`getComputedStyle(document.querySelector(".say")).visibility`), "hidden", "見えない 子の ふきだしが 出ている");
+    // ゆびで ひっぱって もどす（ひっぱった あとに なかまが しゃべりださない）
+    const before = await said(p);
+    await p.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: 100, y: 200 }] });
+    for (let i = 1; i <= 10; i++) {
+      await p.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: 100 + i * 20, y: 202 }] });
+      await t.sleep(20);
+    }
+    await p.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await t.sleep(300);
+    const s2 = await st();
+    t.ok(s2.crop < s1.crop, `ゆびで ひっぱっても うごかない ${JSON.stringify(s2)}`);
+    t.eq(await said(p), before, "ひっぱった だけで しゃべりだした");
+    t.ok(await p.ev(`document.documentElement.scrollWidth <= innerWidth`), "よこに はみだす");
+    // ツアーの あいだは ◀ ▶ を ださない
+    await p.ev(`document.getElementById("tour-btn").click()`);
+    t.ok(!(await p.ev(`document.getElementById("look-l").checkVisibility()`)), "ツアー中に ◀");
+    t.noErrors(p);
+    await server.close();
+    await t.closeAll();
+
+    ({ server, p } = await open(t, "?hour=14", { size: { width: 1440, height: 900 } }));
+    t.ok(!(await p.ev(`document.getElementById("look-l").checkVisibility() || document.getElementById("look-r").checkVisibility()`)), "ひろい 画面に ◀ ▶");
     t.noErrors(p);
     await server.close();
   },

@@ -694,15 +694,16 @@ const factory = (() => {
     // のぼって いく 風船（見えて いる はばの なかで）
     for (let k = 0; k < 2; k++) {
       const t = ((n * 0.6 + k * 70) % 140) / 140;
-      const x = cropX + Math.round(visW * (k ? 0.82 : 0.12)) + Math.round(4 * Math.sin(n / 5 + k));
+      const x = crop0 + Math.round(visW * (k ? 0.82 : 0.12)) + Math.round(4 * Math.sin(n / 5 + k));
       balloon(x, Math.round(96 - t * 116), BALLOONS[(k * 3 + Math.floor((n * 0.6 + k * 70) / 140)) % BALLOONS.length], 6);
     }
   }
-  // 空いっぱいの 紙ふぶき（上の ほう だけ）
+  // 空いっぱいの 紙ふぶき（上の ほう だけ。よこに うごかしても あるように 絵の はば ぜんぶ）
   function skyConfetti(n) {
-    for (let i = 0; i < 28; i++) {
+    const count = Math.ceil((28 * W) / visW);
+    for (let i = 0; i < count; i++) {
       const y = ((i * 37 + n * (0.8 + (i % 3) * 0.3)) % 100) - 4;
-      const x = cropX + ((i * 53) % visW) + Math.round(3 * Math.sin((n + i * 5) / 6));
+      const x = Math.floor((i * W) / count) + ((i * 53) % 9) + Math.round(3 * Math.sin((n + i * 5) / 6));
       rect(x, y, (n + i) % 3 ? 2 : 1, 1, PETALS[i % PETALS.length]);
     }
   }
@@ -740,11 +741,11 @@ const factory = (() => {
     }
   }
   // 飛行船 ソラマメ号（ゆっくり）
-  // 見えている はば（cropX〜）の 中を わたる ので、スマホでも かならず 見える。さいしょは まんなか
+  // さいしょに 見えている はば（crop0〜）の 中を わたる ので、スマホでも かならず 見える。さいしょは まんなか
   let airshipShift = 0;
   const airshipX = (n) => {
     const span = visW + 40;
-    return cropX - 40 + Math.floor((((n * 0.12 + visW / 2 + 20 + airshipShift) % span) + span) % span);
+    return crop0 - 40 + Math.floor((((n * 0.12 + visW / 2 + 20 + airshipShift) % span) + span) % span);
   };
   // ツアーで よる とき、ソラマメ号が 絵の はしに かくれていたら、見ていない うちに まんなかへ よんでくる
   function airshipCenter() {
@@ -1303,15 +1304,17 @@ const factory = (() => {
   // ---------- 画面の はばに あわせる ----------
   // 整数の 倍率に して ドットを くっきり。はみだす ぶんは 左右を けずる（まんなかは ゲンさんたち）
   let scale = 2;
-  let cropX = 0;
+  let cropX = 0; // いま 見ている 左はし（スマホでは ゆびで よこに うごかせる）
+  let crop0 = 0; // さいしょの 左はし（まんなかが ゲンさんたち）
   let visW = W;
   const cam = { x: 0, y: 0, z: 1 }; // カメラ（ふだんは cropX・まるごと。ツアーの ときは よって うごく）
   let tour = null;
+  const clampX = (x) => Math.max(0, Math.min(W - visW, Math.round(x)));
   function fit() {
     const cssW = scene.clientWidth || innerWidth;
     scale = Math.max(2, Math.ceil(cssW / W));
     visW = Math.min(W, Math.ceil(cssW / scale));
-    cropX = Math.max(0, Math.min(W - visW, Math.round(244 - visW / 2)));
+    crop0 = cropX = clampX(244 - visW / 2);
     if (!tour) Object.assign(cam, { x: cropX, y: 0, z: 1 });
     canvas.width = visW;
     canvas.height = H;
@@ -1319,6 +1322,11 @@ const factory = (() => {
     canvas.style.width = `${visW * scale}px`;
     canvas.style.height = `${H * scale}px`;
     scene.style.height = `${H * scale}px`;
+    placeFixed();
+    lookBtns();
+  }
+  // うごかない ボタンと 看板を 絵に あわせる
+  function placeFixed() {
     placeSign();
     place(chimneyBtn, 298, 22, 16, 70);
     place(ojiBtn, OX - 2, OY - 1, 26, 25);
@@ -1329,6 +1337,55 @@ const factory = (() => {
     place(friendBtns.r, 42, 46, 62, 14);
     lastSay = null;
   }
+
+  // ---------- スマホ：絵を よこに うごかして 左右も 見る（ゆびで ひっぱる・◀ ▶ ボタン） ----------
+  const lookL = document.getElementById("look-l");
+  const lookR = document.getElementById("look-r");
+  function lookAt(x) {
+    const next = clampX(x);
+    if (next === cropX) return;
+    cropX = next;
+    if (!tour) cam.x = cropX;
+    placeFixed();
+    lookBtns();
+    frame();
+  }
+  function lookBtns() {
+    const can = W - visW > 24 && !tour; // ほとんど ぜんぶ 見えて いる ときは ださない
+    lookL.hidden = !can || cropX <= 0;
+    lookR.hidden = !can || cropX >= W - visW;
+  }
+  lookL.addEventListener("click", () => lookAt(cropX - Math.round(visW * 0.6)));
+  lookR.addEventListener("click", () => lookAt(cropX + Math.round(visW * 0.6)));
+  let drag = null;
+  let dragged = false;
+  scene.addEventListener("pointerdown", (e) => {
+    if (tour || W - visW <= 24 || e.button > 0 || e.target.closest(".look, .tour-btn")) return;
+    drag = { id: e.pointerId, x: e.clientX, y: e.clientY, from: cropX, moved: false };
+  });
+  scene.addEventListener("pointermove", (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const dx = e.clientX - drag.x;
+    if (!drag.moved) {
+      if (Math.abs(dx) < 8) return;
+      if (Math.abs(e.clientY - drag.y) > Math.abs(dx)) return void (drag = null); // たての スクロールは ページに まかせる
+      drag.moved = true;
+    }
+    lookAt(drag.from - dx / scale);
+  });
+  scene.addEventListener("pointerup", () => {
+    dragged = !!drag?.moved;
+    drag = null;
+    setTimeout(() => (dragged = false));
+  });
+  scene.addEventListener("pointercancel", () => (drag = null));
+  // ひっぱった あとの「おした」は なかった ことに（なかまが しゃべりださない）
+  scene.addEventListener("click", (e) => {
+    if (!dragged) return;
+    dragged = false;
+    e.stopPropagation();
+    e.preventDefault();
+  }, true);
   const offset = () => (scene.clientWidth - visW * scale) / 2;
   // 絵の 目もり → 画面の 位置（カメラに あわせる）
   const cssX = (x) => (x - cam.x) * cam.z * scale + offset();
@@ -1428,6 +1485,7 @@ const factory = (() => {
     if (tour) {
       // ツアー中は 看板が カメラに ついていき、ピクセの あんないは 下か 上の まんなかに
       placeSign();
+      sayEl.style.visibility = "";
       if (lastSay !== tour.text) {
         lastSay = tour.text;
         sayEl.textContent = tour.text;
@@ -1443,7 +1501,9 @@ const factory = (() => {
     const who = override ? override.who : s.who;
     const POS = { o: [OX + 8, OY - 2], n: [405, 108], h: [hakobiX(n) + 8, 150], b: [110, 106], l: [liftonX(n) + 7, 153], a: [356, 86], r: [72, 48], s: [airshipX(n) + 20, 38] };
     const [x, y] = POS[who] ?? [s.px + 8, s.py - 1];
-    const key = `${text}|${x}|${y}|${scale}`;
+    // よこに うごかして しゃべって いる 子が 見えない ときは、ふきだしも かくす
+    sayEl.style.visibility = x < cropX || x > cropX + visW ? "hidden" : "";
+    const key = `${text}|${x}|${y}|${scale}|${cropX}`;
     if (key !== lastSay) {
       lastSay = key;
       sayEl.textContent = text;
@@ -1535,6 +1595,7 @@ const factory = (() => {
     const dur = reduced ? 0 : 1100;
     tour = { i, text, from: { ...cam }, to: camFor(STOPS[i]), start: performance.now(), dur };
     tour.see = seeOf(STOPS[i].see);
+    lookBtns();
     bubble.textContent = `ピクセ「${text.replaceAll("\n", " ")}」`;
     clearTimeout(tourTimer);
     tourTimer = setTimeout(() => tourGo(i + 1), dur + 2600 + text.length * 55);
@@ -1592,6 +1653,7 @@ const factory = (() => {
     scene.classList.add("touring");
     tour = { i: -1, text, from: { ...cam }, to: camFor(m), start: performance.now() + (reduced ? 0 : 400), dur };
     tour.see = seeOf(m.see);
+    lookBtns();
     bubble.textContent = text;
     clearTimeout(tourTimer);
     tourTimer = setTimeout(() => tourEnd(false), dur + 3600 + text.length * 50);
@@ -1752,6 +1814,7 @@ const factory = (() => {
     rect, dot, rows, patch, disc, oval, line, seeded, paper, drawOn,
     C, PIKU, PIKUSE,
     scale: () => scale,
+    cropX: () => cropX,
     heroBottom: () => scene.getBoundingClientRect().bottom + scrollY,
     onTick: (fn) => others.push(fn),
     reduced: frozen != null,

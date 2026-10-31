@@ -79,6 +79,9 @@ const chika = (() => {
   const JEL = { c: "#7ff0ff", W: "#ffffff", C: "#3ac4e0" };
   const TOMOSHIBI = ["..ooo..", ".ohhho.", "ohhhhho", "ohyhyho", "ohhhhho", ".ohhho.", ".ohhho.", "ohhhhho", ".o...o."];
   const TOMO = { o: "#1c1626", h: "#6a4fa0", y: "#ffd84a" };
+  const HORI_LINES = ["ホリマル「ほりほり……カセット みつけた！\nこれ、ぼくの たからもの。」", "ホリマル「ドリルは まいにち みがいてるよ。」", "ホリマル「もっと したに、ひかる まちが あるんだって。」"];
+  const JELLY_LINE = "スイショウクラゲが ぱあっと ひかった。\nふわ〜ん（ほんのり つめたい）";
+  const TOMO_LINES = ["トモシビ族「……ようこそ、ちじょうの ひと。\nここは ひかりの まち。」", "トモシビ族「石板の かけらを 5 つ あつめて、\nはじまりの 像に みせて ごらん。」"];
   const STONE = { o: "#3a3540", w: "#9a96a0", p: "#7f7a86", c: "#5ff0ff", y: "#b3aeb8" }; // 石の ピクセ像
 
   // ---------- 地下の なぞ（その場かぎり。ブラウザには 保存しない） ----------
@@ -262,7 +265,6 @@ const chika = (() => {
         rows(HORIMARU, x, h1.y, n % 2 ? HORI : { ...HORI, m: HORI.M, M: HORI.m });
         if (n % 3 !== 0) for (const [dx, dy] of [[15, 2], [17, 5], [16, 7]]) dot(x + dx + (n % 2), h1.y + dy, "#c99a6a");
       } });
-      const HORI_LINES = ["ホリマル「ほりほり……カセット みつけた！\nこれ、ぼくの たからもの。」", "ホリマル「ドリルは まいにち みがいてるよ。」", "ホリマル「もっと したに、ひかる まちが あるんだって。」"];
       let k = 0;
       hot(h1.x, h1.y, 22, 10, "ホリマル", () => say(HORI_LINES[k++ % HORI_LINES.length]));
     }
@@ -290,7 +292,7 @@ const chika = (() => {
       } });
       hot(lake.x, lake.y + 8, 32, 20, "スイショウクラゲ", () => {
         flashUntil = now + 8;
-        say("スイショウクラゲが ぱあっと ひかった。\nふわ〜ん（ほんのり つめたい）");
+        say(JELLY_LINE);
       });
     }
     // 空洞の 大きな 水晶
@@ -318,7 +320,7 @@ const chika = (() => {
         rect(lx - 1, s.y + 2, 3, 3, n % 3 ? "#ffb347" : "#ffd84a");
       } });
       hot(s.x, s.y - 2, 30, 12, "トモシビ族", () =>
-        say(i === 0 ? "トモシビ族「……ようこそ、ちじょうの ひと。\nここは ひかりの まち。」" : "トモシビ族「石板の かけらを 5 つ あつめて、\nはじまりの 像に みせて ごらん。」")
+        say(TOMO_LINES[i])
       );
     }
     // ===== 石板の かけら（地層ごとに 1 つ。パネルに かくれない ところ、なければ 空洞へ） =====
@@ -715,11 +717,107 @@ const chika = (() => {
       return say("ホタルミミズは、この トンネルを はしっているよ。\nすこし まっていてね。");
     }
     const btn = [...wrap.querySelectorAll(".ug-hot")].find((b) => b.getAttribute("aria-label") === UG[key]);
-    if (!btn) return say(`${UG[key]}は、いまの 画面の はばでは かくれて いるみたい。\n画面を ひろげると 見つかるかも。`);
+    if (!btn) return nozokiOpen(key);
     btn.scrollIntoView({ behavior: factory.tools.reduced ? "auto" : "smooth", block: "center" });
     btn.focus({ preventScroll: true });
     btn.click();
   }
+  // ---------- のぞき窓（せまい 画面で 地下に いない 子にも、図鑑から 会える） ----------
+  const nozoki = document.getElementById("nozoki");
+  const nozokiCanvas = nozoki.querySelector("canvas");
+  const nozokiCtx = nozokiCanvas.getContext("2d");
+  const nozokiView = nozoki.querySelector(".nozoki-view");
+  const nozokiSay = nozoki.querySelector(".nozoki-say");
+  const NW = nozokiCanvas.width;
+  const NH = nozokiCanvas.height;
+  let nozokiKey = null;
+  let nozokiTalk = 0;
+  let nozokiFlash = -1;
+  // その 地層の 土を 1 まい（つぶつぶ つき）
+  function nozokiSoil(L) {
+    rect(0, 0, NW, NH, L.color);
+    const rnd = seeded(7);
+    for (let i = 0; i < 70; i++) dot(Math.floor(rnd() * NW), Math.floor(rnd() * NH), rnd() < 0.5 ? L.dark : L.light);
+  }
+  const NOZOKI = {
+    horimaru: {
+      layer: 1,
+      draw(n) {
+        nozokiSoil(LAYERS[1]);
+        rect(0, 14, 40, 10, "rgba(20,12,10,0.45)");
+        const x = 21 + (n % 16 < 8 ? 0 : 1);
+        rows(HORIMARU, x, 13, n % 2 ? HORI : { ...HORI, m: HORI.M, M: HORI.m });
+        if (n % 3 !== 0) for (const [dx, dy] of [[15, 2], [17, 5], [16, 7]]) dot(x + dx + (n % 2), 13 + dy, "#c99a6a");
+      },
+      talk: (k) => HORI_LINES[k % HORI_LINES.length],
+    },
+    jelly: {
+      layer: 2,
+      draw(n) {
+        nozokiSoil(LAYERS[2]);
+        oval(32, 32, 30, 6, "#1a3a4e");
+        rect(0, 28, NW, NH - 28, "#1a3a4e");
+        rect(0, 28, NW, 1, "#5fb8d8");
+        const bright = n < nozokiFlash;
+        for (const [k, dx] of [[0, 16], [5, 38]]) {
+          const yy = 12 + (Math.floor((n + k) / 4) % 3);
+          if (bright) disc(dx + 4, yy + 3, 6, "rgba(127,240,255,0.35)");
+          rows(JELLY, dx, yy, bright ? { ...JEL, c: "#ffffff", C: "#7ff0ff" } : JEL);
+          rows(JELLY_LEGS[(n + k) % 2], dx, yy + 5, JEL);
+        }
+      },
+      talk: () => {
+        nozokiFlash = now + 8;
+        return JELLY_LINE;
+      },
+    },
+    tomoshibi: {
+      layer: 3,
+      draw(n) {
+        nozokiSoil(LAYERS[3]);
+        rect(0, 28, NW, 2, "#56505e");
+        rect(0, 30, NW, NH - 30, LAYERS[3].dark);
+        const t = n % 44;
+        const x = 18 + (t < 22 ? t : 44 - t);
+        const flip = t >= 22;
+        disc(x + (flip ? 0 : 8), 21, 3, "rgba(255,200,90,0.25)");
+        rows(TOMOSHIBI, x + (flip ? 2 : 0), 19 - (n % 2), TOMO, flip);
+        const lx = flip ? x : x + 8;
+        dot(lx, 19, "#1c1626");
+        rect(lx - 1, 20, 3, 3, n % 3 ? "#ffb347" : "#ffd84a");
+      },
+      talk: (k) => TOMO_LINES[k % TOMO_LINES.length],
+    },
+  };
+  function nozokiDraw(n) {
+    if (!nozokiKey || !nozoki.open) return;
+    T.use(nozokiCtx);
+    NOZOKI[nozokiKey].draw(n);
+  }
+  function nozokiOpen(key) {
+    nozokiKey = key;
+    nozokiTalk = 0;
+    const L = LAYERS[NOZOKI[key].layer];
+    nozoki.querySelector("h2").textContent = `のぞき窓：ちか ${L.depth}m の ${UG[key]}`;
+    nozokiView.setAttribute("aria-label", `${UG[key]}に はなしかける`);
+    nozokiCanvas.setAttribute("aria-label", `ちか ${L.depth}m の 地層の なかに いる ${UG[key]}`);
+    nozokiSay.textContent = `${UG[key]}は、ちか ${L.depth}m に すんで いるよ。\nおすと はなしかけられる。`;
+    nozoki.showModal();
+    nozokiDraw(now);
+  }
+  nozokiView.addEventListener("click", () => {
+    nozokiSay.textContent = NOZOKI[nozokiKey].talk(nozokiTalk++);
+    nozokiDraw(now);
+  });
+  nozoki.querySelector(".nozoki-close").addEventListener("click", () => nozoki.close());
+  // まどの そと（うしろの くらい ところ）を おしても とじる
+  nozoki.addEventListener("click", (e) => {
+    const r = nozoki.getBoundingClientRect();
+    if (e.target === nozoki && (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom)) nozoki.close();
+  });
+  nozoki.addEventListener("close", () => (nozokiKey = null));
+  if (!T.reduced) T.onTick(nozokiDraw);
+
   document.addEventListener("click", (e) => {
     const b = e.target.closest?.(".meet");
     if (!b) return;

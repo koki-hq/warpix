@@ -5,7 +5,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("fonts/dotgothic16.woff2?v=995f7c53") format("woff2");
+  src: url("fonts/dotgothic16.woff2?v=498731d8") format("woff2");
 }
 
 :root {
@@ -262,6 +262,56 @@ main > .hollow {
 .toast:empty {
   display: none;
 }
+/* のぞき窓（図鑑から 地下の 子に 会う。せまい 画面で 地下に いない とき） */
+.nozoki {
+  width: min(300px, calc(100vw - 32px));
+  padding: 16px;
+  border: 0;
+  background: #2a2033;
+  color: #efe6d6;
+  box-shadow: 0 0 0 3px #5ff0ff, 0 0 0 5px #140f1a;
+}
+.nozoki::backdrop {
+  background: rgba(20, 15, 26, 0.6);
+}
+.nozoki h2 {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: normal;
+}
+.nozoki-view {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  box-shadow: 0 0 0 3px #140f1a;
+}
+.nozoki-view canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+}
+.nozoki-say {
+  min-height: 3.2em;
+  margin: 12px 0;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+.nozoki-close {
+  display: block;
+  margin-left: auto;
+  padding: 6px 14px 4px;
+  border: 0;
+  background: #efe6d6;
+  color: #2a2033;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
 /* パネルの あいだの 空洞（ここに 地下の 生き物や 遺跡が 見える） */
 .hollow {
   height: 150px;
@@ -294,6 +344,35 @@ main > .hollow {
   background: #ffe680;
 }
 .touring .hot {
+  display: none;
+}
+/* スマホ：絵を よこに うごかす（ゆびで ひっぱる・◀ ▶） */
+.scene {
+  touch-action: pan-y pinch-zoom;
+}
+.look {
+  position: absolute;
+  top: 46%;
+  z-index: 2;
+  width: 32px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 0 0 2px var(--ink);
+}
+.look-l {
+  left: 6px;
+}
+.look-r {
+  right: 6px;
+}
+.look[hidden],
+.touring .look {
   display: none;
 }
 .say.narrate {
