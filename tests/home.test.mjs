@@ -3,6 +3,7 @@ const NEWS = JSON.stringify({
   news: [
     { id: "old", date: "2020-01-01", title: "むかしの おしらせ", body: "ふるい", url: "https://example.com/old" },
     { id: "new", date: "2099-12-31", title: "みらいの おしらせ", body: "あたらしい" },
+    { id: "new2", date: "2099-12-31", title: "みらいの つづき", url: "https://example.com/new2" },
     { id: "bad", title: "日付が ない" },
   ],
 });
@@ -22,7 +23,7 @@ const pikuseAt = (p) => p.ev(`(() => { const s = document.getElementById("pikuse
 
 export default {
   async "青空の 町工場：看板、絵、あいさつ、おせる ところは キーボードで たどれる"(t) {
-    const { server, p } = await open(t);
+    const { server, p } = await open(t, "?hour=14&date=2026-10-20"); // 開店いわい（11/1〜11/14）は あいさつが かわる
     t.eq(await p.ev(`document.title`), "WARPIX製作所", "タイトル");
     t.ok(await p.ev(`!!document.querySelector('#about a[href="mailto:pixe@warpix.app"]')`), "じむしょに ピクセに おてがみ（pixe@warpix.app）が ない");
     t.eq(await p.ev(`document.querySelector("h1").textContent`), "WARPIX製作所", "看板の 見出し");
@@ -232,7 +233,7 @@ export default {
     };
     for (const opts of [{ mobile: [360, 740] }, { mobile: [390, 844] }, { size: { width: 1440, height: 900 } }, { size: { width: 1024, height: 768 } }]) {
       const size = opts.mobile?.[0] ?? opts.size.width;
-      const { server, p } = await open(t, "?hour=14", opts);
+      let { server, p } = await open(t, "?hour=14&date=2026-10-20", opts); // ふだんの 日
       const stops = await p.ev(`factory.stops`);
       for (let i = 0; i < stops - 1; i++) {
         await p.ev(`factory.tourGo(${i})`);
@@ -246,6 +247,16 @@ export default {
         check(await p.ev(`factory.tourView()`), `${size}px 会いに いく ${k}`);
         await p.key("Escape");
       }
+      t.noErrors(p);
+      await server.close();
+      await t.closeAll();
+      // 開店いわいの ときの 看板と くすだま（ツアー 3）
+      ({ server, p } = await open(t, "?hour=14&date=2026-11-01", opts));
+      await p.ev(`factory.tourGo(3)`);
+      await t.sleep(1300);
+      const v = await p.ev(`factory.tourView()`);
+      t.eq(v.see.length, 2, "開店いわいの ツアー 3 は 看板と くすだま");
+      check(v, `${size}px 開店いわい ツアー 3`);
       t.noErrors(p);
       await server.close();
       await t.closeAll();
@@ -310,11 +321,14 @@ export default {
     const item = JSON.parse(readFileSync(join(t.ROOT, "tools", "open-news.json"), "utf8"));
     const data = JSON.parse(readFileSync(join(t.ROOT, "news.json"), "utf8"));
     t.ok(["X", "Instagram", "TikTok", "YouTube", "@warpix_app"].every((w) => item.body.includes(w)), `開店の おしらせに SNS 4 つが ない: ${item.body}`);
-    t.ok(item.body.includes("正式リリース"), `開店の おしらせに「正式リリース」が ない: ${item.body}`);
+    t.eq(item.body, data.news.find((x) => x.id === item.id)?.body, "開店の おしらせが 製作所だよりと ちがう（v1.29 で 書きなおした）");
     t.eq(OPEN.toISOString(), "2026-10-31T22:00:00.000Z", "開店の 時刻（日本時間 11/1 7:00）");
-    t.eq(addOpenNews(data, item, new Date("2026-11-01T06:59:59+09:00")), null, "7じ まえに のる");
-    const next = addOpenNews(data, item, new Date("2026-11-01T07:00:00+09:00"));
-    t.ok(next && next.news[0].id === "2026-11-01-open" && next.news.length === data.news.length + 1, "7じ に のらない");
+    t.eq(addOpenNews(data, item, new Date("2026-11-02T07:00:00+09:00")), null, "もう のっているのに また のる");
+    // 開店の まえの だより（開店を ぬいた もの）で、7じ の うごきを ためす
+    const before = { ...data, news: data.news.filter((x) => x.id !== item.id) };
+    t.eq(addOpenNews(before, item, new Date("2026-11-01T06:59:59+09:00")), null, "7じ まえに のる");
+    const next = addOpenNews(before, item, new Date("2026-11-01T07:00:00+09:00"));
+    t.ok(next && next.news[0].id === "2026-11-01-open" && next.news.length === before.news.length + 1, "7じ に のらない");
     t.eq(addOpenNews(next, item, new Date("2026-11-02T07:00:00+09:00")), null, "2 回め も のる");
     // news.json と おなじ きまり（id は かぶらない・url は https・title は 40 文字まで）
     t.ok(new Set(next.news.map((x) => x.id)).size === next.news.length, "id が かぶる");
@@ -440,13 +454,15 @@ export default {
     await server.close();
   },
 
-  async "製作所だより：あたらしい じゅん、けいじばんに さいしん、NEW、こわれた ものは とばす"(t) {
+  async "製作所だより：あたらしい じゅん（同じ 日は news.json の じゅん）、見出しは リンクに しない、けいじばんに さいしん、NEW、こわれた ものは とばす"(t) {
     const { server, p } = await open(t, "?hour=14", { server: { override: { "/news.json": NEWS } } });
-    const items = await p.ev(`[...document.querySelectorAll("#news-list li")].map((li) => ({ title: li.querySelector(".n-title").textContent, link: li.querySelector("a.n-title")?.href ?? null, isNew: !!li.querySelector(".n-new"), date: li.querySelector("time").dateTime }))`);
+    const items = await p.ev(`[...document.querySelectorAll("#news-list li")].map((li) => ({ title: li.querySelector(".n-title").textContent, isNew: !!li.querySelector(".n-new"), date: li.querySelector("time").dateTime }))`);
     t.eq(items, [
-      { title: "みらいの おしらせ", link: null, isNew: true, date: "2099-12-31" },
-      { title: "むかしの おしらせ", link: "https://example.com/old", isNew: false, date: "2020-01-01" },
+      { title: "みらいの おしらせ", isNew: true, date: "2099-12-31" },
+      { title: "みらいの つづき", isNew: true, date: "2099-12-31" },
+      { title: "むかしの おしらせ", isNew: false, date: "2020-01-01" },
     ], "おしらせの ならび");
+    t.eq(await p.ev(`document.querySelectorAll("#news-list a").length`), 0, "見出しが リンクに なっている（v1.29 から リンクに しない）");
     t.eq(await p.ev(`document.getElementById("board-latest").textContent`), "NEWみらいの おしらせ", "けいじばん");
     t.ok(await p.ev(`!!document.getElementById("news")`), "id=news の 場所が ない（warpix-link の フッターが とぶ 先）");
     t.noErrors(p);

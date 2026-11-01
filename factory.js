@@ -1553,7 +1553,7 @@ const factory = (() => {
     { x: 232, y: 150, see: ["pikuse"], text: () => "ぼく、ピクセ！ WARPIX製作所の あんないがかり だよ。\nいっしょに 工場を 見て まわろう！" },
     { x: 152, y: 92, see: ["clock"], text: () => `これが 時計塔。はりは ほんとうの 時刻で うごくんだ。\nいまは ${nowText()}！` },
     { x: 84, y: 100, see: ["bachi"], text: () => "タワークレーンと ブルーシート。\n中では つぎの 製品を 建造中。バチが ようせつ してる！" },
-    { x: 252, y: 58, see: kaiten ? ["sign", "kusudama"] : ["sign", "chimney"], text: () => (kaiten ? "屋上の 看板と、紅白の えんとつ。\n看板の 下には、開店いわいの くすだま！" : "屋上の 看板と、紅白の えんとつ。\nえんとつは おすと もくもく するよ。") },
+    { x: 252, y: kaiten ? 92 : 58, see: kaiten ? ["sign", "kusudama"] : ["sign", "chimney"], text: () => (kaiten ? "屋上の 看板と、紅白の えんとつ。\n看板の 下には、開店いわいの くすだま！" : "屋上の 看板と、紅白の えんとつ。\nえんとつは おすと もくもく するよ。") },
     { x: 364, y: 116, see: ["arm"], text: () => "かまぼこ倉庫。屋根の アームさんが、\nいつも どこかを なおしてる。" },
     { x: 412, y: 138, see: ["cat", "lifton"], text: () => "自販機の 上は、ねこの トタンの いつもの 場所。\nリフトンは 木の 箱を はこんでる。" },
     { x: airshipCenter, y: 64, see: ["airship"], text: () => "空には 飛行船の ソラマメ号。\nうしろの 高架には、レトロな 電車も はしるよ。" },
@@ -1705,9 +1705,9 @@ const factory = (() => {
         time.dateTime = x.date;
         li.append(time);
         if (isNew(x.date)) li.append(el("span", "n-new", "NEW"));
-        const title = x.url ? el("a", "n-title", x.title) : el("span", "n-title", x.title);
-        if (x.url) title.href = x.url;
-        li.append(title);
+        // 見出しは リンクに しない（v1.29。もう この ページに いるし、WARPIX LINK へは 展示室から）。
+        // url は ふるい 版の warpix-link の おしらせ欄の ために news.json に のこす
+        li.append(el("span", "n-title", x.title));
         if (x.body) li.append(el("p", "n-body", x.body));
         return li;
       })

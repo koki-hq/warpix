@@ -815,7 +815,10 @@ const chika = (() => {
     const r = nozoki.getBoundingClientRect();
     if (e.target === nozoki && (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom)) nozoki.close();
   });
-  nozoki.addEventListener("close", () => (nozokiKey = null));
+  // close の しらせは あとから とどく。そのあいだに つぎの 子で ひらいて いたら けさない
+  nozoki.addEventListener("close", () => {
+    if (!nozoki.open) nozokiKey = null;
+  });
   if (!T.reduced) T.onTick(nozokiDraw);
 
   document.addEventListener("click", (e) => {

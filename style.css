@@ -5,7 +5,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("fonts/dotgothic16.woff2?v=498731d8") format("woff2");
+  src: url("fonts/dotgothic16.woff2?v=be1750c4") format("woff2");
 }
 
 :root {
@@ -547,9 +547,6 @@ main {
   display: block;
   color: var(--ink);
   font-size: 16px;
-}
-.news a.n-title {
-  color: var(--navy);
 }
 .news .n-body {
   margin: 4px 0 0;
