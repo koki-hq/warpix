@@ -463,6 +463,7 @@ export default {
       { title: "むかしの おしらせ", isNew: false, date: "2020-01-01" },
     ], "おしらせの ならび");
     t.eq(await p.ev(`document.querySelectorAll("#news-list a").length`), 0, "見出しが リンクに なっている（v1.29 から リンクに しない）");
+    t.ok((await p.ev(`getComputedStyle(document.querySelector("#news-list .n-title")).textDecorationLine`)).includes("underline"), "見出しに 下線が ない（v1.29.1）");
     t.eq(await p.ev(`document.getElementById("board-latest").textContent`), "NEWみらいの おしらせ", "けいじばん");
     t.ok(await p.ev(`!!document.getElementById("news")`), "id=news の 場所が ない（warpix-link の フッターが とぶ 先）");
     t.noErrors(p);

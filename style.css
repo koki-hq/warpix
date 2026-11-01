@@ -5,7 +5,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("fonts/dotgothic16.woff2?v=be1750c4") format("woff2");
+  src: url("fonts/dotgothic16.woff2?v=abeda620") format("woff2");
 }
 
 :root {
@@ -545,8 +545,10 @@ main {
 }
 .news .n-title {
   display: block;
-  color: var(--ink);
+  color: var(--navy);
   font-size: 16px;
+  text-decoration: underline; /* リンクでは ないが、本文と 見わけが つく ように（v1.29.1） */
+  text-underline-offset: 3px;
 }
 .news .n-body {
   margin: 4px 0 0;
