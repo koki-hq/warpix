@@ -12,14 +12,14 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 |---|---|---|
 | ホームページ（ここ） | `C:\dev\warpix` / github.com/koki-hq/warpix（**公開**） | All rights reserved。公開なのは GitHub Pages を 無料で つかう ため |
 | warpix-link | `C:\dev\warpix-link` / github.com/koki-hq/warpix-link（公開、All rights reserved。公開なのは Pages の ため）/ https://link.warpix.app/ | 第一弾の 製品。**別の ウィンドウが 担当** |
-| 事務所 | `C:\dev\warpix-seisakusho` / github.com/koki-hq/warpix-seisakusho（**非公開**） | 事業の 方針・決めたこと・やること。決まったことは ここの `きめたこと.md`（新しい ものが 上）と `04-やること.md` に 書いて push |
+| 事務所 | `C:\dev\warpix-seisakusho` / github.com/koki-hq/warpix-seisakusho（**非公開**） | 事業の 方針・決めたこと・やること。決まったことは ここの `きめたこと.md`（新しい ものが 上）に 書いて push。予定は Issue と ロードマップ（`04-やること.md` は 2026-11-01 に 引退）。ファイルの 地図は 事務所の `README.md`（古い 名前からも 引ける）。いまの 版は `tools/版.sh` |
 
 ## WARPIX製作所 とは（決まっている こと）
 
 - ブランド名は **WARPIX製作所**。町工場の ニュアンス。「作品を、製品として 世に出す 工場」
 - 本拠地の ドメインは **warpix.app**（2026-10-18 に 買った。Cloudflare、DNS only。v1.14 で ホームページが 引っ越し）。製品は サブドメイン（link.warpix.app など）
 - 日本の 商標データベースでは「WARPIX」は 0 件（2026-10-16）。海外には 同じ名前の 会社が ある（warpix.com＝アメリカの ロボット等の ネットショップ、warpix.io、warpix.studio）
-- 詳しくは 事務所リポジトリの `01-ほうしん.md`・`02-なまえと権利.md`
+- 詳しくは 事務所リポジトリの `事業/01-ほうしん.md`・`事業/02-なまえと権利.md`
 
 ## いまの ホームページ（v1.2「青空の 工場まち」）
 
@@ -57,7 +57,7 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 1. **お知らせ（`news.json`）の 形と 場所を 変えない。** warpix-link は v1.59 から news.json を よまない（アプリの 中に じぶんの おしらせ ボックス）が、ふるい 版の warpix-link は `https://warpix.app/news.json`・`https://koki-hq.github.io/warpix/news.json` を 読むので、形と 転送は こわさない
    - `{ "news": [{ "id", "date": "YYYY-MM-DD", "title", "body"?, "url"? }] }`。`id` は かぶらない、`url` は https、`title` は 40 文字まで（テストで 確かめている）
    - warpix-link の フッターの「製作所だより」リンクは v1.59 で なくなった が、ふるい 版や 外からの リンクの ために **`id="news"` の 場所を 残す**
-   - **窓への でんごん**（2026-10-25 から）：warpix-link の ウィンドウが 同じ `おしらせ下書き.md` に「`## 窓へ（まだ）：<id>`」で おねがいを 書く。たいおう したら「`## 窓へ（済 ホームページ vX.Y）：<id>`」に して push（news.json には のせない）
+   - **窓への でんごん**（2026-11-01 から 場所が かわった）：ほかの 窓は 事務所リポジトリの `窓へ/ホームページ.md` に「`## まだ：<id>`」で おねがいを 書く。たいおう したら「`## 済（ホームページ vX.Y）：<id>`」に して push（消さない。news.json には のせない）。こちらから 伝える ときは `窓へ/<あいて>.md`（事務所・warpix-link・ゲーム）。事務所の `CLAUDE.md` には 書かない（SNS への 注意は `窓へ/事務所.md`）
    - **おしらせの 下書き**（2026-10-18 から）：warpix-link の ウィンドウが 事務所リポジトリの `おしらせ下書き.md` に「まだ：<id>」で 書く。
      **だよりには 製作所の 大きな できごと だけ**（準備中・プレリリース・正式リリース・新しい 製品・大きな イベント・グッズの 発売 など。2026-10-31 本人）。こまかい 更新は 各アプリの 中。
      ホームページは pull して「まだ」を `news.json` の いちばん 上に そのまま のせ → `node tools/fonts.mjs` → テスト → 公開 → 見出しを「済（ホームページ vX.Y）」に して push。
@@ -85,7 +85,7 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 - 共有カードは `node tools/og.mjs`（絵や 看板を かえたら）
 - favicon と ホーム画面の アイコン（`icons/`・`manifest.webmanifest`）は `node tools/favicon.mjs`（`factory.js` の ピクセから 作る）
 - きた ひとの かず：`count.js`（Cloudflare Web Analytics、v1.26）。本番の warpix.app だけ、クッキー なし。じむしょに 書いて ある
-- 公開：`main` に push すると GitHub Pages に 出る。タグ `vX.Y`（いまは `v1.29.1`）と 仕様メモを セットで。公開後は 本番の URL で 変わった ことを 確かめる
+- 公開：`main` に push すると GitHub Pages に 出る。タグ `vX.Y`（いまは `v1.29.2`）と 仕様メモを セットで。公開後は 本番の URL で 変わった ことを 確かめる
   - Pages の 公開が「waiting」で 止まる ことが ある → `gh api -X POST repos/koki-hq/warpix/pages/builds` で 頼みなおすと 通る
 - コミット：git の メールは noreply 設定ずみ。メッセージの 最後に `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`
 
