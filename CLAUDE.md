@@ -4,15 +4,15 @@
 ユーザーは 日本語で話す。遊び心と 自由な 発想が 大好き。説明は やさしい 日本語で。
 
 2026-10-16 に、ユーザーの 希望で **ホームページは この ウィンドウ（セッション）、warpix-link は 別の ウィンドウ** で 並行して 進める ことに なった。
-warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
+warpix-link（`~/dev/warpix-link`）には 手を 入れない。
 
 ## 関係する もの
 
 | もの | 場所 | メモ |
 |---|---|---|
-| ホームページ（ここ） | `C:\dev\warpix` / github.com/koki-hq/warpix（**公開**） | All rights reserved。公開なのは GitHub Pages を 無料で つかう ため |
-| warpix-link | `C:\dev\warpix-link` / github.com/koki-hq/warpix-link（公開、All rights reserved。公開なのは Pages の ため）/ https://link.warpix.app/ | 第一弾の 製品。**別の ウィンドウが 担当** |
-| 事務所 | `C:\dev\warpix-seisakusho` / github.com/koki-hq/warpix-seisakusho（**非公開**） | 事業の 方針・決めたこと・やること。決まったことは ここの `きめたこと.md`（新しい ものが 上）に 書いて push。予定は Issue と ロードマップ（`04-やること.md` は 2026-11-01 に 引退）。ファイルの 地図は 事務所の `README.md`（古い 名前からも 引ける）。いまの 版は `tools/版.sh` |
+| ホームページ（ここ） | `~/dev/warpix` / github.com/koki-hq/warpix（**公開**） | All rights reserved。公開なのは GitHub Pages を 無料で つかう ため |
+| warpix-link | `~/dev/warpix-link` / github.com/koki-hq/warpix-link（公開、All rights reserved。公開なのは Pages の ため）/ https://link.warpix.app/ | 第一弾の 製品。**別の ウィンドウが 担当** |
+| 事務所 | `~/dev/warpix-seisakusho` / github.com/koki-hq/warpix-seisakusho（**非公開**） | 事業の 方針・決めたこと・やること。決まったことは ここの `きめたこと.md`（新しい ものが 上）に 書いて push。予定は Issue と ロードマップ（`04-やること.md` は 2026-11-01 に 引退）。ファイルの 地図は 事務所の `README.md`（古い 名前からも 引ける）。いまの 版は `tools/版.sh` |
 
 ## WARPIX製作所 とは（決まっている こと）
 
@@ -92,9 +92,9 @@ warpix-link（`C:\dev\warpix-link`）には 手を 入れない。
 ## ヘッドレス Chrome の 後片付け（だいじ）
 
 - テストの Chrome は `--mute-audio`（音を 出さない）。終わったら 残さない
-- **別の ウィンドウ（warpix-link）も 同時に テストで Chrome を 使う。** `tasklist | grep chrome` の 数は あてに しない。
+- **別の ウィンドウ（warpix-link）も 同時に テストで Chrome を 使う。** `pgrep -f chrome` の 数は あてに しない。
   この リポジトリの テスト用 Chrome は プロファイル名が `warpix-home-test-` で 始まる ので、残っているか どうかは それで 調べる：
-  `powershell -Command "Get-CimInstance Win32_Process -Filter \"Name='chrome.exe'\" | ? { $_.CommandLine -like '*warpix-home-test-*' } | measure"`
+  `pgrep -f warpix-home-test- | wc -l`
 - テストの ポートは 10400〜（warpix-link は 9400〜）。同時に ながしても ぶつからない
 
 ## 道具の くせ
