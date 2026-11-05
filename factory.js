@@ -1359,6 +1359,7 @@ const factory = (() => {
   lookR.addEventListener("click", () => lookAt(cropX + Math.round(visW * 0.6)));
   let drag = null;
   let dragged = false;
+  let dragRaf = 0;
   scene.addEventListener("pointerdown", (e) => {
     if (tour || W - visW <= 24 || e.button > 0 || e.target.closest(".look, .tour-btn")) return;
     drag = { id: e.pointerId, x: e.clientX, y: e.clientY, from: cropX, moved: false };
@@ -1371,14 +1372,28 @@ const factory = (() => {
       if (Math.abs(e.clientY - drag.y) > Math.abs(dx)) return void (drag = null); // たての スクロールは ページに まかせる
       drag.moved = true;
     }
-    lookAt(drag.from - dx / scale);
+    // ゆびの 動きは 1 コマに 何回も くる ので、描きなおしは 1 コマに 1 回に まとめる
+    drag.to = drag.from - dx / scale;
+    if (!dragRaf) dragRaf = requestAnimationFrame(applyDrag);
   });
+  function applyDrag() {
+    dragRaf = 0;
+    if (drag?.moved) lookAt(drag.to);
+  }
   scene.addEventListener("pointerup", () => {
+    if (dragRaf) {
+      cancelAnimationFrame(dragRaf);
+      applyDrag(); // はなした ときの いちに ぴったり
+    }
     dragged = !!drag?.moved;
     drag = null;
     setTimeout(() => (dragged = false));
   });
-  scene.addEventListener("pointercancel", () => (drag = null));
+  scene.addEventListener("pointercancel", () => {
+    drag = null;
+    if (dragRaf) cancelAnimationFrame(dragRaf);
+    dragRaf = 0;
+  });
   // ひっぱった あとの「おした」は なかった ことに（なかまが しゃべりださない）
   scene.addEventListener("click", (e) => {
     if (!dragged) return;
