@@ -1309,9 +1309,11 @@ const factory = (() => {
   let visW = W;
   const cam = { x: 0, y: 0, z: 1 }; // カメラ（ふだんは cropX・まるごと。ツアーの ときは よって うごく）
   let tour = null;
+  let fitW = 0; // いま 合わせた ときの 絵の はば
   const clampX = (x) => Math.max(0, Math.min(W - visW, Math.round(x)));
   function fit() {
     const cssW = scene.clientWidth || innerWidth;
+    fitW = scene.clientWidth;
     scale = Math.max(2, Math.ceil(cssW / W));
     visW = Math.min(W, Math.ceil(cssW / scale));
     crop0 = cropX = clampX(244 - visW / 2);
@@ -1817,6 +1819,9 @@ const factory = (() => {
   addEventListener("resize", () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
+      // iPhone は ページを スクロールすると アドレスバーが 出入りして resize が くる。
+      // はばが かわって いない ときは まんなかへ もどさない（見て いた ところに のこる）
+      if (scene.clientWidth === fitW) return;
       fit();
       frame();
     }, 120);

@@ -418,6 +418,10 @@ export default {
     await p.ev(`document.getElementById("look-r").click()`);
     await p.ev(`document.getElementById("look-r").click()`);
     const s1 = await st();
+    // iPhone は スクロールで アドレスバーが 出入りして、たかさだけ かわる resize が くる。まんなかへ もどらない
+    await p.size(360, 660, true);
+    await t.sleep(400);
+    t.eq((await st()).crop, s1.crop, "たかさだけ かわったら まんなかへ もどった");
     t.ok(s1.crop > s0.crop && !s1.r && s1.l && s1.cat, `▶ で みぎはし まで いけない・ねこに 会えない ${JSON.stringify(s1)}`);
     // みぎはしでは、ゲンさんたちの ふきだしは 見えない ので かくれる
     t.eq(await p.ev(`getComputedStyle(document.querySelector(".say")).visibility`), "hidden", "見えない 子の ふきだしが 出ている");
