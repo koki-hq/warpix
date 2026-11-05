@@ -38,6 +38,9 @@ export default {
     t.ok(await p.ev(`(() => { const ex = document.querySelector("#products .exhibit"); return ex.querySelector("img").alt.includes("WARPIX LINK") && ex.querySelector(".ex-go").href === "https://link.warpix.app/" && !ex.querySelector(".ex-src") && !/MIT|github\.com/.test(ex.innerHTML); })()`), "展示室の warpix-link が たりない");
     t.ok((await p.ev(`document.getElementById("products").textContent`)).includes("いつもの 公式サイトへ、ドット絵の ピクセと いっしょに ワープする 踏み台リンクアプリ。"), "製品の ひとことが きえた");
     t.eq(await p.ev(`document.querySelector("#products .ex-catch").textContent`), "いつもの アプリを、ちょっと 楽しく ひらく 入口。", "WARPIX LINK の ひとこと（事務所で きめた もの）");
+    // グッズ売り場（BOOTH）：入口と、書かない こと（®・ねだん・日数）
+    t.ok(await p.ev(`(() => { const g = document.querySelector("#products .ex-goods"); const a = g.querySelector(".ex-go"); return a.href === "https://warpix.booth.pm/" && a.rel.includes("noopener") && g.querySelector("img").alt.includes("アクリルキーホルダー") && g.querySelector("img").getAttribute("src") === "goods/promo.png" && !/®|円|日で|発売/.test(g.textContent) && g.textContent.replace(/\\s/g, "").length < 200; })()`), "グッズ売り場の 札が おかしい");
+    t.ok(await p.ev(`document.querySelector("#about a[href='https://warpix.booth.pm/']") !== null`), "じむしょに 売り場の リンクが ない");
     // 展示室は みじかく（説明書は warpix-link の 中）。権利の ことわりは のこす
     // ふだんは みじかく。くわしい 説明は「ピクセの てがき カタログ」に しまって あり、ひらくと 読める
     t.ok((await p.ev(`(() => { const ex = document.querySelector("#products .exhibit").cloneNode(true); ex.querySelector(".ex-catalog .ex-memo").remove(); return ex.textContent.replace(/\\s/g, "").length; })()`)) < 400, "展示室の 紹介（カタログの そと）が ながい");

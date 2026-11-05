@@ -33,6 +33,7 @@ warpix-link（`~/dev/warpix-link`）には 手を 入れない。
 - 季節の 服：月で 春・夏・秋・冬に 着がえる（v1.5）。`?month=1〜12` で ためす。どの 季節も 晴れ
 - 工場見学ツアー：カメラ（`cam`）で よって まわる（v1.7）。絵の 位置あわせは `cssX`・`cssY`・`place()`（カメラ経由）
 - ゲンさんの 一日：時刻で `story()` が `DAY`（体操・おべんとう・おやつ・かたづけ・うたたね）か `work()`（しごと）を えらぶ（v1.8）
+- グッズ売り場（v1.30）：展示室の LINK の 下に BOOTH（https://warpix.booth.pm/）への 札。宣伝画像は `goods/promo.png`（`node tools/goods.mjs`）。®・ねだん・発送日数は 書かない
 - せいひん 展示室：warpix-link の 紹介（v1.6。v1.19 で みじかい ショーウィンドウに、v1.20 で くわしい 説明は「ピクセの てがき カタログ」に しまう。ふだん 見える ところは ながく しない）。warpix-link の 機能が かわったら ここも 見なおす。v1.22 で 用意した WARPIX ARCADE の 部屋は、ARCADE を いったん 寝かせる ことに なり v1.24 で はずした（開店は WARPIX LINK だけ）。文字で 書く ときは WARPIX LINK・WARPIX ARCADE
 - 健康診断の 数字は、別の ウィンドウが 重い ときに 悪く でる（パソコン全体の CPU も 見て 書く）
 - テストで 地下の ボタンへ スクロールする ときは `behavior: "instant"`（ページは なめらかスクロール なので、まにあわない）
@@ -85,7 +86,7 @@ warpix-link（`~/dev/warpix-link`）には 手を 入れない。
 - 共有カードは `node tools/og.mjs`（絵や 看板を かえたら）
 - favicon と ホーム画面の アイコン（`icons/`・`manifest.webmanifest`）は `node tools/favicon.mjs`（`factory.js` の ピクセから 作る）
 - きた ひとの かず：`count.js`（Cloudflare Web Analytics、v1.26）。本番の warpix.app だけ、クッキー なし。じむしょに 書いて ある
-- 公開：`main` に push すると GitHub Pages に 出る。タグ `vX.Y`（いまは `v1.29.2`）と 仕様メモを セットで。公開後は 本番の URL で 変わった ことを 確かめる
+- 公開：`main` に push すると GitHub Pages に 出る。タグ `vX.Y`（いまは `v1.30`）と 仕様メモを セットで。公開後は 本番の URL で 変わった ことを 確かめる
   - Pages の 公開が「waiting」で 止まる ことが ある → `gh api -X POST repos/koki-hq/warpix/pages/builds` で 頼みなおすと 通る
 - コミット：git の メールは noreply 設定ずみ。メッセージの 最後に `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`
 
