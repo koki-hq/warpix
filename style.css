@@ -5,7 +5,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("fonts/dotgothic16.woff2?v=70978dd0") format("woff2");
+  src: url("fonts/dotgothic16.woff2?v=145ba9b9") format("woff2");
 }
 
 :root {
@@ -843,18 +843,6 @@ main {
   height: auto;
   padding: 6px 0;
 }
-.card-wide {
-  grid-column: 1 / -1;
-  grid-template-columns: auto 1fr;
-  grid-template-rows: auto;
-  background: linear-gradient(90deg, #eaf6ff, #fff 40%);
-}
-.card-wide canvas.portrait {
-  grid-row: auto;
-  max-width: none;
-  width: 80px;
-  padding: 0;
-}
 .c-name {
   margin: 0;
   color: var(--ink);
@@ -870,27 +858,6 @@ main {
   margin: 0;
   font-size: 14px;
   line-height: 1.6;
-}
-.card dl {
-  margin: 6px 0 0;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 2px 12px;
-}
-.card dt {
-  color: var(--navy);
-  font-size: 14px;
-}
-.card dd {
-  margin: 0;
-}
-@media (max-width: 480px) {
-  .card dl {
-    grid-template-columns: 1fr;
-  }
-  .card dd {
-    margin-bottom: 6px;
-  }
 }
 
 /* 図鑑から 会いに いく */
@@ -909,9 +876,6 @@ main {
 }
 .meet:hover {
   background: #d4ecff;
-}
-.card-wide .meet {
-  margin-top: 4px;
 }
 
 /* パネルの ふちから のぞく キャラクター */

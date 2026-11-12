@@ -1107,7 +1107,7 @@ const factory = (() => {
       s.left = ["lUp", "lSide", "lDown", "lSide"][beat];
       s.right = ["rUpEmpty", "rSide", "rDown", "rSide"][beat];
       s.music = true;
-      s.happy = true;
+      s.happy = beat === 0; // 腕を 上げる 拍だけ 目を つむる
       s.py -= beat === 0 ? 3 : 0;
       s.say = t < 8 ? "あさの ラジオ体操、はじめ！" : t % 8 < 4 ? "いち、に、さん、し" : "ご、ろく、しち、はち";
       return s;
@@ -1117,7 +1117,7 @@ const factory = (() => {
       s.bento = true;
       s.left = "lHold";
       s.right = t % 4 < 2 ? "rEat" : "rHold";
-      s.happy = true;
+      s.happy = t % 8 === 0; // ときどき 目を つむる
       if (t < 20) s.say = "おひるだ！ おべんとう おべんとう♪";
       else if (t < 40) s.say = "もぐもぐ";
       else if (t < 50) Object.assign(s, { say: "スズメ。", who: "p", thief: t - 40 });
@@ -1127,7 +1127,7 @@ const factory = (() => {
     },
     // 3 じ：おやつ（たいやき）
     oyatsu(t, s) {
-      Object.assign(s, { taiyaki: true, left: "lDown", right: t % 6 < 3 ? "rEat" : "rHold", happy: true });
+      Object.assign(s, { taiyaki: true, left: "lDown", right: t % 6 < 3 ? "rEat" : "rHold", happy: t % 8 === 0 });
       if (t < 16) Object.assign(s, { say: "おやつ。たいやき。", who: "p" });
       else if (t < 40) s.say = "あんこ たっぷり！";
       else if (t < 60) s.say = "しっぽまで あんこ……しあわせ";
@@ -1175,13 +1175,13 @@ const factory = (() => {
     } else if (t < 61) {
       Object.assign(s, { px: BX + 12, py: ON_BENCH, right: "rReach", say: season === "winter" ? "おちゃ。" : "みず。", who: "p" });
     } else if (t < 72) {
-      Object.assign(s, { px: BX + 12, py: ON_BENCH, right: "rDrink", closed: true, happy: true });
+      Object.assign(s, { px: BX + 12, py: ON_BENCH, right: "rDrink", closed: true });
       if (t < 66) s.say = "ごくっ ごくっ";
       else Object.assign(s, { say: "……。\n（だまって 見守る）", who: "p" });
     } else if (t < 80) {
-      Object.assign(s, { px: BX + 12, py: ON_BENCH, left: "lWipe", happy: true, say: "ふきふき" });
+      Object.assign(s, { px: BX + 12, py: ON_BENCH, left: "lWipe", say: "ふきふき" });
     } else if (t < 84) {
-      Object.assign(s, { px: BX + 12, py: ON_BENCH - (t % 2) * 3, left: "lUp", right: "rUpEmpty", closed: true, happy: true, say: "ぷはーっ！ いきかえった！" });
+      Object.assign(s, { px: BX + 12, py: ON_BENCH - (t % 2) * 3, left: "lUp", right: "rUpEmpty", closed: true, say: "ぷはーっ！ いきかえった！" });
     } else {
       Object.assign(s, { px: BX + 12 + (t - 83) * 3, py: t === 84 ? GROUND - 22 : GROUND - 16, say: "よし、もう ひとふんばり！" });
     }

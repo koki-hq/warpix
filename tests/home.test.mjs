@@ -57,7 +57,7 @@ export default {
     t.ok(await p.ev(`!!document.getElementById("pikuse")`), "id=pikuse の 場所が ない");
     // ピクセ族：ピクセ（みならい）が いちばん 上、いとこ（きいろ・あんないがかり）は ハコビ・バチと おなじ 大きさで その 上
     t.ok(await p.ev(`(() => { const pk = document.getElementById("pikuse"), it = document.getElementById("itoko"); const names = [...pk.parentElement.querySelectorAll(".c-name")].map((n) => n.firstChild.textContent.trim());
-      return pk.querySelector("canvas").dataset.sprite === "shiro" && pk.textContent.includes("みならい") && !pk.textContent.includes("しごとが まだ")
+      return pk.querySelector("canvas").dataset.sprite === "shiro" && pk.textContent.includes("みならい") && pk.textContent.includes("ひみつ") && !pk.querySelector("dl") && !pk.classList.contains("card-wide") && !pk.textContent.includes("しごとが まだ")
         && it.querySelector("canvas").dataset.sprite === "pikuse" && it.textContent.includes("あんぜん だいいち") && !it.classList.contains("card-wide")
         && names.join() === "ピクセ,いとこ,ハコビ,バチ"; })()`), "図鑑の ピクセ族の ならびが ちがう");
     // 地面の 下の 世界：パネルの うしろ いっぱいに 描かれ、ふかい ほど くらい
