@@ -1,0 +1,8 @@
+# GitHub Pages（Jekyll）に「サイトに 出さない もの」を つたえる。
+# 作業の てびき・仕様メモ・テスト・道具は warpix.app から 読めない ように する（v1.31.1）。
+exclude:
+  - CLAUDE.md
+  - README.md
+  - docs
+  - tests
+  - tools
