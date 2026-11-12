@@ -36,15 +36,17 @@ export default {
     t.eq(await p.ev(`document.querySelector('#products a').href`), "https://link.warpix.app/", "warpix-link への リンク");
     // せいひん 展示室：warpix-link の 絵（説明つき）、ひらく ボタン、コード
     t.ok(await p.ev(`(() => { const ex = document.querySelector("#products .exhibit"); return ex.querySelector("img").alt.includes("WARPIX LINK") && ex.querySelector(".ex-go").href === "https://link.warpix.app/" && !ex.querySelector(".ex-src") && !/MIT|github\.com/.test(ex.innerHTML); })()`), "展示室の warpix-link が たりない");
-    t.ok((await p.ev(`document.getElementById("products").textContent`)).includes("いつもの 公式サイトへ、ドット絵の ピクセと いっしょに ワープする 踏み台リンクアプリ。"), "製品の ひとことが きえた");
-    t.eq(await p.ev(`document.querySelector("#products .ex-catch").textContent`), "いつもの アプリを、ちょっと 楽しく ひらく 入口。", "WARPIX LINK の ひとこと（事務所で きめた もの）");
+    t.ok((await p.ev(`document.getElementById("products").textContent`)).includes("アプリや サイトを またいで、見たい ところだけを 集めて おける リンクアプリ。"), "製品の ひとことが きえた");
+    t.eq(await p.ev(`document.querySelector("#products .ex-catch").textContent`), "よく行くリンクを、グループに まとめて 開く。", "WARPIX LINK の ひとこと（事務所の 製品の核）");
     // グッズ売り場（BOOTH）：入口と、書かない こと（®・ねだん・日数）
     t.ok(await p.ev(`(() => { const g = document.querySelector("#products .ex-goods"); const a = g.querySelector(".ex-go"); return a.href === "https://warpix.booth.pm/" && a.rel.includes("noopener") && g.querySelector("img").alt.includes("アクリルキーホルダー") && g.querySelector("img").getAttribute("src") === "goods/promo.png" && !/®|円|日で|発売/.test(g.textContent) && g.textContent.replace(/\\s/g, "").length < 200; })()`), "グッズ売り場の 札が おかしい");
     t.ok(await p.ev(`document.querySelector("#about a[href='https://warpix.booth.pm/']") !== null`), "じむしょに 売り場の リンクが ない");
     // 展示室は みじかく（説明書は warpix-link の 中）。権利の ことわりは のこす
     // ふだんは みじかく。くわしい 説明は「ピクセの てがき カタログ」に しまって あり、ひらくと 読める
     t.ok((await p.ev(`(() => { const ex = document.querySelector("#products .exhibit").cloneNode(true); ex.querySelector(".ex-catalog .ex-memo").remove(); return ex.textContent.replace(/\\s/g, "").length; })()`)) < 400, "展示室の 紹介（カタログの そと）が ながい");
-    t.ok(await p.ev(`(() => { const d = document.querySelector("#products .ex-catalog"); return !d.open && d.querySelector("summary").textContent.includes("カタログ") && d.textContent.includes("こんな ひとに") && d.querySelectorAll(".ex-features li").length === 8 && d.textContent.includes("しゅうらいの よる") && d.textContent.includes("クローゼット") && d.textContent.includes("プレゼント") && !d.textContent.includes("リンクだけ") && !d.textContent.includes("成長"); })()`), "ピクセの てがき カタログが ない・さいしょから ひらいている");
+    t.ok(await p.ev(`(() => { const d = document.querySelector("#products .ex-catalog"); return !d.open && d.querySelector("summary").textContent.includes("カタログ") && d.textContent.includes("こんな ひとに") && d.querySelectorAll(".ex-features li").length === 10 && d.textContent.includes("グループ") && d.textContent.includes("使い方は あなた次第") && !/ワンタップ|たな|しゅうらい|クローゼット|ミニゲーム|おみくじ|PRESS START|ワープゾーン|ないしょ/.test(d.textContent) && !d.textContent.includes("リンクだけ") && !d.textContent.includes("成長"); })()`), "ピクセの てがき カタログが ない・さいしょから ひらいている");
+    // WARPIX LINK v2（11/10）：v1 の へや・あそびの ことば、「踏み台」「ワンタップ」は のこさない
+    t.ok(await p.ev(`!/踏み台|ワンタップ|ちょっと 楽しく|プレゼント|ミニゲーム|しゅうらい/.test(document.querySelector("#products .exhibit").textContent + document.getElementById("about").textContent + document.querySelector('meta[property="og:description"]').content)`), "WARPIX LINK v1 の 説明が のこって いる");
     t.ok((await p.ev(`document.querySelector("#products .ex-note").textContent`)).includes("WARPIX製作所の もの"), "名前・絵の 権利の ことわりが ない");
     // じむしょの 芯の ことば（デザインが かわっても のこす）
     t.ok((await p.ev(`document.getElementById("about").textContent`)).includes("ドット絵と チップチューンの 世界"), "じむしょの 説明から 芯の ことばが きえた");

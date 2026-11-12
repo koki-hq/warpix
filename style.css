@@ -5,7 +5,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("fonts/dotgothic16.woff2?v=3ecdc8e0") format("woff2");
+  src: url("fonts/dotgothic16.woff2?v=bf336468") format("woff2");
 }
 
 :root {
@@ -733,10 +733,9 @@ main {
 .ex-steps li {
   margin: 0;
 }
-.panel .ex-psst {
-  margin: 10px 0 0;
-  color: var(--red);
-  font-size: 14px;
+.panel .ex-yours {
+  margin: 0;
+  font-size: 15px;
   line-height: 28px;
 }
 .panel .ex-sign {
