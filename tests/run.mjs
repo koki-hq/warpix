@@ -1,14 +1,15 @@
 // テストをまとめて流す。
-//   node tests/run.mjs              … ぜんぶ（4 つ同時に）
+//   node tests/run.mjs              … ぜんぶ（1 ファイルずつ じゅんばんに。約 4 分）
 //   node tests/run.mjs news        … 名前に news を含むテストだけ
-//   node tests/run.mjs --jobs 1     … 1 つずつ順番に（いちばん安定。時間は かかる）
+//   node tests/run.mjs --jobs 4     … 4 つ同時に（はやい が、Mac では Chrome が 止まりやすい）
+// Mac の ヘッドレス Chrome は ときどき へんじを しなく なる（原因 不明）。ふだんは ファイルごとに 子プロセスで ながし、
+// 6 分 おわらない・Chrome が へんじ しない（STALL）ときは、Chrome を かたづけて 1 回だけ やりなおす。ふつうの しっぱいは やりなおさない
 // Chrome の場所は自動でさがす（見つからないときは環境変数 CHROME_PATH）。
 // スクリーンショットは tests/.output/ に保存される。
 import { readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL, fileURLToPath } from "node:url";
-import { spawn } from "node:child_process";
-import { cpus } from "node:os";
+import { spawn, execFileSync } from "node:child_process";
 import * as harness from "./lib/harness.mjs";
 
 const args = process.argv.slice(2);
@@ -25,7 +26,8 @@ const filter = args[0] ?? "";
 const dir = join(harness.ROOT, "tests");
 const all = readdirSync(dir).filter((f) => f.endsWith(".test.mjs") && f.includes(filter)).sort();
 const files = only ? only.split(",") : all;
-const jobs = Math.max(1, Math.min(Number(jobsArg ?? Math.min(4, Math.floor(cpus().length / 2) || 1)), files.length));
+const jobs = Math.max(1, Math.min(Number(jobsArg ?? 1), files.length));
+const FILE_LIMIT_MS = (Number(process.env.WARPIX_FILE_LIMIT_S) || 360) * 1000; // ためす ときは WARPIX_FILE_LIMIT_S で みじかく
 const started = Date.now();
 
 // ---------- 1 つの ファイルを ながす（結果の行を かえす） ----------
@@ -68,7 +70,43 @@ async function runFile(file) {
   return { lines, passed, failed };
 }
 
-if (jobs === 1 || only) {
+// ---------- 1 ファイルを 子プロセスで（時間ぎれ つき）。止まったら Chrome を かたづけて 1 回 やりなおす ----------
+function runChild(file) {
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, [fileURLToPath(import.meta.url), "--files", file], { stdio: ["ignore", "pipe", "inherit"] });
+    let out = "";
+    let stalled = false;
+    const timer = setTimeout(() => { stalled = true; child.kill("SIGKILL"); }, FILE_LIMIT_MS);
+    child.stdout.on("data", (d) => (out += d));
+    child.on("close", () => {
+      clearTimeout(timer);
+      // 子が のこした テスト用 Chrome を かたづける（この リポジトリの プロファイル名だけ）
+      try { execFileSync("pkill", ["-f", "warpix-home-test-"], { stdio: "ignore" }); } catch {}
+      let r = null;
+      for (const line of out.split("\n")) try { const j = JSON.parse(line); if (j.file === file) r = j; } catch {}
+      if (r && r.lines.some((l) => l.includes("STALL:"))) stalled = true;
+      resolve({ r, stalled });
+    });
+  });
+}
+
+if (jobs === 1 && !only) {
+  let passed = 0;
+  let failed = 0;
+  for (const file of files) {
+    let { r, stalled } = await runChild(file);
+    if (stalled || !r) {
+      console.log(`… ${file}：Chrome が 止まったので、かたづけて もう 1 回`);
+      ({ r, stalled } = await runChild(file));
+    }
+    if (!r) r = { lines: [`✗ ${file} が ${stalled ? "2 回 とも 止まった" : "さいごまで ながれなかった"}`], passed: 0, failed: 1 };
+    passed += r.passed;
+    failed += r.failed;
+    console.log(r.lines.join("\n"));
+  }
+  console.log(`\n${passed} passed, ${failed} failed  (${((Date.now() - started) / 1000).toFixed(0)}s)`);
+  process.exit(failed ? 1 : 0);
+} else if (only) {
   // ---------- ひとりで ぜんぶ（ワーカーも ここ） ----------
   let passed = 0;
   let failed = 0;

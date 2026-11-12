@@ -149,7 +149,14 @@ async function connectPage(browser, wsUrl) {
     if (msg.method === "Runtime.consoleAPICalled" && msg.params.type === "error") page.errors.push("console.error: " + msg.params.args.map((a) => a.value ?? a.description).join(" "));
     for (const fn of listeners) fn(msg);
   };
-  page.send = (method, params = {}) => new Promise((r) => { const i = ++id; pending.set(i, r); ws.send(JSON.stringify({ id: i, method, params })); });
+  // Mac の ヘッドレス Chrome は ときどき へんじを しなく なる（原因 不明、2026-11）。
+  // 60 秒 まっても へんじが なければ、止まった まま に せず エラーに する（STALL を ふくめる：run.mjs が やりなおす めじるし）
+  page.send = (method, params = {}) => new Promise((r, j) => {
+    const i = ++id;
+    const timer = setTimeout(() => { pending.delete(i); j(new Error(`STALL: Chrome が へんじ しない（${method}、60 秒）`)); }, 60000);
+    pending.set(i, (m) => { clearTimeout(timer); r(m); });
+    ws.send(JSON.stringify({ id: i, method, params }));
+  });
   page.on = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
   page.waitFor = (method, test = () => true, ms = 10000) => new Promise((resolve, reject) => {
     const off = page.on((m) => { if (m.method === method && test(m.params)) { off(); resolve(m.params); } });

@@ -1,5 +1,25 @@
 // 健康診断：重さ、スマホでの速さ、待機中の CPU、アクセシビリティ（axe-core）。
 //   node tools/health.mjs
+import { spawn, execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+
+// Mac の ヘッドレス Chrome は ときどき へんじを しなく なる（原因 不明、2026-11）。
+// ふだんは 自分を 子プロセスで うごかし、2 分 おわらなければ Chrome を かたづけて やりなおす（2 回まで）
+if (!process.env.WARPIX_HEALTH_CHILD) {
+  const cleanup = () => { try { execFileSync("pkill", ["-f", "warpix-home-test-"], { stdio: "ignore" }); } catch {} };
+  for (let tryNo = 1; tryNo <= 3; tryNo++) {
+    const code = await new Promise((resolve) => {
+      const child = spawn(process.execPath, [fileURLToPath(import.meta.url)], { env: { ...process.env, WARPIX_HEALTH_CHILD: "1" }, stdio: "inherit" });
+      const timer = setTimeout(() => { child.kill("SIGKILL"); resolve("stall"); }, 2 * 60 * 1000);
+      child.on("close", (c) => { clearTimeout(timer); resolve(c); });
+    });
+    cleanup();
+    if (code !== "stall") process.exit(code ?? 1);
+    console.log(`\n… Chrome が 止まったので、かたづけて やりなおし（${tryNo}／2）\n`);
+  }
+  console.log("✗ 健康診断が 3 回 とも 止まった");
+  process.exit(1);
+}
 import { startServer, launchBrowser, closeAll, sleep } from "../tests/lib/harness.mjs";
 
 const AXE = "https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.10.2/axe.min.js";
