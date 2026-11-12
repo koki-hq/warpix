@@ -5,7 +5,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("fonts/dotgothic16.woff2?v=bf336468") format("woff2");
+  src: url("fonts/dotgothic16.woff2?v=70978dd0") format("woff2");
 }
 
 :root {
@@ -749,7 +749,7 @@ main {
   color: var(--muted);
   font-size: 13px;
 }
-/* ショーウィンドウの ピクセ（おすと ワープあなへ） */
+/* ショーウィンドウの いとこ（おすと「いってらっしゃい。」） */
 .ex-window {
   position: relative;
   align-self: start;
@@ -783,34 +783,8 @@ main {
 .ex-warp:focus-visible::after {
   background: #ffe680;
 }
-.ex-warp.warping::after {
-  content: "いってきまーす！";
-}
-/* ワープあな（おした ときだけ、1 回 うごく） */
-.ex-warp::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  width: 0;
-  height: 0;
-  translate: -50% 40%;
-  border-radius: 50%;
-  background: radial-gradient(#1a1030 40%, #6b3fd6 60%, #3ee8ff 75%, transparent 76%);
-}
-.ex-warp.warping::before {
-  animation: warp-hole 0.7s steps(7) forwards;
-}
-.ex-warp.warping canvas {
-  animation: warp-dive 0.7s steps(7) forwards;
-}
-@keyframes warp-hole {
-  40% { width: 60px; height: 22px; }
-  100% { width: 60px; height: 22px; }
-}
-@keyframes warp-dive {
-  30% { translate: 0 -14px; }
-  100% { translate: 0 30px; scale: 0.2; opacity: 0; }
+.ex-warp.sent::after {
+  content: "いってらっしゃい。";
 }
 .ex-soon {
   background: repeating-linear-gradient(-45deg, #fff 0 12px, #fff7d6 12px 24px);
@@ -997,4 +971,30 @@ footer a {
     animation: none !important;
     transition: none !important;
   }
+}
+/* よぞらの ピクセの のぞき窓：WARPIX LINK と おなじ ブラウン管ふうの 走査線 */
+.nozoki.sky .nozoki-view {
+  position: relative;
+}
+.nozoki.sky .nozoki-view::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom, transparent 0 2px, rgba(0, 0, 0, 0.25) 2px 3px);
+}
+/* のぞき窓の 中の「WARPIX LINK で 会う」（よぞらの ピクセ だけ） */
+.nozoki-go {
+  margin: 0 0 12px;
+}
+.nozoki-go a {
+  display: inline-block;
+  padding: 6px 14px 4px;
+  background: #ffd84a;
+  color: #2a2033;
+  font-size: 14px;
+  text-decoration: none;
+}
+.nozoki-go a:hover {
+  background: #fff3a0;
 }

@@ -710,7 +710,24 @@ const chika = (() => {
 
   // ---------- 図鑑から 会いに いく（地上は factory.meet、地下は その 場所へ もぐる） ----------
   const UG = { horimaru: "ホリマル", jelly: "スイショウクラゲ", tomoshibi: "トモシビ族" };
+  // WARPIX LINK の 夜空と ピクセの 色（warpix-link の style.css・core.js と おなじ）
+  const LINK = { bg: "#0f0b1e", grid: "#1a1433", o: "#000", w: "#f4f4f4", p: "#ff4fa3", c: "#3ee8ff", y: "#ffd84a", k: "rgba(138,128,184,0.35)" };
+  const PIXE = T.BODY.slice(0, 15); // ピクセ（なにも つけて いない）
+  const PIXE_BLINK = PIXE.map((r, y) => (y === 7 ? ".owwwwwwwwwwwwo." : r));
+  const UFO = ["....cccc....", "...cccccc...", ".wwwwwwwwww.", "wpwwpwwpwwpw", ".wwwwwwwwww.", "...w....w..."];
+  const CLOUD = ["....kkkk........", "..kkkkkkkk.kkk..", ".kkkkkkkkkkkkkk.", "kkkkkkkkkkkkkkkk", ".kkkkkkkkkkkkkk."]; // warpix-link の sky.js の 雲
+  const SKY_STARS = (() => {
+    const rnd = seeded(23);
+    const col = ["#f4f4f4", "#f4f4f4", "#f4f4f4", "#3ee8ff", "#ff4fa3"];
+    return Array.from({ length: 30 }, () => {
+      const big = rnd() < 0.2;
+      return { x: Math.floor(rnd() * 128) * 2, y: rnd() * 144, s: big ? 4 : 2, v: big ? 1.6 : 0.6 + rnd() * 0.6, c: col[Math.floor(rnd() * col.length)] };
+    });
+  })();
+  let hopAt = -99;
+  const PIXE_LINES = ["ピクセ「ぴょん！ よぞらで ワープの れんしゅう ちゅう。」", "ピクセ「いとこは げんき？ あんぜん だいいち って いってた？」", "ピクセ「WARPIX LINK で まってるよ。」"];
   function meetUnder(key) {
+    if (key === "pikuse") return nozokiOpen(key);
     if (key === "worm") {
       const y = top + (LAYERS[4].y + 16) * scale;
       scrollTo({ top: y - innerHeight / 2, behavior: factory.tools.reduced ? "auto" : "smooth" });
@@ -728,6 +745,7 @@ const chika = (() => {
   const nozokiCtx = nozokiCanvas.getContext("2d");
   const nozokiView = nozoki.querySelector(".nozoki-view");
   const nozokiSay = nozoki.querySelector(".nozoki-say");
+  const nozokiGo = nozoki.querySelector(".nozoki-go");
   const NW = nozokiCanvas.width;
   const NH = nozokiCanvas.height;
   let nozokiKey = null;
@@ -788,6 +806,49 @@ const chika = (() => {
       },
       talk: (k) => TOMO_LINES[k % TOMO_LINES.length],
     },
+    // ピクセは 地下でも 工場でもなく、よぞらに しゅっちょう ちゅう。WARPIX LINK と おなじ 夜空（方眼・ながれる 星・むらさきの 雲・月・UFO）
+    pikuse: {
+      name: "ピクセ",
+      title: "のぞき窓：よぞらの ピクセ",
+      label: "WARPIX LINK の 夜空で、ピクセが ゆらゆら している。UFO も とんでいる",
+      intro: "ピクセは いま、よぞらに しゅっちょう ちゅう。\nWARPIX LINK で 会えるよ。",
+      go: true,
+      sky: true,
+      // 方眼と 星は WARPIX LINK と おなじ こまかさ（4 ばいの 目もり）。キャラは 1 ドット＝4 目もり
+      fine: 4,
+      draw(n) {
+        const c = nozokiCtx;
+        const F = 4;
+        c.setTransform(1, 0, 0, 1, 0, 0);
+        c.fillStyle = LINK.bg;
+        c.fillRect(0, 0, NW * F, NH * F);
+        c.fillStyle = LINK.grid;
+        for (let x = 0; x < NW * F; x += 24) c.fillRect(x, 0, 2, NH * F);
+        for (let y = 0; y < NH * F; y += 24) c.fillRect(0, y, NW * F, 2);
+        // 星：上から 下へ ゆっくり（WARPIX LINK と おなじ 色・2 と 4 の 大きさ）
+        for (const st of SKY_STARS) {
+          c.fillStyle = st.c;
+          c.fillRect(st.x, Math.floor((st.y + n * st.v) % (NH * F) / 2) * 2, st.s, st.s);
+        }
+        c.setTransform(F, 0, 0, F, 0, 0);
+        // 月（三日月、右上）。背景なので、雲や UFO は 月の 前を とおる
+        disc(56, 8, 3, "rgba(42,33,80,0.9)");
+        for (const [dx, dy] of [[2, -2], [3, -1], [3, 0], [3, 1], [2, 2]]) dot(56 + dx, 8 + dy, LINK.y);
+        // 雲（うすい むらさき）が ゆっくり ながれる
+        rows(CLOUD, (Math.floor(n / 2) % (NW + 18)) - 17, 3, LINK);
+        // UFO が よこぎる
+        const ux = (n % 60) - 13;
+        if (ux < NW) rows(UFO, ux, 3 + (Math.floor(n / 4) % 2), LINK);
+        // ピクセ：ゆらゆら、ときどき まばたき、たまに ぴょん（おしても ぴょん）
+        const hopT = n - hopAt;
+        const hop = hopT >= 0 && hopT < 3 ? [3, 5, 3][hopT] : n % 30 < 3 ? [3, 5, 3][n % 30] : 0;
+        const bob = Math.floor(n / 2) % 2;
+        rect(25, 31, 14, 1, "rgba(0,0,0,0.55)");
+        rows(n % 17 === 0 ? PIXE_BLINK : PIXE, 24, 15 - bob - hop, LINK);
+      },
+      onTalk: () => (hopAt = now),
+      talk: (k) => PIXE_LINES[k % PIXE_LINES.length],
+    },
   };
   function nozokiDraw(n) {
     if (!nozokiKey || !nozoki.open) return;
@@ -797,15 +858,22 @@ const chika = (() => {
   function nozokiOpen(key) {
     nozokiKey = key;
     nozokiTalk = 0;
-    const L = LAYERS[NOZOKI[key].layer];
-    nozoki.querySelector("h2").textContent = `のぞき窓：ちか ${L.depth}m の ${UG[key]}`;
-    nozokiView.setAttribute("aria-label", `${UG[key]}に はなしかける`);
-    nozokiCanvas.setAttribute("aria-label", `ちか ${L.depth}m の 地層の なかに いる ${UG[key]}`);
-    nozokiSay.textContent = `${UG[key]}は、ちか ${L.depth}m に すんで いるよ。\nおすと はなしかけられる。`;
+    const N = NOZOKI[key];
+    const L = LAYERS[N.layer];
+    const name = N.name ?? UG[key];
+    nozoki.querySelector("h2").textContent = N.title ?? `のぞき窓：ちか ${L.depth}m の ${name}`;
+    nozokiView.setAttribute("aria-label", `${name}に はなしかける`);
+    nozokiCanvas.setAttribute("aria-label", N.label ?? `ちか ${L.depth}m の 地層の なかに いる ${name}`);
+    nozokiSay.textContent = N.intro ?? `${name}は、ちか ${L.depth}m に すんで いるよ。\nおすと はなしかけられる。`;
+    nozokiGo.hidden = !N.go;
+    nozoki.classList.toggle("sky", !!N.sky);
+    nozokiCanvas.width = NW * (N.fine ?? 1); // 大きさを かえると 目もりも もとに もどる
+    nozokiCanvas.height = NH * (N.fine ?? 1);
     nozoki.showModal();
     nozokiDraw(now);
   }
   nozokiView.addEventListener("click", () => {
+    NOZOKI[nozokiKey].onTalk?.();
     nozokiSay.textContent = NOZOKI[nozokiKey].talk(nozokiTalk++);
     nozokiDraw(now);
   });

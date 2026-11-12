@@ -27,8 +27,10 @@ export default {
     t.eq(await p.ev(`document.title`), "WARPIX製作所", "タイトル");
     t.ok(await p.ev(`!!document.querySelector('#about a[href="mailto:pixe@warpix.app"]')`), "じむしょに ピクセに おてがみ（pixe@warpix.app）が ない");
     t.eq(await p.ev(`document.querySelector("h1").textContent`), "WARPIX製作所", "看板の 見出し");
-    t.ok((await said(p)).includes("こんにちは"), "ひるの あいさつ");
-    t.ok((await p.ev(`document.querySelector(".scene .say").textContent`)).includes("こんにちは"), "絵の ふきだしに あいさつが ない");
+    t.ok((await said(p)).includes("いとこ「いらっしゃい。」"), "ひるの あいさつ");
+    t.ok((await p.ev(`document.querySelector(".scene .say").textContent`)).includes("いらっしゃい"), "絵の ふきだしに あいさつが ない");
+    // いとこは 口数が 少ない：「ぼく」「！」「だよ」を いわない
+    t.ok(await p.ev(`factory.lines.every((l) => !/ぼく|！|だよ/.test(l))`), "いとこの セリフが ながい・ピクセの 口調");
     // 絵が ちゃんと 描かれている（空の 青が ある）
     t.ok(await p.ev(`(() => { const d = document.querySelector(".scene canvas").getContext("2d").getImageData(0, 0, document.querySelector(".scene canvas").width, 176).data; let blue = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 2] > 200 && d[i] < 120) blue++; return blue > 4000; })()`), "青空が 描かれていない");
     t.ok(await p.ev(`[...document.querySelectorAll(".hot")].length === 11 && [...document.querySelectorAll(".hot")].filter((b) => !b.hidden).every((b) => b.tabIndex === 0 && b.getAttribute("aria-label"))`), "おせる ところに Tab で いけない・名前が ない");
@@ -53,12 +55,17 @@ export default {
     // なかま図鑑：キャラクターの 絵が 描かれている
     t.ok(await p.ev(`[...document.querySelectorAll("#nakama canvas[data-sprite]")].length >= 10 && [...document.querySelectorAll("#nakama canvas[data-sprite]")].every((c) => c.width > 0)`), "図鑑の 絵が ない");
     t.ok(await p.ev(`!!document.getElementById("pikuse")`), "id=pikuse の 場所が ない");
+    // ピクセ族：ピクセ（みならい）が いちばん 上、いとこ（きいろ・あんないがかり）は ハコビ・バチと おなじ 大きさで その 上
+    t.ok(await p.ev(`(() => { const pk = document.getElementById("pikuse"), it = document.getElementById("itoko"); const names = [...pk.parentElement.querySelectorAll(".c-name")].map((n) => n.firstChild.textContent.trim());
+      return pk.querySelector("canvas").dataset.sprite === "shiro" && pk.textContent.includes("みならい") && !pk.textContent.includes("しごとが まだ")
+        && it.querySelector("canvas").dataset.sprite === "pikuse" && it.textContent.includes("あんぜん だいいち") && !it.classList.contains("card-wide")
+        && names.join() === "ピクセ,いとこ,ハコビ,バチ"; })()`), "図鑑の ピクセ族の ならびが ちがう");
     // 地面の 下の 世界：パネルの うしろ いっぱいに 描かれ、ふかい ほど くらい
     await t.sleep(400);
     t.ok(await p.ev(`(() => { const w = document.querySelector(".underground"), c = w.querySelector("canvas"); if (!c.width || w.offsetHeight < document.querySelector("main").offsetHeight) return false; const x = c.getContext("2d"); const lum = (y) => { const d = x.getImageData(0, y, 1, 1).data; return d[0] + d[1] + d[2]; }; return lum(2) > lum(c.height - 4); })()`), "地下の 世界が 描かれていない・ふかい ほうが あかるい");
-    // 展示室の ピクセ：おすと ワープあなに とびこんでから warpix-link へ（すぐには とばない）
-    const warp = await p.ev(`(() => { const w = document.querySelector(".ex-warp"); w.click(); return { label: w.getAttribute("aria-label"), href: w.href, warping: w.classList.contains("warping"), here: location.host }; })()`);
-    t.ok(warp.label.includes("WARPIX LINK") && warp.href === "https://link.warpix.app/" && warp.warping && warp.here.startsWith("127.0.0.1"), `展示室の ピクセが ワープ しない: ${JSON.stringify(warp)}`);
+    // 展示室の いとこ：おすと「いってらっしゃい。」。WARPIX LINK への リンクは ぜんぶ 別の タブ
+    const warp = await p.ev(`(() => { const w = document.querySelector(".ex-warp"); w.addEventListener("click", (e) => e.preventDefault(), { once: true }); w.click(); return { sprite: w.querySelector("canvas").dataset.sprite, label: w.getAttribute("aria-label"), sent: w.classList.contains("sent"), say: getComputedStyle(w, "::after").content, tabs: [...document.querySelectorAll('a[href^="https://link.warpix.app"]')].every((a) => a.target === "_blank" && a.rel.includes("noopener")) }; })()`);
+    t.ok(warp.sprite === "pikuse" && warp.label.includes("いとこ") && warp.sent && warp.say.includes("いってらっしゃい。") && warp.tabs, `展示室の いとこ・別の タブ: ${JSON.stringify(warp)}`);
     t.noErrors(p);
     await server.close();
   },
@@ -93,7 +100,7 @@ export default {
     t.ok((await p.ev(`document.querySelector(".scene canvas").toDataURL()`)) !== img0, "絵が かわらない");
     await p.click("#pikuse-btn");
     const line = await said(p);
-    t.ok(line.startsWith("ピクセ「") && (await p.ev(`factory.lines.some((l) => document.getElementById("bubble").textContent.includes(l.replaceAll("\\n", " ")))`)), `ピクセの セリフ: ${line}`);
+    t.ok(line.startsWith("いとこ「") && (await p.ev(`factory.lines.some((l) => document.getElementById("bubble").textContent.includes(l.replaceAll("\\n", " ")))`)), `いとこの セリフ: ${line}`);
     await p.click("#oji-btn");
     t.ok((await said(p)).startsWith("ゲンさん「"), `ゲンさんの セリフ: ${await said(p)}`);
     await p.click("#cat-btn");
@@ -168,7 +175,7 @@ export default {
       await p.ev(`scrollTo({ top: 0, behavior: "instant" })`);
       await t.sleep(100);
       await p.click("#pikuse-btn");
-      t.ok((await said(p)).includes("なつかしい"), `ピクセが 伝説を おぼえていない: ${await said(p)}`);
+      t.ok((await said(p)).includes("足もとを 見た"), `いとこが 伝説に だまらない: ${await said(p)}`);
       t.noErrors(p);
       await server.close();
       await t.closeAll();
@@ -197,7 +204,7 @@ export default {
       t.eq((await p.ev(`factory.story(37)`)).say, rest, `${season} の ひとやすみの セリフ`);
       t.ok((await count(p, test)) > 60, `${season} の 色が 見あたらない`);
       t.ok((await count(p, "b > 200 && r < 140")) > 3000, `${season} でも 青空`);
-      if (season === "winter") t.eq((await p.ev(`factory.story(60)`)).say, "おちゃ どうぞ！", "冬は おちゃ");
+      if (season === "winter") t.eq((await p.ev(`factory.story(60)`)).say, "おちゃ。", "冬は おちゃ");
       t.noErrors(p);
       await server.close();
       await t.closeAll();
@@ -210,9 +217,9 @@ export default {
       t.eq(await p.ev(`factory.tour()`), null, "さいしょから ツアー中");
       await p.click("#tour-btn");
       t.eq(await p.ev(`document.getElementById("tour-btn").getAttribute("aria-pressed")`), "true", "aria-pressed");
-      t.ok((await said(p)).includes("あんないがかり"), `ピクセが あんない しない: ${await said(p)}`);
+      t.ok((await said(p)).includes("あんない する"), `いとこが あんない しない: ${await said(p)}`);
       t.ok(await p.ev(`[...document.querySelectorAll(".hot")].every((b) => getComputedStyle(b).display === "none")`), "ツアー中に おせる ところが のこっている");
-      t.ok((await p.ev(`document.querySelector(".scene .say").textContent`)).includes("いっしょに 工場を"), "絵の 中に あんないが でない");
+      t.ok((await p.ev(`document.querySelector(".scene .say").textContent`)).includes("こっち"), "絵の 中に あんないが でない");
       await t.sleep(7000); // 1 つめの あんないは 約 6 秒
       const st = await p.ev(`factory.tour()`);
       t.ok(st && st.i >= 1 && (await said(p)).includes("時計塔"), `つぎの 場所へ すすまない: ${JSON.stringify(st)} ${await said(p)}`);
@@ -246,7 +253,7 @@ export default {
         check(await p.ev(`factory.tourView()`), `${size}px ツアー ${i}`);
       }
       await p.key("Escape");
-      for (const k of ["gen", "pikuse", "hakobi", "bachi", "arm", "lifton", "airship", "cat", "sparrow"]) {
+      for (const k of ["gen", "itoko", "hakobi", "bachi", "arm", "lifton", "airship", "cat", "sparrow"]) {
         await p.ev(`(window.scrollTo({ top: 0, behavior: "instant" }), factory.meet("${k}"))`);
         await t.sleep(1700);
         check(await p.ev(`factory.tourView()`), `${size}px 会いに いく ${k}`);
@@ -283,10 +290,10 @@ export default {
     const { server, p } = await open(t, "?date=2026-11-01&hour=14", { mobile: [390, 844] });
     const tag = () => p.ev(`(() => { const e = document.querySelector(".kaiten-tag"); return e.hidden ? null : e.textContent; })()`);
     t.eq(await tag(), "祝開店", "開店の 日の たれまく");
-    t.ok((await said(p)).includes("開店！"), `開店の 日の あいさつ: ${await said(p)}`);
+    t.ok((await said(p)).includes("開店。"), `開店の 日の あいさつ: ${await said(p)}`);
     t.ok((await p.ev(`document.querySelector(".scene canvas").getAttribute("aria-label")`)).includes("くすだま"), "読み上げに くすだまが ない");
     await p.click("#pikuse-btn");
-    t.ok((await said(p)).includes("くすだま"), `ピクセの 開店の ことば: ${await said(p)}`);
+    t.ok((await said(p)).includes("くすだま"), `いとこの 開店の ことば: ${await said(p)}`);
     // ツアーの 看板の コマで、くすだまが ふきだしに かくれない
     await p.ev(`factory.tourGo(3)`);
     await t.sleep(1300);
@@ -368,7 +375,7 @@ export default {
   async "図鑑から 会いに いく：地上の なかまは カメラが よる、地下の なかまは その 場所で こたえる"(t) {
     const { server, p } = await open(t, "?hour=14", { size: { width: 1440, height: 900 } });
     await t.sleep(600);
-    t.eq(await p.ev(`document.querySelectorAll("#nakama .meet").length`), 14, "会いに いく ボタンの 数");
+    t.eq(await p.ev(`document.querySelectorAll("#nakama .meet").length`), 15, "会いに いく ボタンの 数");
     const meet = (k) => p.ev(`document.querySelector('.meet[data-meet="${k}"]').click()`);
     await meet("gen");
     t.ok((await p.ev(`factory.tour()`)) && (await said(p)).startsWith("ゲンさん「"), `ゲンさんに よらない: ${await said(p)}`);
@@ -408,6 +415,17 @@ export default {
       t.ok(!(await open_()), `${name}：とじない`);
     }
     t.ok(!(await p.ev(`document.getElementById("toast").textContent`)).includes("ひろげる"), "まだ「画面を ひろげると」と いう");
+    // ピクセは よぞらに しゅっちょう ちゅう：のぞき窓で はねて いて、WARPIX LINK へ 行ける
+    await meet("pikuse");
+    t.ok(await open_(), "ピクセの のぞき窓が ひらかない");
+    t.ok((await p.ev(`document.getElementById("nozoki-h").textContent`)).includes("よぞら"), "ピクセの のぞき窓の 見出し");
+    t.ok(await p.ev(`(() => { const g = document.querySelector(".nozoki-go"); return !g.hidden && g.querySelector("a").href === "https://link.warpix.app/"; })()`), "のぞき窓に WARPIX LINK への ボタンが ない");
+    await p.ev(`document.querySelector(".nozoki-view").click()`);
+    t.ok((await p.ev(`document.querySelector(".nozoki-say").textContent`)).startsWith("ピクセ「"), "ピクセが しゃべらない");
+    await p.ev(`document.querySelector(".nozoki-close").click()`);
+    await meet("tomoshibi");
+    t.ok(await p.ev(`!document.getElementById("nozoki").open || document.querySelector(".nozoki-go").hidden`), "地下の 子の のぞき窓に WARPIX LINK の ボタンが のこる");
+    await p.ev(`document.getElementById("nozoki").close()`);
     t.noErrors(p);
     await server.close();
   },
@@ -572,7 +590,7 @@ export default {
     t.eq(await pikuseAt(p), before, "動きを へらしているのに ピクセが うごいた");
     t.eq(await p.ev(`document.getAnimations().filter((a) => a.playState === "running").length`), 0, "アニメーションが うごいている");
     await p.click("#pikuse-btn");
-    t.ok((await said(p)).startsWith("ピクセ「"), "動きを へらしていても はなしかけられる");
+    t.ok((await said(p)).startsWith("いとこ「"), "動きを へらしていても はなしかけられる");
     t.noErrors(p);
     await server.close();
   },

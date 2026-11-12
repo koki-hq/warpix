@@ -156,7 +156,7 @@ const factory = (() => {
     const over = HELMET[y - 3];
     return over ? [...row].map((ch, x) => (over[x] !== "." ? over[x] : ch)).join("") : row;
   });
-  const HAPPY = [[1, 7, "owwowwwwwwowwo"], [1, 8, "owowowwwwowowo"]]; // にっこり（^ ^）
+  const HAPPY = [[1, 7, "owwwwwwwwwwwwo"]]; // うれしい ときは 目を つむる（いとこは にこにこ しない。下の 段だけ のこって 横線の 目）
   const VISOR = [[1, 7, "oMMMMMMMMMMMMo"], [1, 8, "oMcMMMMMMMMcMo"]]; // バチの ようせつの 面
   const STEP = [[4, 14, "oo....oo"]]; // あるく あし
   const withPatch = (list, p) => {
@@ -1120,7 +1120,7 @@ const factory = (() => {
       s.happy = true;
       if (t < 20) s.say = "おひるだ！ おべんとう おべんとう♪";
       else if (t < 40) s.say = "もぐもぐ";
-      else if (t < 50) Object.assign(s, { say: "あっ、スズメが……", who: "p", thief: t - 40 });
+      else if (t < 50) Object.assign(s, { say: "スズメ。", who: "p", thief: t - 40 });
       else if (t < 56) Object.assign(s, { say: "こらっ！ おれの からあげ！", left: "lUp", right: "rUpEmpty", thief: t - 40 });
       else if (t < 70) Object.assign(s, { say: "……まあ いいか。ひとつ わけて やろう", thief: 16 });
       return s;
@@ -1128,7 +1128,7 @@ const factory = (() => {
     // 3 じ：おやつ（たいやき）
     oyatsu(t, s) {
       Object.assign(s, { taiyaki: true, left: "lDown", right: t % 6 < 3 ? "rEat" : "rHold", happy: true });
-      if (t < 16) Object.assign(s, { say: "3じの おやつ！ たいやき もってきたよ", who: "p" });
+      if (t < 16) Object.assign(s, { say: "おやつ。たいやき。", who: "p" });
       else if (t < 40) s.say = "あんこ たっぷり！";
       else if (t < 60) s.say = "しっぽまで あんこ……しあわせ";
       return s;
@@ -1143,15 +1143,15 @@ const factory = (() => {
       s.step = t % 2 === 1;
       s.box = true;
       if (t < 16) s.say = "そろそろ かたづけるか";
-      else if (t >= 30 && t < 46) Object.assign(s, { say: "どうぐ、しまってくるね", who: "p" });
+      else if (t >= 30 && t < 46) Object.assign(s, { say: "どうぐ、しまう。", who: "p" });
       else if (t >= 70 && t < 80) s.say = "きょうも おつかれさん";
-      else if (t >= 80 && t < 90) Object.assign(s, { say: "おつかれさま！", who: "p" });
+      else if (t >= 80 && t < 90) Object.assign(s, { say: "おつかれ。", who: "p" });
       return s;
     },
     // よる：うたたね（こっちは いつでも 晴れ だけど、ゲンさんは ねむい）
     nap(t, s) {
       Object.assign(s, { closed: true, zz: true });
-      if (t < 20) Object.assign(s, { say: "しーっ。ゲンさん、うたたね ちゅう", who: "p" });
+      if (t < 20) Object.assign(s, { say: "……。\n（ゲンさんを 起こさない ように、しずかに）", who: "p" });
       else if (t >= 40 && t < 56) s.say = "Zzz……むにゃ";
       return s;
     },
@@ -1165,7 +1165,7 @@ const factory = (() => {
     } else if (t < 40) {
       Object.assign(s, { say: REST_LINE[season], sweat: true });
     } else if (t < 48) {
-      Object.assign(s, { px: HOME + (t - 39) * 4, say: "まってて！", who: "p", sweat: true, step: t % 2 === 1 });
+      Object.assign(s, { px: HOME + (t - 39) * 4, say: "まってて。", who: "p", sweat: true, step: t % 2 === 1 });
     } else if (t < 50) {
       Object.assign(s, { px: JUG - 2, carry: t === 49 });
     } else if (t < 58) {
@@ -1173,11 +1173,11 @@ const factory = (() => {
     } else if (t < 60) {
       Object.assign(s, { px: BX + 12, py: t === 58 ? GROUND - 24 : ON_BENCH, carry: true });
     } else if (t < 61) {
-      Object.assign(s, { px: BX + 12, py: ON_BENCH, right: "rReach", say: season === "winter" ? "おちゃ どうぞ！" : "おみず どうぞ！", who: "p" });
+      Object.assign(s, { px: BX + 12, py: ON_BENCH, right: "rReach", say: season === "winter" ? "おちゃ。" : "みず。", who: "p" });
     } else if (t < 72) {
       Object.assign(s, { px: BX + 12, py: ON_BENCH, right: "rDrink", closed: true, happy: true });
       if (t < 66) s.say = "ごくっ ごくっ";
-      else Object.assign(s, { say: "どうぞ どうぞ", who: "p" });
+      else Object.assign(s, { say: "……。\n（だまって 見守る）", who: "p" });
     } else if (t < 80) {
       Object.assign(s, { px: BX + 12, py: ON_BENCH, left: "lWipe", happy: true, say: "ふきふき" });
     } else if (t < 84) {
@@ -1192,7 +1192,7 @@ const factory = (() => {
   // 絵の ふきだし（.say）に 出して、読み上げ用の #bubble にも 入れる
   const sayEl = scene.querySelector(".say");
   const bubble = document.getElementById("bubble");
-  const NAMES = { p: "ピクセ", o: "ゲンさん", n: "トタン", h: "ハコビ", b: "バチ", l: "リフトン", a: "アームさん", r: "スズメ", s: "ソラマメ号" };
+  const NAMES = { p: "いとこ", o: "ゲンさん", n: "トタン", h: "ハコビ", b: "バチ", l: "リフトン", a: "アームさん", r: "スズメ", s: "ソラマメ号", e: "えんとつ" };
   // なかまたちの ことば（おすと じゅんばんに）
   const FRIEND_LINES = {
     h: ["よいしょ、よいしょ。\nまっすぐ しか あるけないんだ。", "この ぶひん、どこに はこぶんだっけ……", "リフトンが また つみすぎてる！"],
@@ -1214,34 +1214,35 @@ const factory = (() => {
     frame();
   }
   const greeting =
-    kaiten?.today ? (kaiten.years ? `きょうで 開店 ${kaiten.years}しゅうねん！\nいつも きてくれて ありがとう。` : "きょう、WARPIX製作所が 開店！\nきてくれて ありがとう！")
-    : kaiten && !kaiten.years ? "WARPIX製作所、開店 したよ！\nくすだま、きれいでしょ？"
-    : hour < 5 ? "こんばんは！ よふかしだね。\nこっちは いつでも 晴れてるよ。"
-    : hour < 11 ? "おはよう！ WARPIX製作所へ ようこそ。\nきょうも ドットを くみたてるよ。"
-    : hour < 19 ? "こんにちは！ WARPIX製作所へ ようこそ。\nぼくや ゲンさんを おすと おはなし できるよ。"
-    : "こんばんは！ WARPIX製作所へ ようこそ。\nこっちは まだ 晴れてるよ。";
+    // いとこは 口数が 少ない：シンプル・端的・短く（「……」は 無言の ときと あんぜん だいいち だけ）
+    kaiten?.today ? (kaiten.years ? `今日で ${kaiten.years}しゅうねん。` : "開店。\nきて くれて、ありがとう。")
+    : kaiten && !kaiten.years ? "開店いわい ちゅう。"
+    : hour < 5 ? "よふかし か。"
+    : hour < 11 ? "おはよう。"
+    : hour < 19 ? "いらっしゃい。"
+    : "こんばんは。";
   const SEASON_LINE = {
-    spring: "さくらが さいたね。\nゲンさんは はなより だんご だって。",
+    spring: "さくら、さいた。",
     summer: "なつだ！ 入道雲が でっかい！",
     autumn: "あきの 空は たかいね。\nあかとんぼが とんでる。",
     winter: "ゆきだるま、ぼくが つくったんだ。\nヘルメットも かぶせて あげた。",
   };
   const LINES = [
-    ...(kaiten ? ["くすだまは、ぼくが ひもを ひっぱったんだ！\nぱかーんって ひらいたよ。", "花輪は ご近所さんからの おいわい。\nスズメたちも 見に きてる。"] : []),
+    ...(kaiten ? ["くすだまの ひもは、ひっぱった。", "花輪は、ご近所さんから。"] : []),
     SEASON_LINE[season],
-    "ここでは ドットを ひとつずつ くみたてて、\nせいひんに してるんだ。",
-    "ブルーシートの 中は けんせつちゅう。\nなにが できるかは、まだ ひみつ。",
-    "このヘルメット、にあう？\nあんぜん だいいち だからね。",
-    "ラジカセを おしてみて。\nゲンさんの おきにいりの チップチューンが ながれるよ。",
-    "したの けいじばんに、製作所だよりが はってあるよ。",
-    "WARPIX LINK には、ぼくの きょうだいみたいな\nピクセが いるんだ。あいに いってみて。",
-    "なかま図鑑も 見てね。\nみんなの こと、しょうかい してるよ。",
-    "えんとつ、おしてみた？",
+    "ドット、くみたて ちゅう。",
+    "ブルーシートの なかみは、まだ。",
+    "……あんぜん だいいち。",
+    "ラジカセ、おしてみる？",
+    "したに、けいじばん。",
+    "ピクセは、よぞらに 出張中。",
+    "なかま図鑑も ある。",
+    "えんとつ、おしてみる？",
   ];
   const GEN_LINES = [
     ...(kaiten ? ["開店 おめでとう……って、おれたちの 店か。\nこれからも よろしくな！"] : []),
     "おう、いらっしゃい！ ゆっくり 見てってくれ。",
-    "ピクセは よく はたらく。\nたまに つまみぐい するけどな。",
+    "いとこは よく はたらく。\nたまに つまみぐい するけどな。",
     "むかしの 道具も、未来の 機械も、\nつかいよう ってもんよ。",
     "ピコピコ した 音楽が すきでな。\nしごとが はかどるんだ。",
   ];
@@ -1278,7 +1279,7 @@ const factory = (() => {
     happyUntil = n + 6;
     if (remember) {
       remember = false;
-      say("……地下の 石板？\nなんだか、なつかしい かんじが する。");
+      say("…………。\n（なにも 言わず、足もとを 見た）");
       return;
     }
     say(LINES[lineIndex++ % LINES.length]);
@@ -1298,7 +1299,7 @@ const factory = (() => {
   chimneyBtn.addEventListener("click", () => {
     puffs++;
     bigUntil = n + 8;
-    say(puffs >= 10 ? "けほっ けほっ……\nもう けむりで まえが みえないよ！" : puffs >= 5 ? "ぽっぽー！ ぽっぽー！\nフルかどう！" : "ぽっぽー！\nきょうも げんきに かどうちゅう。");
+    say(puffs >= 10 ? "けほっ けほっ……\n（けむりで まえが みえない）" : puffs >= 5 ? "ぽっぽー！ ぽっぽー！\nフルかどう！" : "ぽっぽー！\nきょうも げんきに かどうちゅう。", "e");
   });
 
   // ---------- 画面の はばに あわせる ----------
@@ -1516,7 +1517,7 @@ const factory = (() => {
     // ふきだし：おされた ときの ことばが さき、なければ お話の セリフ
     const text = override ? override.text : s.say;
     const who = override ? override.who : s.who;
-    const POS = { o: [OX + 8, OY - 2], n: [405, 108], h: [hakobiX(n) + 8, 150], b: [110, 106], l: [liftonX(n) + 7, 153], a: [356, 86], r: [72, 48], s: [airshipX(n) + 20, 38] };
+    const POS = { e: [306, 20], o: [OX + 8, OY - 2], n: [405, 108], h: [hakobiX(n) + 8, 150], b: [110, 106], l: [liftonX(n) + 7, 153], a: [356, 86], r: [72, 48], s: [airshipX(n) + 20, 38] };
     const [x, y] = POS[who] ?? [s.px + 8, s.py - 1];
     // よこに うごかして しゃべって いる 子が 見えない ときは、ふきだしも かくす
     sayEl.style.visibility = x < cropX || x > cropX + visW ? "hidden" : "";
@@ -1567,15 +1568,15 @@ const factory = (() => {
   };
   const seeOf = (keys) => keys.map((k) => (typeof SEE[k] === "function" ? SEE[k]() : SEE[k]));
   const STOPS = [
-    { x: 232, y: 150, see: ["pikuse"], text: () => "ぼく、ピクセ！ WARPIX製作所の あんないがかり だよ。\nいっしょに 工場を 見て まわろう！" },
-    { x: 152, y: 92, see: ["clock"], text: () => `これが 時計塔。はりは ほんとうの 時刻で うごくんだ。\nいまは ${nowText()}！` },
-    { x: 84, y: 100, see: ["bachi"], text: () => "タワークレーンと ブルーシート。\n中では つぎの 製品を 建造中。バチが ようせつ してる！" },
-    { x: 252, y: kaiten ? 92 : 58, see: kaiten ? ["sign", "kusudama"] : ["sign", "chimney"], text: () => (kaiten ? "屋上の 看板と、紅白の えんとつ。\n看板の 下には、開店いわいの くすだま！" : "屋上の 看板と、紅白の えんとつ。\nえんとつは おすと もくもく するよ。") },
-    { x: 364, y: 116, see: ["arm"], text: () => "かまぼこ倉庫。屋根の アームさんが、\nいつも どこかを なおしてる。" },
-    { x: 412, y: 138, see: ["cat", "lifton"], text: () => "自販機の 上は、ねこの トタンの いつもの 場所。\nリフトンは 木の 箱を はこんでる。" },
-    { x: airshipCenter, y: 64, see: ["airship"], text: () => "空には 飛行船の ソラマメ号。\nうしろの 高架には、レトロな 電車も はしるよ。" },
-    { x: 186, y: 154, see: ["radio", "gen"], text: () => "ゲンさんの ラジカセ。おすと チップチューンが ながれるよ。\nゲンさんの おきにいり！" },
-    { x: 0, y: 0, end: true, see: [], text: () => "さいごは……地面の 下へ！\nだれも 知らない 世界が まってるよ。" },
+    { x: 232, y: 150, see: ["pikuse"], text: () => "あんない する。\nこっち。" },
+    { x: 152, y: 92, see: ["clock"], text: () => `時計塔。はりは ほんとうの 時刻。\nいま ${nowText()}。` },
+    { x: 84, y: 100, see: ["bachi"], text: () => "つぎの 製品を 建造中。\nバチが ようせつ。" },
+    { x: 252, y: kaiten ? 92 : 58, see: kaiten ? ["sign", "kusudama"] : ["sign", "chimney"], text: () => (kaiten ? "屋上の 看板。\n看板の 下に、くすだま。" : "紅白の えんとつ。\nおすと、もくもく。") },
+    { x: 364, y: 116, see: ["arm"], text: () => "かまぼこ倉庫。\n屋根に アームさん。" },
+    { x: 412, y: 138, see: ["cat", "lifton"], text: () => "自販機の 上に トタン。\n木箱は リフトン。" },
+    { x: airshipCenter, y: 64, see: ["airship"], text: () => "ソラマメ号。\n高架には 電車。" },
+    { x: 186, y: 154, see: ["radio", "gen"], text: () => "ゲンさんの ラジカセ。\nおすと、音楽。" },
+    { x: 0, y: 0, end: true, see: [], text: () => "さいごは、地面の 下。\n……あんぜん だいいち。" },
   ];
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
   // あんないの ふきだしを、紹介する ものに かさならない ほう（下 → 上）へ。行く さきの カメラで はかる
@@ -1613,7 +1614,8 @@ const factory = (() => {
     tour = { i, text, from: { ...cam }, to: camFor(STOPS[i]), start: performance.now(), dur };
     tour.see = seeOf(STOPS[i].see);
     lookBtns();
-    bubble.textContent = `ピクセ「${text.replaceAll("\n", " ")}」`;
+    bubble.textContent = `いとこ「${text.replaceAll("\n", " ")}」`;
+    clearTimeout(bubbleTimer); // まえの ことばを けす タイマーが、ツアーの ことばまで けさない ように
     clearTimeout(tourTimer);
     tourTimer = setTimeout(() => tourGo(i + 1), dur + 2600 + text.length * 55);
     frame();
@@ -1651,7 +1653,7 @@ const factory = (() => {
   // ---------- 図鑑から 会いに いく（絵まで もどって、カメラが その なかまに よる） ----------
   const MEET = {
     gen: { x: () => OX + 8, y: 150, see: ["gen"], text: () => "ゲンさん「おう、ここだ ここだ！ ゆっくり 見てってくれ。」" },
-    pikuse: { x: () => HOME + 8, y: 150, see: ["pikuse"], text: () => "ピクセ「ぼくは ここ！ ゲンさんの となりで はたらいてるよ。」" },
+    itoko: { x: () => HOME + 8, y: 150, see: ["pikuse"], text: () => "いとこ「ここ。」" },
     hakobi: { x: () => hakobiX(n) + 8, y: 150, see: ["hakobi"], text: () => "ハコビ「よいしょ、よいしょ。時計塔の まえを 行ったり 来たり してるよ。」" },
     bachi: { x: () => 104, y: 112, see: ["bachi"], text: () => "バチ「足場の 上だよ！ バチバチッ！」" },
     arm: { x: () => 360, y: 100, see: ["arm"], text: () => "アームさん「ウィーン。倉庫の 屋根から こんにちは。」" },
@@ -1682,15 +1684,9 @@ const factory = (() => {
     if (e.key === "Escape" && tour) tourEnd(false);
   });
 
-  // ---------- 展示室の ピクセ：おすと ワープあなに とびこんでから warpix-link へ ----------
+  // ---------- 展示室の いとこ：おすと「いってらっしゃい！」。WARPIX LINK は 別の タブで ひらく ----------
   const warp = document.querySelector(".ex-warp");
-  warp.addEventListener("click", (e) => {
-    if (reduced || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return; // 新しい タブ などは ふつうの リンクの まま
-    e.preventDefault();
-    warp.classList.add("warping");
-    setTimeout(() => (location.href = warp.href), 750);
-  });
-  addEventListener("pageshow", () => warp.classList.remove("warping")); // もどる ボタンで もどった とき
+  warp.addEventListener("click", () => warp.classList.add("sent"));
 
   // ---------- 製作所だより（news.json） ----------
   const list = document.getElementById("news-list");
@@ -1742,7 +1738,8 @@ const factory = (() => {
   // ---------- なかま図鑑と かざりの え ----------
   // data-sprite の 名前で、ページの あちこちに キャラクターを 描く
   const portraits = {
-    pikuse: [PIKUSE, PIKU],
+    pikuse: [PIKUSE, PIKU], // いとこ（きいろい ヘルメット）
+    shiro: [BODY, PIKU], // ピクセ（ヘルメットなし。WARPIX LINK の 子）
     hakobi: [PIKUSE, HAKOBI],
     bachi: [withPatch(PIKUSE, VISOR), BACHI],
     gen: [OJI, C],
@@ -1832,7 +1829,7 @@ const factory = (() => {
   const tools = {
     use: (ctx) => (g = ctx),
     rect, dot, rows, patch, disc, oval, line, seeded, paper, drawOn,
-    C, PIKU, PIKUSE,
+    C, PIKU, PIKUSE, BODY,
     scale: () => scale,
     cropX: () => cropX,
     heroBottom: () => scene.getBoundingClientRect().bottom + scrollY,
